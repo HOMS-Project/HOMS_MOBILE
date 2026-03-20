@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -13,6 +15,7 @@ import LabeledTextInput from "../components/LabeledTextInput";
 import PrimaryButton from "../components/PrimaryButton";
 import { colors, spacing, radius } from "../theme";
 import type { RootStackParamList } from "../../App";
+import { apiRequest, endpoints } from "../api";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -21,13 +24,55 @@ const avatarUri =
 
 const EditProfileScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
-  const [name, setName] = useState("Hieu tran");
-  const [email, setEmail] = useState("hieutrumbgsg@gmail.com");
-  const [phone, setPhone] = useState("0935225032");
-  const [dob, setDob] = useState("18/04/2004");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [dob, setDob] = useState("");
 
-  const handleSave = () => {
-    navigation.goBack();
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const result = await apiRequest(endpoints.user.getProfile);
+        if (result.success) {
+          const u = result.data;
+          setName(u.fullName || u.username || "");
+          setEmail(u.email || "");
+          setPhone(u.phoneNumber || "");
+          setDob(u.dob || "");
+        }
+      } catch (error) {
+        console.error("Fetch profile failed:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const result = await apiRequest(endpoints.user.updateProfile, {
+        method: 'PUT',
+        body: JSON.stringify({
+          fullName: name,
+          email,
+          phoneNumber: phone,
+          dob
+        })
+      });
+      if (result.success) {
+        Alert.alert("Success", "Profile updated successfully");
+        navigation.goBack();
+      }
+    } catch (error) {
+      console.error("Update profile failed:", error);
+      Alert.alert("Error", "Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -88,14 +133,22 @@ const EditProfileScreen: React.FC = () => {
 
           <View style={{ marginTop: spacing.md, alignItems: "center" }}>
             <PrimaryButton
-              title="Save changes"
+              title={saving ? "Saving..." : "Save changes"}
               onPress={handleSave}
               fullWidth={false}
               style={{ width: 280 }}
+              loading={saving}
+              disabled={saving}
             />
           </View>
         </View>
       </ScrollView>
+
+      {loading && (
+        <View style={[StyleSheet.absoluteFill, styles.loadingOverlay]}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      )}
     </View>
   );
 };
@@ -172,6 +225,11 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 420,
     marginTop: spacing.xl,
+  },
+  loadingOverlay: {
+    backgroundColor: "rgba(255,255,255,0.7)",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 

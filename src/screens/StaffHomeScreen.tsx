@@ -1,40 +1,53 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Image,
+  ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { colors, spacing, radius } from "../theme";
 import type { RootStackParamList } from "../../App";
 
+import { apiRequest, endpoints } from "../api";
+
 type Nav = NativeStackNavigationProp<RootStackParamList>;
-
-const currentOrder = {
-  code: "#INV-2026-00009",
-  time: "08:00",
-  status: "On the way",
-  date: "24 June",
-  from: "Thanh Khê, Đà Nẵng",
-  to: "Cẩm Lệ, Đà Nẵng",
-};
-
-const recentOrders = [
-  {
-    code: "#INV-2026-00008",
-    time: "11:00",
-    status: "On the way",
-    date: "25 June",
-    from: "Thanh Khê, Đà Nẵng",
-    to: "Cẩm Lệ, Đà Nẵng",
-  },
-];
 
 const StaffHomeScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
+  const [loading, setLoading] = useState(true);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [user, setUser] = useState<any>(null);
+
+  const fetchData = async () => {
+    try {
+      // Gọi song song nhưng xử lý độc lập để lỗi 1 cái không làm trắng màn hình
+      const ordersPromise = apiRequest(endpoints.staff.getOrders)
+        .then(res => { if (res.success) setOrders(res.data); })
+        .catch(err => console.error("Orders fetch failed:", err));
+
+      const profilePromise = apiRequest(endpoints.user.getProfile)
+        .then(res => { if (res.success) setUser(res.data); })
+        .catch(err => console.error("Profile fetch failed:", err));
+
+      await Promise.all([ordersPromise, profilePromise]);
+    } catch (error) {
+      console.error("Fetch data general error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const currentOrder = orders.find((o) => o.status === "IN_PROGRESS") || orders[0];
+  const recentOrders = orders.filter((o) => o.status === "COMPLETED").slice(0, 3);
 
   return (
     <View style={styles.container}>
@@ -44,10 +57,14 @@ const StaffHomeScreen: React.FC = () => {
       >
         <View style={styles.topBanner}>
           <View style={styles.topRow}>
-            <View style={styles.avatarCircle} />
+            <View style={styles.avatarCircle}>
+              {loading && <ActivityIndicator color={colors.primary} />}
+            </View>
             <View style={styles.nameBlock}>
-              <Text style={styles.name}>Hiếu Trần</Text>
-              <Text style={styles.role}>Driver</Text>
+              <Text style={styles.name}>
+                {user?.fullName || user?.username || "Staff"}
+              </Text>
+              <Text style={styles.role}>{user?.role || "Team Member"}</Text>
             </View>
             <View style={styles.spacer} />
             <TouchableOpacity style={styles.notifyBtn}>
@@ -62,10 +79,19 @@ const StaffHomeScreen: React.FC = () => {
             >
               <Text style={styles.quickLabel}>My Schedule</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.quickCard}>
+            <TouchableOpacity 
+              style={styles.quickCard}
+              onPress={() => navigation.navigate("OrderList")}
+            >
               <Text style={styles.quickLabel}>Order List</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.quickCard}>
+            <TouchableOpacity 
+              style={styles.quickCard}
+              onPress={() => navigation.navigate("OrderMap", { 
+                assignmentId: currentOrder?.assignmentId || "placeholder", 
+                invoiceId: currentOrder?.invoiceId || "placeholder" 
+              })}
+            >
               <Text style={styles.quickLabel}>Map</Text>
             </TouchableOpacity>
           </View>
@@ -73,43 +99,51 @@ const StaffHomeScreen: React.FC = () => {
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Current Order</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate("OrderList")}>
             <Text style={styles.link}>View All</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.orderCard}>
-          <View style={styles.orderTopRow}>
-            <Text style={styles.orderIcon}>📦</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.orderCode}>{currentOrder.code}</Text>
-              <Text style={styles.orderMeta}>
-                {currentOrder.time} · {currentOrder.status} ·{" "}
-                {currentOrder.date}
-              </Text>
+        {loading ? (
+          <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 20 }} />
+        ) : currentOrder ? (
+          <TouchableOpacity 
+            style={styles.orderCard}
+            onPress={() => navigation.navigate("OrderDetails", { invoiceId: currentOrder.invoiceId })}
+          >
+            <View style={styles.orderTopRow}>
+              <Text style={styles.orderIcon}>📦</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.orderCode}>{currentOrder.orderCode}</Text>
+                <Text style={styles.orderMeta}>
+                  {new Date(currentOrder.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {currentOrder.status}
+                </Text>
+              </View>
+              <Text style={styles.chevron}>{">"}</Text>
             </View>
-            <Text style={styles.chevron}>{">"}</Text>
-          </View>
 
-          <View style={styles.progress}>
-            <View style={styles.progressLine} />
-            <View style={styles.progressDotLeft}>
-              <Text style={styles.progressCheck}>✓</Text>
+            <View style={styles.progress}>
+              <View style={styles.progressLine} />
+              <View style={styles.progressDotLeft}>
+                <Text style={styles.progressCheck}>✓</Text>
+              </View>
+              <View style={styles.progressDotRight} />
             </View>
-            <View style={styles.progressDotRight} />
-          </View>
 
-          <View style={styles.addrRow}>
-            <View style={styles.addrBlock}>
-              <Text style={styles.addrLabel}>From</Text>
-              <Text style={styles.addrValue}>{currentOrder.from}</Text>
+            <View style={styles.addrRow}>
+              <View style={styles.addrBlock}>
+                <Text style={styles.addrLabel}>From</Text>
+                <Text style={styles.addrValue}>{currentOrder.pickup.address}</Text>
+              </View>
+              <View style={styles.addrBlockRight}>
+                <Text style={styles.addrLabel}>To</Text>
+                <Text style={styles.addrValue}>{currentOrder.delivery.address}</Text>
+              </View>
             </View>
-            <View style={styles.addrBlockRight}>
-              <Text style={styles.addrLabel}>To</Text>
-              <Text style={styles.addrValue}>{currentOrder.to}</Text>
-            </View>
-          </View>
-        </View>
+          </TouchableOpacity>
+        ) : (
+          <Text style={styles.emptyText}>No orders assigned</Text>
+        )}
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recent Order</Text>
@@ -119,7 +153,7 @@ const StaffHomeScreen: React.FC = () => {
         </View>
 
         {recentOrders.map((item) => (
-          <View key={item.code} style={styles.orderCard}>
+          <View key={item.invoiceId || item.id} style={styles.orderCard}>
             <View style={styles.orderTopRow}>
               <Text style={styles.orderIcon}>📦</Text>
               <View style={{ flex: 1 }}>
@@ -339,6 +373,12 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "right",
     fontSize: 19,
+  },
+  emptyText: {
+    textAlign: "center",
+    color: colors.muted,
+    marginTop: 20,
+    fontSize: 17,
   },
 });
 

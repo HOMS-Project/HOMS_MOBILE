@@ -1,59 +1,79 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { colors, spacing, radius } from "../theme";
 import type { RootStackParamList } from "../../App";
+import { apiRequest, endpoints } from "../api";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 type Job = {
   id: string;
+  invoiceId: string;
   date: string;
   invoice: string;
-  status: "Approve" | "Pending";
+  status: string;
   pickup: { title: string; address: string };
   dropoff: { title: string; address: string };
 };
 
-const upcoming: Job[] = [
-  {
-    id: "u1",
-    date: "15/03/2026",
-    invoice: "INV-2026-00009",
-    status: "Approve",
-    pickup: { title: "05 Hà Huy Tập", address: "Thanh Khê, Đà Nẵng" },
-    dropoff: { title: "16 Lê Độ", address: "Thanh Khê, Đà Nẵng" },
-  },
-];
-
-const future: Job[] = [
-  {
-    id: "f1",
-    date: "25/03/2026",
-    invoice: "INV-2026-00010",
-    status: "Pending",
-    pickup: { title: "15 Trường Chinh", address: "Cẩm Lệ, Đà Nẵng" },
-    dropoff: { title: "25 Mai Đăng Chơn", address: "Ngũ Hành Sơn, Đà Nẵng" },
-  },
-];
-
-const badgeColor: Record<Job["status"], string> = {
-  Approve: "#22C55E",
-  Pending: "#93C5FD",
-};
-
 const MyScheduleScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
+  const [loading, setLoading] = useState(true);
+  const [jobs, setJobs] = useState<Job[]>([]);
+
+  const fetchJobs = async () => {
+    try {
+      const result = await apiRequest(endpoints.staff.getOrders);
+      if (result.success) {
+        const formattedJobs = result.data.map((o: any) => ({
+          id: o.assignmentId || o.invoiceId,
+          invoiceId: o.invoiceId,
+          date: new Date(o.scheduledTime).toLocaleDateString(),
+          invoice: o.orderCode,
+          status: o.status,
+          pickup: { title: o.pickup.address.split(',')[0], address: o.pickup.address },
+          dropoff: { title: o.delivery.address.split(',')[0], address: o.delivery.address },
+        }));
+        setJobs(formattedJobs);
+      }
+    } catch (error) {
+       console.error("Fetch jobs failed:", error);
+    } finally {
+       setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const upcoming = jobs.filter(j => j.status !== "COMPLETED");
+  const completed = jobs.filter(j => j.status === "COMPLETED");
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "COMPLETED": return "#22C55E";
+      case "IN_PROGRESS": return "#1D9BF0";
+      case "PENDING": return "#F59E0B";
+      default: return colors.muted;
+    }
+  };
 
   const renderCard = (item: Job) => (
-    <View key={item.id} style={styles.card}>
+    <TouchableOpacity 
+      key={item.id} 
+      style={styles.card}
+      onPress={() => navigation.navigate("OrderDetails", { invoiceId: item.invoiceId })}
+    >
       <View style={styles.cardHeader}>
         <View style={styles.dateRow}>
           <Text style={styles.orderIcon}>📦</Text>
@@ -61,7 +81,7 @@ const MyScheduleScreen: React.FC = () => {
           <Text style={styles.cardInvoice}>{item.invoice}</Text>
         </View>
         <View
-          style={[styles.badge, { backgroundColor: badgeColor[item.status] }]}
+          style={[styles.badge, { backgroundColor: getStatusColor(item.status) }]}
         >
           <Text style={styles.badgeText}>{item.status}</Text>
         </View>
@@ -75,39 +95,55 @@ const MyScheduleScreen: React.FC = () => {
 
       <View style={styles.addressBlock}>
         <Text style={styles.addrTitle}>{item.pickup.title}</Text>
-        <Text style={styles.addrDesc}>{item.pickup.address}</Text>
+        <Text style={styles.addrDesc} numberOfLines={1}>{item.pickup.address}</Text>
       </View>
 
       <View style={styles.addressBlock}>
         <Text style={styles.addrTitle}>{item.dropoff.title}</Text>
-        <Text style={styles.addrDesc}>{item.dropoff.address}</Text>
+        <Text style={styles.addrDesc} numberOfLines={1}>{item.dropoff.address}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate("MainTabs")}
-            style={styles.backBtn}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          >
-            <Text style={styles.backText}>{"<"}</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>My schedule</Text>
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
+      ) : (
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.header}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("MainTabs")}
+              style={styles.backBtn}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <Text style={styles.backText}>{"<"}</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>My schedule</Text>
+          </View>
 
-        <Text style={styles.sectionTitle}>Upcoming</Text>
-        <View style={styles.list}>{upcoming.map(renderCard)}</View>
+          <Text style={styles.sectionTitle}>Active & Upcoming</Text>
+          <View style={styles.list}>
+            {upcoming.length > 0 ? (
+              upcoming.map(renderCard)
+            ) : (
+              <Text style={styles.emptyText}>No upcoming jobs</Text>
+            )}
+          </View>
 
-        <Text style={styles.sectionTitle}>Future</Text>
-        <View style={styles.list}>{future.map(renderCard)}</View>
-      </ScrollView>
+          {completed.length > 0 && (
+            <>
+              <Text style={styles.sectionTitle}>Recently Completed</Text>
+              <View style={styles.list}>{completed.map(renderCard)}</View>
+            </>
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 };
@@ -231,6 +267,18 @@ const styles = StyleSheet.create({
   addrDesc: {
     color: colors.muted,
     fontSize: 16,
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    textAlign: "center",
+    color: colors.muted,
+    padding: spacing.xl,
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
 

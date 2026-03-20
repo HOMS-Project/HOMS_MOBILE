@@ -14,6 +14,8 @@ import PrimaryButton from "../../components/PrimaryButton";
 import { colors, spacing } from "../../theme";
 import type { RootStackParamList } from "../../../App";
 
+import { apiRequest, endpoints, setAuthToken } from "../../api";
+
 interface Props {
   onForgotPassword?: () => void;
   onSubmit?: (payload: { username: string; password: string }) => void;
@@ -22,21 +24,35 @@ interface Props {
 const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [username, setUsername] = useState("demo.staff");
-  const [password, setPassword] = useState("Demo@1234");
+  const [email, setEmail] = useState("nguyenvana123@example.com");
+  const [password, setPassword] = useState("Password123@");
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (onSubmit) {
-      onSubmit({ username, password });
+      onSubmit({ email, password });
       return;
     }
 
-    if (username === "demo.staff" && password === "Demo@1234") {
-      setError(null);
-      navigation.navigate("MainTabs");
-    } else {
-      setError("Sai tài khoản hoặc mật khẩu demo.");
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await apiRequest(endpoints.auth.login, {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (result.success && result.data.accessToken) {
+        setAuthToken(result.data.accessToken);
+        navigation.navigate("MainTabs");
+      } else {
+        setError(result.message || "Đăng nhập thất bại");
+      }
+    } catch (err: any) {
+      setError(err.message || "Không thể kết nối đến máy chủ");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -58,10 +74,10 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
             <View style={styles.spacerAfterSubtitle} />
 
             <LabeledTextInput
-              label="Username"
-              placeholder="Enter your username"
-              value={username}
-              onChangeText={setUsername}
+              label="Email"
+              placeholder="Enter your email"
+              value={email}
+              onChangeText={setEmail}
               autoCapitalize="none"
               autoCorrect={false}
             />
@@ -88,7 +104,11 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
               <Text style={styles.linkText}>Forgot password?</Text>
             </TouchableOpacity>
 
-            <PrimaryButton title="Sign In" onPress={handleSubmit} />
+            <PrimaryButton
+              title={loading ? "Signing In..." : "Sign In"}
+              onPress={handleSubmit}
+              disabled={loading}
+            />
 
             <View style={styles.dividerRow}>
               <View style={styles.divider} />
