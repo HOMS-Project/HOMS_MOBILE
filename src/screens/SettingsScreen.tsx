@@ -1,16 +1,18 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useIsFocused } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { colors, spacing, radius } from "../theme";
 import type { RootStackParamList } from "../../App";
 import { Ionicons } from "@expo/vector-icons";
+import { apiRequest, endpoints } from "../api";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -54,6 +56,28 @@ const options = [
 
 const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
+  const isFocused = useIsFocused();
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    if (isFocused) {
+      fetchProfile();
+    }
+  }, [isFocused]);
+
+  const fetchProfile = async () => {
+    try {
+      const result = await apiRequest(endpoints.user.getProfile);
+      if (result.success) {
+        setUser(result.data);
+      }
+    } catch (error) {
+      console.error("Fetch profile failed:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handlePress = (route?: keyof RootStackParamList) => {
     if (!route) return;
@@ -78,11 +102,13 @@ const SettingsScreen: React.FC = () => {
         </View>
 
         <View style={styles.profileCard}>
-          <View style={styles.avatarCircle} />
+          <View style={styles.avatarCircle}>
+            {loading && <ActivityIndicator color={colors.primary} />}
+          </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.name}>Hiếu Trần</Text>
-            <Text style={styles.email}>Hieutrumbgsg@gmail.com</Text>
-            <Text style={styles.phone}>0935225032</Text>
+            <Text style={styles.name}>{user?.fullName || user?.username || "Staff"}</Text>
+            <Text style={styles.email}>{user?.email || "No email"}</Text>
+            <Text style={styles.phone}>{user?.phoneNumber || "No phone"}</Text>
           </View>
         </View>
 
@@ -164,6 +190,8 @@ const styles = StyleSheet.create({
     height: 90,
     borderRadius: 45,
     backgroundColor: "#E6F4EA",
+    justifyContent: "center",
+    alignItems: "center",
   },
   name: {
     fontSize: 24,

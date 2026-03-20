@@ -16,6 +16,9 @@ import SettingsScreen from "./src/screens/SettingsScreen.tsx";
 import EditProfileScreen from "./src/screens/EditProfileScreen.tsx";
 import MyScheduleScreen from "./src/screens/MyScheduleScreen.tsx";
 import MapPlaceholderScreen from "./src/screens/MapPlaceholderScreen.tsx";
+import OrderListScreen from "./src/screens/OrderListScreen.tsx";
+import OrderDetailsScreen from "./src/screens/OrderDetailsScreen.tsx";
+import OrderMapScreen from "./src/screens/OrderMapScreen.tsx";
 
 export type RootStackParamList = {
   Login: undefined;
@@ -26,6 +29,9 @@ export type RootStackParamList = {
   MainTabs: undefined;
   EditProfile: undefined;
   MySchedule: undefined;
+  OrderList: undefined;
+  OrderDetails: { invoiceId: string };
+  OrderMap: { assignmentId: string; invoiceId: string };
 };
 
 export type MainTabParamList = {
@@ -108,6 +114,9 @@ export default function App() {
         <Stack.Screen name="MainTabs" component={MainTabs} />
         <Stack.Screen name="EditProfile" component={EditProfileScreen} />
         <Stack.Screen name="MySchedule" component={MyScheduleScreen} />
+        <Stack.Screen name="OrderList" component={OrderListScreen} />
+        <Stack.Screen name="OrderDetails" component={OrderDetailsScreen} />
+        <Stack.Screen name="OrderMap" component={OrderMapScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
