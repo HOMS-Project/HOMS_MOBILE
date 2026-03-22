@@ -1,7 +1,6 @@
 // src/api.ts
 
-// Use 10.0.2.2 for Android Emulator, OR use your Wi-Fi IP (192.168.106.234)
-// const BASE_URL = 'http://192.168.106.234:5000/api';
+// Dưới đây là IP của Anh Bùi, ai code thì vô cmd gõ ipconfig sau đó cop ip của mình vào đây
 const BASE_URL = 'http://10.63.47.129:5000/api';
 
 // In a real app, you would store this in AsyncStorage/ureStore
