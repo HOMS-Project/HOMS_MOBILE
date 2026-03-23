@@ -5,6 +5,7 @@ import {
   StyleSheet,
   PressableProps,
   ViewStyle,
+  ActivityIndicator,
 } from "react-native";
 import { colors, spacing, radius } from "../theme";
 
@@ -12,6 +13,7 @@ interface Props extends PressableProps {
   title: string;
   fullWidth?: boolean;
   style?: ViewStyle;
+  loading?: boolean;
 }
 
 const PrimaryButton: React.FC<Props> = ({
@@ -19,21 +21,26 @@ const PrimaryButton: React.FC<Props> = ({
   fullWidth = true,
   style,
   disabled,
+  loading = false,
   ...rest
 }) => {
   return (
     <Pressable
-      disabled={disabled}
+      disabled={disabled || loading}
       style={({ pressed }) => [
         styles.base,
         fullWidth && styles.fullWidth,
-        disabled ? styles.disabled : styles.enabled,
-        pressed && !disabled ? styles.pressed : null,
+        disabled || loading ? styles.disabled : styles.enabled,
+        pressed && !(disabled || loading) ? styles.pressed : null,
         style,
       ]}
       {...rest}
     >
-      <Text style={styles.text}>{title}</Text>
+      {loading ? (
+        <ActivityIndicator size="small" color={colors.buttonText} />
+      ) : (
+        <Text style={styles.text}>{title}</Text>
+      )}
     </Pressable>
   );
 };

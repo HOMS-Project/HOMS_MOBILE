@@ -1,9 +1,13 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Alert } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import AuthHeader from "../../components/AuthHeader";
 import LabeledTextInput from "../../components/LabeledTextInput";
 import PrimaryButton from "../../components/PrimaryButton";
 import { colors, spacing } from "../../theme";
+import { apiRequest, endpoints } from "../../api";
+import type { RootStackParamList } from "../../../App";
 
 interface Props {
   onSubmit?: (payload: {
@@ -14,12 +18,53 @@ interface Props {
 }
 
 const ChangePasswordScreen: React.FC<Props> = ({ onSubmit }) => {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = () => {
-    onSubmit?.({ currentPassword, newPassword, confirmPassword });
+    if (onSubmit) {
+      onSubmit({ currentPassword, newPassword, confirmPassword });
+      return;
+    }
+
+    if (!currentPassword || !newPassword) {
+      Alert.alert("Thiếu thông tin", "Vui lòng nhập đầy đủ mật khẩu");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      Alert.alert("Không khớp", "Mật khẩu xác nhận không trùng");
+      return;
+    }
+
+    setLoading(true);
+    apiRequest(endpoints.user.changePassword, {
+      method: "PUT",
+      body: JSON.stringify({ currentPassword, newPassword }),
+    })
+      .then((res) => {
+        if (res?.success !== false) {
+          Alert.alert("Thành công", "Đổi mật khẩu thành công", [
+            {
+              text: "OK",
+              onPress: () =>
+                navigation.navigate("MainTabs", { screen: "Settings" } as any),
+            },
+          ]);
+          setCurrentPassword("");
+          setNewPassword("");
+          setConfirmPassword("");
+        } else {
+          Alert.alert("Lỗi", res?.message || "Không đổi được mật khẩu");
+        }
+      })
+      .catch((err: any) => {
+        Alert.alert("Lỗi", err?.message || "Không thể kết nối máy chủ");
+      })
+      .finally(() => setLoading(false));
   };
 
   return (
@@ -70,7 +115,11 @@ const ChangePasswordScreen: React.FC<Props> = ({ onSubmit }) => {
               secure
             />
 
-            <PrimaryButton title="Update" onPress={handleSubmit} />
+            <PrimaryButton
+              title={loading ? "Updating..." : "Update"}
+              onPress={handleSubmit}
+              disabled={loading}
+            />
           </View>
         </View>
       </ScrollView>
