@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import AuthHeader from "../../components/AuthHeader";
 import OTPInput from "../../components/OTPInput";
 import PrimaryButton from "../../components/PrimaryButton";
 import { colors, spacing } from "../../theme";
 import type { RootStackParamList } from "../../../App";
+import { apiRequest, endpoints } from "../../api";
 
 interface Props {
   onSubmit?: (code: string) => void;
@@ -16,7 +18,10 @@ interface Props {
 const VerifyOTPScreen: React.FC<Props> = ({ onSubmit, digits = 4 }) => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<RootStackParamList, "VerifyOTP">>();
+  const email = (route.params as any)?.email || "";
   const [code, setCode] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   return (
     <View style={styles.container}>
@@ -35,15 +40,36 @@ const VerifyOTPScreen: React.FC<Props> = ({ onSubmit, digits = 4 }) => {
 
             <View style={styles.spacerAfterSubtitle} />
 
-            <OTPInput length={digits} onChange={setCode} />
+            <OTPInput length={6} onChange={setCode} />
 
             <PrimaryButton
-              title="Verify"
-              onPress={() => {
+              title={submitting ? "Verifying..." : "Verify"}
+              disabled={submitting}
+              onPress={async () => {
+                if (!email) {
+                  navigation.goBack();
+                  return;
+                }
+
                 if (onSubmit) {
                   onSubmit(code);
-                } else {
-                  navigation.navigate("ResetPassword");
+                  return;
+                }
+
+                setSubmitting(true);
+                try {
+                  const res = await apiRequest(endpoints.auth.verifyOtp, {
+                    method: "POST",
+                    body: JSON.stringify({ email, otp: code }),
+                  });
+
+                  if (res?.success !== false) {
+                    navigation.navigate("ResetPassword", { email });
+                  }
+                } catch (err) {
+                  // Consider showing toast/alert; silent fail for now
+                } finally {
+                  setSubmitting(false);
                 }
               }}
             />

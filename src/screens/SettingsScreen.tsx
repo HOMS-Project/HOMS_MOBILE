@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { useNavigation, useIsFocused } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -16,7 +17,18 @@ import { apiRequest, endpoints } from "../api";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-const options = [
+const fallbackAvatar =
+  "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80";
+
+type SettingsRoute = "EditProfile" | "ChangePassword" | "Login";
+
+const options: Array<{
+  id: string;
+  label: string;
+  desc: string;
+  route?: SettingsRoute;
+  icon: keyof typeof Ionicons.glyphMap;
+}> = [
   {
     id: "edit",
     label: "Edit Profile",
@@ -79,7 +91,7 @@ const SettingsScreen: React.FC = () => {
     }
   };
 
-  const handlePress = (route?: keyof RootStackParamList) => {
+  const handlePress = (route?: SettingsRoute) => {
     if (!route) return;
     if (route === "Login") {
       navigation.reset({ index: 0, routes: [{ name: "Login" }] });
@@ -103,12 +115,23 @@ const SettingsScreen: React.FC = () => {
 
         <View style={styles.profileCard}>
           <View style={styles.avatarCircle}>
-            {loading && <ActivityIndicator color={colors.primary} />}
+            {loading ? (
+              <ActivityIndicator color={colors.primary} />
+            ) : (
+              <Image
+                source={{ uri: user?.avatar || fallbackAvatar }}
+                style={styles.avatar}
+              />
+            )}
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.name}>{user?.fullName || user?.username || "Staff"}</Text>
+            <Text style={styles.name}>
+              {user?.fullName || user?.username || "Staff"}
+            </Text>
             <Text style={styles.email}>{user?.email || "No email"}</Text>
-            <Text style={styles.phone}>{user?.phoneNumber || "No phone"}</Text>
+            <Text style={styles.phone}>
+              {user?.phone || user?.phoneNumber || "No phone"}
+            </Text>
           </View>
         </View>
 
@@ -192,6 +215,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#E6F4EA",
     justifyContent: "center",
     alignItems: "center",
+  },
+  avatar: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
   },
   name: {
     fontSize: 24,

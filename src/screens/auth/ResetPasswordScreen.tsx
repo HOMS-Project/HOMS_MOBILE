@@ -1,12 +1,14 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { View, Text, StyleSheet, ScrollView, Alert } from "react-native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import AuthHeader from "../../components/AuthHeader";
 import LabeledTextInput from "../../components/LabeledTextInput";
 import PrimaryButton from "../../components/PrimaryButton";
 import { colors, spacing } from "../../theme";
 import type { RootStackParamList } from "../../../App";
+import { apiRequest, endpoints } from "../../api";
 
 interface Props {
   onSubmit?: (payload: {
@@ -18,8 +20,11 @@ interface Props {
 const ResetPasswordScreen: React.FC<Props> = ({ onSubmit }) => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<RootStackParamList, "ResetPassword">>();
+  const email = (route.params as any)?.email || "";
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   return (
     <View style={styles.container}>
@@ -56,12 +61,51 @@ const ResetPasswordScreen: React.FC<Props> = ({ onSubmit }) => {
             />
 
             <PrimaryButton
-              title="Send"
-              onPress={() => {
+              title={loading ? "Processing..." : "Send"}
+              disabled={loading}
+              onPress={async () => {
                 if (onSubmit) {
                   onSubmit({ newPassword, confirmPassword });
-                } else {
-                  navigation.navigate("Login");
+                  return;
+                }
+
+                if (!email) {
+                  Alert.alert("Thiếu email", "Vui lòng quay lại và nhập email");
+                  navigation.goBack();
+                  return;
+                }
+                if (!newPassword || newPassword !== confirmPassword) {
+                  Alert.alert("Lỗi", "Mật khẩu xác nhận không khớp");
+                  return;
+                }
+
+                setLoading(true);
+                try {
+                  const res = await apiRequest(endpoints.auth.resetPassword, {
+                    method: "POST",
+                    body: JSON.stringify({ email, newPassword }),
+                  });
+
+                  if (res?.success !== false) {
+                    Alert.alert("Thành công", "Đặt lại mật khẩu thành công", [
+                      {
+                        text: "OK",
+                        onPress: () => navigation.navigate("Login"),
+                      },
+                    ]);
+                  } else {
+                    Alert.alert(
+                      "Lỗi",
+                      res?.message || "Không đặt lại được mật khẩu",
+                    );
+                  }
+                } catch (err: any) {
+                  Alert.alert(
+                    "Lỗi",
+                    err?.message || "Không thể kết nối máy chủ",
+                  );
+                } finally {
+                  setLoading(false);
                 }
               }}
             />
