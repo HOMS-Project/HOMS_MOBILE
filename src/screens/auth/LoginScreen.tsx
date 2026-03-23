@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,9 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import * as WebBrowser from "expo-web-browser";
+import * as Google from "expo-auth-session/providers/google";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import AuthHeader from "../../components/AuthHeader";
 import LabeledTextInput from "../../components/LabeledTextInput";
 import PrimaryButton from "../../components/PrimaryButton";
@@ -18,16 +21,57 @@ import { apiRequest, endpoints, setAuthToken } from "../../api";
 
 interface Props {
   onForgotPassword?: () => void;
-  onSubmit?: (payload: { username: string; password: string }) => void;
+  onSubmit?: (payload: { email: string; password: string }) => void;
 }
+
+WebBrowser.maybeCompleteAuthSession();
+const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "";
+const GOOGLE_ANDROID_CLIENT_ID =
+  process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || "";
+const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || "";
 
 const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [email, setEmail] = useState("nguyenvana123@example.com");
-  const [password, setPassword] = useState("Password123@");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const [googleRequest, googleResponse, promptGoogle] =
+    Google.useIdTokenAuthRequest({
+      clientId: GOOGLE_WEB_CLIENT_ID,
+      androidClientId: GOOGLE_ANDROID_CLIENT_ID,
+      iosClientId: GOOGLE_IOS_CLIENT_ID,
+      scopes: ["profile", "email"],
+    });
+
+  useEffect(() => {
+    if (googleResponse?.type === "success") {
+      const idToken = googleResponse.params?.id_token;
+      if (idToken) {
+        handleGoogleLogin(idToken);
+      } else {
+        setError("Google không trả về token");
+      }
+    } else if (googleResponse?.type === "error") {
+      setError("Đăng nhập Google thất bại");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [googleResponse]);
+
+  useEffect(() => {
+    const loadLastEmail = async () => {
+      try {
+        const stored = await AsyncStorage.getItem("lastEmail");
+        if (stored) setEmail(stored);
+      } catch (err) {
+        // ignore
+      }
+    };
+    loadLastEmail();
+  }, []);
 
   const handleSubmit = async () => {
     if (onSubmit) {
@@ -43,7 +87,16 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
         body: JSON.stringify({ email, password }),
       });
 
+      const userRole = result?.data?.user?.role;
+      if (userRole !== "driver") {
+        throw new Error("Chỉ tài xế (driver) mới được phép đăng nhập ứng dụng");
+      }
+
       if (result.success && result.data.accessToken) {
+        try {
+          const userEmail = result?.data?.user?.email || email;
+          if (userEmail) await AsyncStorage.setItem("lastEmail", userEmail);
+        } catch (_) {}
         setAuthToken(result.data.accessToken);
         navigation.navigate("MainTabs");
       } else {
@@ -53,6 +106,37 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
       setError(err.message || "Không thể kết nối đến máy chủ");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async (idToken: string) => {
+    setGoogleLoading(true);
+    setError(null);
+    try {
+      const result = await apiRequest(endpoints.auth.googleLogin, {
+        method: "POST",
+        body: JSON.stringify({ token: idToken }),
+      });
+
+      const userRole = result?.data?.user?.role;
+      if (userRole !== "driver") {
+        throw new Error("Chỉ tài xế (driver) mới được phép đăng nhập ứng dụng");
+      }
+
+      if (result.success && result.data.accessToken) {
+        try {
+          const userEmail = result?.data?.user?.email;
+          if (userEmail) await AsyncStorage.setItem("lastEmail", userEmail);
+        } catch (_) {}
+        setAuthToken(result.data.accessToken);
+        navigation.navigate("MainTabs");
+      } else {
+        setError(result.message || "Đăng nhập Google thất bại");
+      }
+    } catch (err: any) {
+      setError(err.message || "Không thể kết nối đến máy chủ");
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -116,9 +200,15 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
               <View style={styles.divider} />
             </View>
 
-            <View style={styles.googleButton}>
-              <Text style={styles.googleText}>G</Text>
-            </View>
+            <TouchableOpacity
+              style={[styles.googleButton, googleLoading && { opacity: 0.6 }]}
+              disabled={!googleRequest || googleLoading}
+              onPress={() => promptGoogle()}
+            >
+              <Text style={styles.googleText}>
+                {googleLoading ? "..." : "G"}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>

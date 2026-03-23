@@ -25,7 +25,7 @@ export type RootStackParamList = {
   ChangePassword: undefined;
   ForgotPassword: undefined;
   VerifyOTP: { email?: string } | undefined;
-  ResetPassword: undefined;
+  ResetPassword: { email?: string } | undefined;
   MainTabs: undefined;
   EditProfile: undefined;
   MySchedule: undefined;

@@ -7,6 +7,7 @@ import LabeledTextInput from "../../components/LabeledTextInput";
 import PrimaryButton from "../../components/PrimaryButton";
 import { colors, spacing } from "../../theme";
 import type { RootStackParamList } from "../../../App";
+import { apiRequest, endpoints } from "../../api";
 
 interface Props {
   onRequestOTP?: (email: string) => Promise<boolean> | boolean;
@@ -30,14 +31,21 @@ const ForgotPasswordScreen: React.FC<Props> = ({ onRequestOTP }) => {
 
     setSubmitting(true);
     try {
-      const exists = onRequestOTP
-        ? await onRequestOTP(trimmedEmail)
-        : /\S+@\S+\.\S+/.test(trimmedEmail);
-
-      if (exists) {
-        navigation.navigate("VerifyOTP", { email: trimmedEmail });
+      if (onRequestOTP) {
+        const ok = await onRequestOTP(trimmedEmail);
+        if (ok) navigation.navigate("VerifyOTP", { email: trimmedEmail });
+        else setError("Email không tồn tại trong hệ thống");
       } else {
-        setError("Email không tồn tại trong hệ thống");
+        const res = await apiRequest(endpoints.auth.forgotPassword, {
+          method: "POST",
+          body: JSON.stringify({ email: trimmedEmail }),
+        });
+
+        if (res?.success !== false) {
+          navigation.navigate("VerifyOTP", { email: trimmedEmail });
+        } else {
+          setError(res?.message || "Gửi OTP thất bại");
+        }
       }
     } catch (err) {
       Alert.alert("Có lỗi xảy ra", "Vui lòng thử lại sau");
