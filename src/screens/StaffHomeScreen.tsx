@@ -17,6 +17,9 @@ import { apiRequest, endpoints } from "../api";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
+const fallbackAvatar =
+  "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80";
+
 const StaffHomeScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const [loading, setLoading] = useState(true);
@@ -27,12 +30,16 @@ const StaffHomeScreen: React.FC = () => {
     try {
       // Gọi song song nhưng xử lý độc lập để lỗi 1 cái không làm trắng màn hình
       const ordersPromise = apiRequest(endpoints.staff.getOrders)
-        .then(res => { if (res.success) setOrders(res.data); })
-        .catch(err => console.error("Orders fetch failed:", err));
+        .then((res) => {
+          if (res.success) setOrders(res.data);
+        })
+        .catch((err) => console.error("Orders fetch failed:", err));
 
       const profilePromise = apiRequest(endpoints.user.getProfile)
-        .then(res => { if (res.success) setUser(res.data); })
-        .catch(err => console.error("Profile fetch failed:", err));
+        .then((res) => {
+          if (res.success) setUser(res.data);
+        })
+        .catch((err) => console.error("Profile fetch failed:", err));
 
       await Promise.all([ordersPromise, profilePromise]);
     } catch (error) {
@@ -46,8 +53,11 @@ const StaffHomeScreen: React.FC = () => {
     fetchData();
   }, []);
 
-  const currentOrder = orders.find((o) => o.status === "IN_PROGRESS") || orders[0];
-  const recentOrders = orders.filter((o) => o.status === "COMPLETED").slice(0, 3);
+  const currentOrder =
+    orders.find((o) => o.status === "IN_PROGRESS") || orders[0];
+  const recentOrders = orders
+    .filter((o) => o.status === "COMPLETED")
+    .slice(0, 3);
 
   return (
     <View style={styles.container}>
@@ -58,7 +68,14 @@ const StaffHomeScreen: React.FC = () => {
         <View style={styles.topBanner}>
           <View style={styles.topRow}>
             <View style={styles.avatarCircle}>
-              {loading && <ActivityIndicator color={colors.primary} />}
+              {loading ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : (
+                <Image
+                  source={{ uri: user?.avatar || fallbackAvatar }}
+                  style={styles.avatar}
+                />
+              )}
             </View>
             <View style={styles.nameBlock}>
               <Text style={styles.name}>
@@ -79,18 +96,20 @@ const StaffHomeScreen: React.FC = () => {
             >
               <Text style={styles.quickLabel}>My Schedule</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.quickCard}
               onPress={() => navigation.navigate("OrderList")}
             >
               <Text style={styles.quickLabel}>Order List</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.quickCard}
-              onPress={() => navigation.navigate("OrderMap", { 
-                assignmentId: currentOrder?.assignmentId || "placeholder", 
-                invoiceId: currentOrder?.invoiceId || "placeholder" 
-              })}
+              onPress={() =>
+                navigation.navigate("OrderMap", {
+                  assignmentId: currentOrder?.assignmentId || "placeholder",
+                  invoiceId: currentOrder?.invoiceId || "placeholder",
+                })
+              }
             >
               <Text style={styles.quickLabel}>Map</Text>
             </TouchableOpacity>
@@ -105,18 +124,30 @@ const StaffHomeScreen: React.FC = () => {
         </View>
 
         {loading ? (
-          <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 20 }} />
+          <ActivityIndicator
+            size="small"
+            color={colors.primary}
+            style={{ marginTop: 20 }}
+          />
         ) : currentOrder ? (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.orderCard}
-            onPress={() => navigation.navigate("OrderDetails", { invoiceId: currentOrder.invoiceId })}
+            onPress={() =>
+              navigation.navigate("OrderDetails", {
+                invoiceId: currentOrder.invoiceId,
+              })
+            }
           >
             <View style={styles.orderTopRow}>
               <Text style={styles.orderIcon}>📦</Text>
               <View style={{ flex: 1 }}>
                 <Text style={styles.orderCode}>{currentOrder.orderCode}</Text>
                 <Text style={styles.orderMeta}>
-                  {new Date(currentOrder.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {currentOrder.status}
+                  {new Date(currentOrder.scheduledTime).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}{" "}
+                  · {currentOrder.status}
                 </Text>
               </View>
               <Text style={styles.chevron}>{">"}</Text>
@@ -133,11 +164,15 @@ const StaffHomeScreen: React.FC = () => {
             <View style={styles.addrRow}>
               <View style={styles.addrBlock}>
                 <Text style={styles.addrLabel}>From</Text>
-                <Text style={styles.addrValue}>{currentOrder.pickup.address}</Text>
+                <Text style={styles.addrValue}>
+                  {currentOrder.pickup.address}
+                </Text>
               </View>
               <View style={styles.addrBlockRight}>
                 <Text style={styles.addrLabel}>To</Text>
-                <Text style={styles.addrValue}>{currentOrder.delivery.address}</Text>
+                <Text style={styles.addrValue}>
+                  {currentOrder.delivery.address}
+                </Text>
               </View>
             </View>
           </TouchableOpacity>
@@ -209,6 +244,11 @@ const styles = StyleSheet.create({
     height: 78,
     borderRadius: 39,
     backgroundColor: "#E6F4EA",
+  },
+  avatar: {
+    width: 78,
+    height: 78,
+    borderRadius: 39,
   },
   nameBlock: {
     marginLeft: spacing.md,

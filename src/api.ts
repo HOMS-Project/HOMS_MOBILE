@@ -1,7 +1,7 @@
 // src/api.ts
 
 // Dưới đây là IP của Anh Bùi, ai code thì vô cmd gõ ipconfig sau đó cop ip của mình vào đây
-const BASE_URL = 'http://10.63.47.129:5000/api';
+const BASE_URL = 'http://192.168.2.8:5000/api';
 
 // In a real app, you would store this in AsyncStorage/ureStore
 let authToken: string | null = null;
@@ -18,9 +18,10 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
   const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
   const headers = {
-    'Accept': 'application/json',
+    Accept: 'application/json',
     'Content-Type': 'application/json',
-    ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+    'X-Client': 'mobile-driver',
+    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
     ...(options.headers || {}),
   };
 
@@ -53,10 +54,15 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
 export const endpoints = {
   auth: {
     login: '/auth/login',
+    googleLogin: '/auth/google-login',
+    forgotPassword: '/auth/forgot-password',
+    verifyOtp: '/auth/verify-otp',
+    resetPassword: '/auth/reset-password',
   },
   user: {
     getProfile: '/customer/personal-info',
     updateProfile: '/customer/personal-info',
+    changePassword: '/customer/change-password',
   },
   staff: {
     getOrders: '/staff/orders',
