@@ -1,15 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   Alert,
   ActivityIndicator,
   Modal,
   TextInput,
+  ScrollView,
+  Linking,
+  Platform,
 } from "react-native";
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE, PROVIDER_DEFAULT } from "react-native-maps";
+import { Ionicons } from "@expo/vector-icons";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { colors, spacing, radius } from "../theme";
@@ -24,28 +28,83 @@ const OrderMapScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState("PENDING");
-  const [routeDetails, setRouteDetails] = useState<any>(null);
+  const [orderData, setOrderData] = useState<any>(null);
+  const [routes, setRoutes] = useState<any[]>([]);
+  const [selectedRouteIdx, setSelectedRouteIdx] = useState(0);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [deviationReason, setDeviationReason] = useState("");
+  const [mapCoords, setMapCoords] = useState<{ pickup: any; delivery: any } | null>(null);
+  const mapRef = useRef<MapView>(null);
   const assignmentId = route.params.assignmentId;
 
+  const fetchRoutes = async (p: any, d: any) => {
+    try {
+      const url = `https://router.project-osrm.org/route/v1/driving/${p.lng},${p.lat};${d.lng},${d.lat}?overview=full&geometries=geojson&alternatives=true`;
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data.code === 'Ok') {
+        setRoutes(data.routes);
+      }
+    } catch (err) {
+      console.warn("OSRM fetch error (fallback to backend):", err);
+    }
+  };
+
   const fetchStatus = async () => {
-     try {
-        const result = await apiRequest(endpoints.staff.getOrderDetails(route.params.invoiceId));
-        if (result.success) {
-           setStatus(result.data.status);
-           setRouteDetails(result.data.route);
+    try {
+      const result = await apiRequest(endpoints.staff.getOrderDetails(route.params.invoiceId));
+      if (result.success) {
+        setStatus(result.data.status);
+        setOrderData(result.data);
+
+        const p = result.data.pickup?.coordinates;
+        const d = result.data.delivery?.coordinates;
+        if (p && d) {
+          setMapCoords({ pickup: p, delivery: d });
+          fetchRoutes(p, d);
         }
-     } catch (error) {
-        console.error("Fetch status failed:", error);
-     } finally {
-        setLoading(false);
-     }
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy thông tin trạng thái:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchStatus();
   }, []);
+
+  useEffect(() => {
+    if (mapCoords && mapRef.current) {
+      const coords = [
+        { latitude: mapCoords.pickup.lat, longitude: mapCoords.pickup.lng },
+        { latitude: mapCoords.delivery.lat, longitude: mapCoords.delivery.lng }
+      ];
+
+      if (routes.length > 0 && routes[selectedRouteIdx]?.geometry?.coordinates) {
+        routes[selectedRouteIdx].geometry.coordinates.forEach((c: any) => {
+          coords.push({ latitude: c[1], longitude: c[0] });
+        });
+      }
+
+      const timer = setTimeout(() => {
+        mapRef.current?.fitToCoordinates(coords, {
+          edgePadding: { top: 80, right: 50, bottom: 450, left: 50 },
+          animated: true,
+        });
+      }, 800);
+
+      return () => clearTimeout(timer);
+    }
+  }, [mapCoords, routes, selectedRouteIdx]);
+
+  const openExternalMap = () => {
+    if (!orderData?.delivery?.coordinates) return;
+    const { lat, lng } = orderData.delivery.coordinates;
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+    Linking.openURL(url).catch(() => Alert.alert("Lỗi", "Không thể mở ứng dụng bản đồ"));
+  };
 
   const updateStatus = async (newStatus: string) => {
     try {
@@ -55,34 +114,35 @@ const OrderMapScreen: React.FC = () => {
       });
       if (result.success) {
         setStatus(newStatus);
-        Alert.alert("Success", `Status updated to ${newStatus}`);
+        const statusName = newStatus === "IN_PROGRESS" ? "Đang giao hàng" : "Đã hoàn thành";
+        Alert.alert("Thành công", `Đã cập nhật trạng thái: ${statusName}`);
+
         if (newStatus === "COMPLETED") {
           navigation.navigate("OrderList");
         }
       }
     } catch (error) {
-       console.error("Update status failed:", error);
-       Alert.alert("Error", "Failed to update status");
+      Alert.alert("Lỗi", "Không thể cập nhật trạng thái");
     }
   };
 
   const submitDeviation = async () => {
     if (!deviationReason.trim()) {
-       Alert.alert("Lỗi", "Vui lòng nhập lý do (VD: Tắc đường, Ngập nước)");
-       return;
+      Alert.alert("Lỗi", "Vui lòng nhập lý do");
+      return;
     }
     try {
-       const result = await apiRequest(endpoints.staff.updateAssignmentRoute?.(assignmentId) || `/staff/assignments/${assignmentId}/route`, {
-         method: 'PATCH',
-         body: JSON.stringify({ reason: deviationReason })
-       });
-       if (result.success) {
-          Alert.alert("Thành công", "Đã báo cáo chuyển hướng/tắc đường về hệ thống");
-          setIsModalVisible(false);
-          setDeviationReason("");
-       }
+      const result = await apiRequest(endpoints.staff.updateAssignmentRoute?.(assignmentId) || `/staff/assignments/${assignmentId}/route`, {
+        method: 'PATCH',
+        body: JSON.stringify({ reason: deviationReason })
+      });
+      if (result.success) {
+        Alert.alert("Thành công", "Đã báo cáo chuyển hướng về hệ thống");
+        setIsModalVisible(false);
+        setDeviationReason("");
+      }
     } catch (error) {
-       Alert.alert("Lỗi", "Không thể báo cáo tại thời điểm này");
+      Alert.alert("Lỗi", "Không thể gửi báo cáo");
     }
   };
 
@@ -91,13 +151,13 @@ const OrderMapScreen: React.FC = () => {
       case "PENDING":
         return (
           <TouchableOpacity style={styles.actionBtn} onPress={() => updateStatus("IN_PROGRESS")}>
-            <Text style={styles.actionBtnText}>ARRIVED AT PICKUP</Text>
+            <Text style={styles.actionBtnText}>ĐÃ TỚI ĐIỂM LẤY HÀNG</Text>
           </TouchableOpacity>
         );
       case "IN_PROGRESS":
         return (
           <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#22C55E" }]} onPress={() => updateStatus("COMPLETED")}>
-            <Text style={styles.actionBtnText}>FINISH DELIVERY</Text>
+            <Text style={styles.actionBtnText}>HOÀN TẤT GIAO HÀNG</Text>
           </TouchableOpacity>
         );
       default:
@@ -115,21 +175,60 @@ const OrderMapScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* Real Map would go here. Using a placeholder for now */}
-      <View style={styles.mapPlaceholder}>
-         {/* Since I cannot embed the generated image directly into code yet, I'll use a stylized View */}
-         <View style={styles.mapOverlay}>
-            <Text style={styles.mapText}>Optimal Route Active 📍</Text>
-            {routeDetails && (
-              <Text style={styles.routeCodeText}>Tuyến: {routeDetails.code}</Text>
-            )}
-            <View style={styles.pathGraphic}>
-               <View style={styles.dotStart} />
-               <View style={styles.pathLine} />
-               <View style={styles.dotEnd} />
-            </View>
-         </View>
-         <View style={styles.mockMapBackground} />
+      <View style={styles.mapContainer}>
+        <MapView
+          ref={mapRef}
+          provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : PROVIDER_DEFAULT}
+          style={styles.map}
+          initialRegion={{
+            latitude: orderData?.pickup?.coordinates?.lat || 16.047079,
+            longitude: orderData?.pickup?.coordinates?.lng || 108.20623,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+          }}
+        >
+          {mapCoords?.pickup && (
+            <Marker
+              coordinate={{ latitude: mapCoords.pickup.lat, longitude: mapCoords.pickup.lng }}
+              title="Điểm lấy hàng"
+              pinColor="#1D9BF0"
+            />
+          )}
+          {mapCoords?.delivery && (
+            <Marker
+              coordinate={{ latitude: mapCoords.delivery.lat, longitude: mapCoords.delivery.lng }}
+              title="Điểm giao hàng"
+              pinColor="#EF4444"
+            />
+          )}
+          {routes.map((r, idx) => (
+            <Polyline
+              key={`route-${idx}`}
+              coordinates={r.geometry.coordinates.map((c: any) => ({ latitude: c[1], longitude: c[0] }))}
+              strokeColor={idx === selectedRouteIdx ? "#1D9BF0" : "rgba(0,0,0,0.15)"}
+              strokeWidth={idx === selectedRouteIdx ? 6 : 4}
+              zIndex={idx === selectedRouteIdx ? 2 : 1}
+            />
+          ))}
+          {routes.length === 0 && orderData?.polyline?.length > 0 && (
+            <Polyline
+              coordinates={orderData.polyline.map((p: any) => ({ latitude: p[1], longitude: p[0] }))}
+              strokeColor="#1D9BF0"
+              strokeWidth={4}
+            />
+          )}
+          {orderData?.routeValidation?.restrictedSegments?.map((seg: any, idx: number) => (
+            seg.geometry?.coordinates?.length > 0 && (
+              <Polyline
+                key={`rest-seg-${idx}`}
+                coordinates={seg.geometry.coordinates.map((p: any) => ({ latitude: p[1], longitude: p[0] }))}
+                strokeColor="#DC2626"
+                strokeWidth={8}
+                zIndex={5}
+              />
+            )
+          ))}
+        </MapView>
       </View>
 
       <View style={styles.header}>
@@ -137,60 +236,89 @@ const OrderMapScreen: React.FC = () => {
           <Text style={styles.backIcon}>{"<"}</Text>
         </TouchableOpacity>
         <View style={styles.headerInfo}>
-           <Text style={styles.headerTitle}>Delivery Route</Text>
-           <Text style={styles.headerSubtitle}>Assign ID: {assignmentId.substring(0, 8)}...</Text>
+          <Text style={styles.headerTitle}>Lộ Trình Vận Chuyển</Text>
+          <Text style={styles.headerSubtitle}>Đơn: {orderData?.orderCode || assignmentId.substring(0, 8)}</Text>
         </View>
       </View>
 
+      {routes.length > 0 && (
+        <View style={styles.routeSelector}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 15 }}>
+            {routes.map((r, idx) => (
+              <TouchableOpacity
+                key={idx}
+                onPress={() => setSelectedRouteIdx(idx)}
+                style={[styles.routeTab, selectedRouteIdx === idx && styles.activeRouteTab]}
+              >
+                <Text style={[styles.routeTabText, selectedRouteIdx === idx && styles.activeRouteTabText]}>Tuyến {idx + 1}</Text>
+                <Text style={[styles.routeTabSub, selectedRouteIdx === idx && styles.activeRouteTabSub]}>{(r.distance / 1000).toFixed(1)}km</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
       <View style={styles.bottomSheet}>
-        <View style={styles.sheetHandle} />
-        
-        <View style={styles.infoRow}>
-           <View style={styles.infoBlock}>
-              <Text style={styles.infoLabel}>TIME</Text>
-              <Text style={styles.infoValue}>{routeDetails?.estimatedDurationMin || 25} min</Text>
-           </View>
-           <View style={styles.vDivider} />
-           <View style={styles.infoBlock}>
-              <Text style={styles.infoLabel}>DISTANCE</Text>
-              <Text style={styles.infoValue}>{routeDetails?.estimatedDistanceKm || 5.2} km</Text>
-           </View>
-        </View>
-
-        <View style={styles.addressSection}>
-            <Text style={styles.addrHeading}>To: {routeDetails?.toDistrict || "Cẩm Lệ"}, {routeDetails?.area || "Đà Nẵng"}</Text>
-            <Text style={styles.addrSub}>From: {routeDetails?.fromDistrict || "Hải Châu"}</Text>
-        </View>
-
-        <TouchableOpacity style={styles.deviateBtn} onPress={() => setIsModalVisible(true)}>
-             <Text style={styles.deviateBtnText}>⚠️ Báo Tắc Đường / Đổi Lộ Trình</Text>
-        </TouchableOpacity>
-
-        {renderActionButton()}
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+          <View style={styles.sheetHandle} />
+          <View style={styles.infoRow}>
+            <View style={styles.infoBlock}>
+              <Text style={styles.infoLabel}>THỜI GIAN</Text>
+              <Text style={styles.infoValue}>{routes.length > 0 ? Math.round(routes[selectedRouteIdx].duration / 60) : 25} phút</Text>
+            </View>
+            <View style={styles.vDivider} />
+            <View style={styles.infoBlock}>
+              <Text style={styles.infoLabel}>KHOẢNG CÁCH</Text>
+              <Text style={styles.infoValue}>{routes.length > 0 ? (routes[selectedRouteIdx].distance / 1000).toFixed(1) : 5.0} km</Text>
+            </View>
+          </View>
+          <View style={styles.addressSection}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+              <Ionicons name="location" size={16} color="#EF4444" />
+              <Text style={[styles.addrHeading, { marginLeft: 6 }]}>Giao: {orderData?.delivery?.address.split(',')[0]}</Text>
+            </View>
+            <Text style={styles.addrSub}>Từ: {orderData?.pickup?.address.split(',')[0]}</Text>
+          </View>
+          <TouchableOpacity style={styles.googleMapsBtn} onPress={openExternalMap}>
+            <Ionicons name="navigate" size={18} color="#FFF" />
+            <Text style={styles.googleMapsBtnText}>Mở bằng Google Maps</Text>
+          </TouchableOpacity>
+          {orderData?.routeValidation?.violations?.length > 0 && (
+            <View style={styles.violationContainer}>
+              <Text style={styles.violationTitle}>⚠️ Cảnh báo cấm đường:</Text>
+              {orderData.routeValidation.violations.map((v: string, idx: number) => (
+                <Text key={idx} style={styles.violationText}>• {v}</Text>
+              ))}
+            </View>
+          )}
+          <TouchableOpacity style={styles.deviateBtn} onPress={() => setIsModalVisible(true)}>
+            <Text style={styles.deviateBtnText}>⚠️ Báo Tắc Đường / Đổi Lộ Trình</Text>
+          </TouchableOpacity>
+          {renderActionButton()}
+        </ScrollView>
       </View>
 
       <Modal visible={isModalVisible} transparent={true} animationType="slide">
-          <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                  <Text style={styles.modalTitle}>Báo Cáo Sự Cố Tuyến Đường</Text>
-                  <Text style={styles.modalSub}>Vui lòng nhập lý do cần thay đổi lộ trình (Vd: Tắc đường, Cây đổ, Ngập nước...)</Text>
-                  <TextInput 
-                     style={styles.modalInput}
-                     placeholder="Nhập lý do thay đổi lộ trình..."
-                     value={deviationReason}
-                     onChangeText={setDeviationReason}
-                     multiline
-                  />
-                  <View style={styles.modalActions}>
-                      <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setIsModalVisible(false)}>
-                          <Text style={styles.modalCancelText}>Hủy</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={styles.modalSubmitBtn} onPress={submitDeviation}>
-                          <Text style={styles.modalSubmitText}>Gửi Báo Cáo</Text>
-                      </TouchableOpacity>
-                  </View>
-              </View>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Báo Cáo Sự Cố</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Lý do thay đổi lộ trình..."
+              value={deviationReason}
+              onChangeText={setDeviationReason}
+              multiline
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setIsModalVisible(false)}>
+                <Text style={styles.modalCancelText}>Hủy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalSubmitBtn} onPress={submitDeviation}>
+                <Text style={styles.modalSubmitText}>Gửi</Text>
+              </TouchableOpacity>
+            </View>
           </View>
+        </View>
       </Modal>
     </View>
   );
@@ -200,6 +328,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F0F0F0",
+  },
+  mapContainer: {
+    flex: 1,
+    ...StyleSheet.absoluteFillObject,
+  },
+  map: {
+    ...StyleSheet.absoluteFillObject,
   },
   center: {
     flex: 1,
@@ -213,13 +348,56 @@ const styles = StyleSheet.create({
     right: 20,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.9)",
+    backgroundColor: "rgba(255,255,255,0.95)",
     padding: 15,
     borderRadius: radius.lg,
     elevation: 4,
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 10,
+    zIndex: 1000,
+  },
+  routeSelector: {
+    position: 'absolute',
+    top: 135,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+  },
+  routeTab: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginRight: 10,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    alignItems: 'center',
+    minWidth: 90,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  activeRouteTab: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  routeTabText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.text,
+  },
+  activeRouteTabText: {
+    color: '#FFF',
+  },
+  routeTabSub: {
+    fontSize: 11,
+    color: colors.muted,
+    marginTop: 2,
+  },
+  activeRouteTabSub: {
+    color: 'rgba(255,255,255,0.8)',
   },
   backBtn: {
     width: 40,
@@ -246,62 +424,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.muted,
   },
-  mapPlaceholder: {
-    flex: 1,
-    backgroundColor: "#E5E7EB",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  mockMapBackground: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#D1D5DB",
-    // In real app, this would be the MapView
-  },
-  mapOverlay: {
-    zIndex: 1,
-    alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.7)",
-    padding: 20,
-    borderRadius: radius.lg,
-  },
-  mapText: {
-    fontWeight: "800",
-    color: colors.primary,
-    marginBottom: 10,
-  },
-  pathGraphic: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: 150,
-  },
-  dotStart: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: "#1D9BF0",
-  },
-  pathLine: {
-    flex: 1,
-    height: 3,
-    backgroundColor: "#1D9BF0",
-    borderStyle: "dashed",
-    borderRadius: 1,
-  },
-  dotEnd: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: "#EF4444",
-  },
   bottomSheet: {
-    backgroundColor: colors.background,
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    maxHeight: '60%',
+    backgroundColor: "#FFF",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    padding: spacing.xl,
+    paddingHorizontal: spacing.xl,
     paddingTop: 12,
     elevation: 10,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 20,
   },
   sheetHandle: {
@@ -337,7 +472,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
   },
   addressSection: {
-    marginBottom: 30,
+    marginBottom: 20,
   },
   addrHeading: {
     fontSize: 19,
@@ -347,33 +482,41 @@ const styles = StyleSheet.create({
   addrSub: {
     fontSize: 14,
     color: colors.muted,
-    marginTop: 4,
+    marginTop: 2,
   },
   actionBtn: {
     backgroundColor: colors.primary,
-    paddingVertical: 20,
+    paddingVertical: 18,
     borderRadius: radius.lg,
     alignItems: "center",
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
     shadowRadius: 10,
-    elevation: 8,
   },
   actionBtnText: {
-    color: colors.buttonText,
-    fontSize: 18,
+    color: "#FFF",
+    fontSize: 17,
     fontWeight: "900",
     letterSpacing: 1,
   },
-  routeCodeText: {
+  googleMapsBtn: {
+    flexDirection: 'row',
+    backgroundColor: '#4285F4',
+    paddingVertical: 14,
+    borderRadius: radius.md,
+    alignItems: "center",
+    justifyContent: 'center',
+    marginBottom: 15,
+    gap: 10,
+  },
+  googleMapsBtnText: {
+    color: '#FFF',
     fontSize: 16,
     fontWeight: "800",
-    color: colors.text,
-    marginBottom: 8,
   },
   deviateBtn: {
-    backgroundColor: "#FEE2E2",
+    backgroundColor: "#FEF2F2",
     paddingVertical: 12,
     borderRadius: radius.md,
     alignItems: "center",
@@ -398,13 +541,8 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: "800",
-    marginBottom: 8,
+    marginBottom: 16,
     color: colors.text
-  },
-  modalSub: {
-    fontSize: 14,
-    color: colors.muted,
-    marginBottom: 16
   },
   modalInput: {
     backgroundColor: "#F3F4F6",
@@ -438,6 +576,36 @@ const styles = StyleSheet.create({
   modalSubmitText: {
     fontWeight: "700",
     color: "#FFF"
+  },
+  violationContainer: {
+    backgroundColor: "#FEF2F2",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 15,
+    borderLeftWidth: 4,
+    borderLeftColor: "#EF4444"
+  },
+  violationTitle: {
+    color: "#991B1B",
+    fontWeight: "800",
+    fontSize: 14,
+    marginBottom: 4
+  },
+  violationText: {
+    color: "#B91C1C",
+    fontSize: 13,
+    fontWeight: "600"
+  },
+  warningTitle: {
+    color: "#1E40AF",
+    fontWeight: "800",
+    fontSize: 14,
+    marginBottom: 4
+  },
+  warningText: {
+    color: "#1D4ED8",
+    fontSize: 13,
+    fontWeight: "600"
   }
 });
 

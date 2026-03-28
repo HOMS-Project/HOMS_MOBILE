@@ -9,6 +9,7 @@ import {
   Linking,
 } from "react-native";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { colors, spacing, radius } from "../theme";
 import type { RootStackParamList } from "../../App";
@@ -26,12 +27,19 @@ type OrderDetail = {
   delivery: { address: string; district: string };
   items: { name: string; quantity: number; notes?: string }[];
   scheduledTime: string;
+  dispatchTime?: string;
   customer: {
     name: string;
     phone: string;
     email: string;
   };
 };
+
+const Tag: React.FC<{ children: React.ReactNode; color: string; style?: any }> = ({ children, color, style }) => (
+  <View style={[{ backgroundColor: color + '20', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 }, style]}>
+    <Text style={{ color: color, fontSize: 12, fontWeight: '800', textTransform: 'uppercase' }}>{children}</Text>
+  </View>
+);
 
 const OrderDetailsScreen: React.FC = () => {
   const route = useRoute<OrderDetailsRouteProp>();
@@ -55,6 +63,12 @@ const OrderDetailsScreen: React.FC = () => {
   useEffect(() => {
     fetchOrderDetails();
   }, []);
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "Chưa xác định";
+    const d = new Date(dateString);
+    return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+  };
 
   const handleContact = () => {
     if (order?.customer.phone) {
@@ -81,75 +95,97 @@ const OrderDetailsScreen: React.FC = () => {
         <Text style={styles.headerTitle}>Order Details</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.mainInfo}>
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusText}>{order.status}</Text>
+          </View>
           <Text style={styles.orderCode}>{order.orderCode}</Text>
-          <Text style={styles.orderTime}>
-            Scheduled: {new Date(order.scheduledTime).toLocaleString()}
-          </Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Locations</Text>
-          <View style={styles.locationCard}>
-             <View style={styles.locRow}>
-                <View style={[styles.dot, { backgroundColor: "#1D9BF0" }]} />
-                <View>
-                   <Text style={styles.locLabel}>Pickup</Text>
-                   <Text style={styles.locValue}>{order.pickup.address}</Text>
-                </View>
-             </View>
-             <View style={styles.connector} />
-             <View style={styles.locRow}>
-                <View style={[styles.dot, { backgroundColor: "#EF4444" }]} />
-                <View>
-                   <Text style={styles.locLabel}>Drop-off</Text>
-                   <Text style={styles.locValue}>{order.delivery.address}</Text>
-                </View>
-             </View>
+        <View style={styles.timeCard}>
+          <View style={styles.timeRow}>
+            <Ionicons name="calendar-outline" size={20} color={colors.primary} />
+            <View style={{ marginLeft: 12 }}>
+              <Text style={styles.timeLabel}>Lịch hẹn khách hàng</Text>
+              <Text style={styles.timeValue}>{formatDate(order.scheduledTime)}</Text>
+            </View>
+          </View>
+          <View style={[styles.timeRow, { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#f0f0f0' }]}>
+            <Ionicons name="time-outline" size={20} color="#EAB308" />
+            <View style={{ marginLeft: 12 }}>
+              <Text style={styles.timeLabel}>Thời gian điều phối dự kiến</Text>
+              <Text style={styles.timeValue}>{formatDate(order.dispatchTime || order.scheduledTime)}</Text>
+            </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Customer Information</Text>
+          <Text style={styles.sectionTitle}>Lộ trình di chuyển</Text>
+          <View style={styles.locationCard}>
+            <View style={styles.locRow}>
+              <View style={[styles.dot, { backgroundColor: "#1D9BF0" }]} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.locLabel}>Điểm lấy hàng (Pickup)</Text>
+                <Text style={styles.locValue} numberOfLines={2}>{order.pickup.address}</Text>
+              </View>
+            </View>
+            <View style={styles.connector} />
+            <View style={styles.locRow}>
+              <View style={[styles.dot, { backgroundColor: "#EF4444" }]} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.locLabel}>Điểm giao hàng (Drop-off)</Text>
+                <Text style={styles.locValue} numberOfLines={2}>{order.delivery.address}</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Thông tin khách hàng</Text>
           <View style={styles.infoCard}>
             <View style={styles.customerHeader}>
-               <View style={styles.avatarPlaceholder}>
-                  <Text style={styles.avatarText}>{order.customer.name[0]}</Text>
-               </View>
-               <View>
-                  <Text style={styles.customerName}>{order.customer.name}</Text>
-                  <Text style={styles.customerPhone}>{order.customer.phone}</Text>
-               </View>
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarText}>{order.customer.name[0]}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.customerName}>{order.customer.name}</Text>
+                <Text style={styles.customerPhone}>{order.customer.phone}</Text>
+              </View>
+              <TouchableOpacity style={styles.callIconBtn} onPress={handleContact}>
+                <Ionicons name="call" size={20} color="#FFF" />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.contactBtn} onPress={handleContact}>
-              <Text style={styles.contactBtnText}>Contact Customer 📞</Text>
-            </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.itemsSection}>
-          <Text style={styles.sectionTitle}>Items List ({order.items.length})</Text>
-          {order.items.map((item, index) => (
-            <View key={index} style={styles.itemRow}>
-              <View style={styles.itemMain}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                {item.notes && <Text style={styles.itemNotes}>{item.notes}</Text>}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={styles.sectionTitle}>Danh sách đồ đạc</Text>
+            <Tag color={colors.primary} style={{ borderRadius: 12 }}>{order.items.length} món</Tag>
+          </View>
+          <View style={styles.itemsCard}>
+            {order.items.map((item, index) => (
+              <View key={index} style={[styles.itemRow, index === order.items.length - 1 && { borderBottomWidth: 0 }]}>
+                <View style={styles.itemMain}>
+                  <Text style={styles.itemName}>{item.name}</Text>
+                  {item.notes && <Text style={styles.itemNotes}>{item.notes}</Text>}
+                </View>
+                <Text style={styles.itemQty}>x{item.quantity}</Text>
               </View>
-              <Text style={styles.itemQty}>x{item.quantity}</Text>
-            </View>
-          ))}
+            ))}
+          </View>
         </View>
 
         <View style={{ height: 100 }} />
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity 
-          style={styles.mapBtn} 
-          onPress={() => navigation.navigate("OrderMap", { 
-            assignmentId: order.assignmentId, 
-            invoiceId: order.id 
+        <TouchableOpacity
+          style={styles.mapBtn}
+          onPress={() => navigation.navigate("OrderMap", {
+            assignmentId: order.assignmentId,
+            invoiceId: order.id
           })}
         >
           <Text style={styles.mapBtnText}>Go to Map & Update Status</Text>
@@ -199,17 +235,48 @@ const styles = StyleSheet.create({
   },
   mainInfo: {
     alignItems: "center",
-    gap: 4,
+    gap: 8,
+    marginTop: 10,
+  },
+  statusBadge: {
+    backgroundColor: '#E0F2FE',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  statusText: {
+    color: '#0284C7',
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
   },
   orderCode: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: "800",
     color: colors.primary,
+    letterSpacing: 1,
   },
-  orderTime: {
-    fontSize: 16,
+  timeCard: {
+    backgroundColor: colors.surface,
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+  },
+  timeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  timeLabel: {
+    fontSize: 12,
     color: colors.muted,
     fontWeight: "600",
+  },
+  timeValue: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: colors.text,
+    marginTop: 2,
   },
   section: {
     gap: spacing.md,
@@ -285,16 +352,24 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontWeight: "600",
   },
-  contactBtn: {
-    backgroundColor: colors.primary,
-    paddingVertical: 12,
-    borderRadius: radius.md,
-    alignItems: "center",
+  callIconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#22C55E',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  contactBtnText: {
-    color: colors.buttonText,
-    fontWeight: "800",
-    fontSize: 16,
+  itemsCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    paddingHorizontal: spacing.lg,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
   },
   itemsSection: {
     gap: spacing.md,

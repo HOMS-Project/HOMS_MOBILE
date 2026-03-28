@@ -1,5 +1,7 @@
-{
-  "expo": {
+export default ({ config }) => {
+
+  return {
+    ...config,
     "name": "homs",
     "slug": "homs",
     "version": "1.0.0",
@@ -22,14 +24,14 @@
       "predictiveBackGestureEnabled": false,
       "config": {
         "googleMaps": {
-          "apiKey": "***REMOVED***"
+          "apiKey": process.env.GOOGLE_MAPS_API_KEY
         }
       }
     },
     "ios": {
       "supportsTablet": true,
       "config": {
-        "googleMapsApiKey": "***REMOVED***"
+        "googleMapsApiKey": process.env.GOOGLE_MAPS_API_KEY
       }
     },
     "web": {
@@ -38,5 +40,5 @@
     "plugins": [
       "expo-font"
     ]
-  }
-}
+  };
+};
