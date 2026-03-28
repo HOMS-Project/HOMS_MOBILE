@@ -30,17 +30,19 @@ const OrderMapScreen: React.FC = () => {
   const assignmentId = route.params.assignmentId;
 
   const fetchStatus = async () => {
-     try {
-        const result = await apiRequest(endpoints.staff.getOrderDetails(route.params.invoiceId));
-        if (result.success) {
-           setStatus(result.data.status);
-           setRouteDetails(result.data.route);
-        }
-     } catch (error) {
-        console.error("Fetch status failed:", error);
-     } finally {
-        setLoading(false);
-     }
+    try {
+      const result = await apiRequest(
+        endpoints.staff.getOrderDetails(route.params.invoiceId),
+      );
+      if (result.success) {
+        setStatus(result.data.status);
+        setRouteDetails(result.data.route);
+      }
+    } catch (error) {
+      console.error("Fetch status failed:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -49,40 +51,46 @@ const OrderMapScreen: React.FC = () => {
 
   const updateStatus = async (newStatus: string) => {
     try {
-      const result = await apiRequest(endpoints.staff.updateAssignmentStatus(assignmentId), {
-        method: 'PATCH',
-        body: JSON.stringify({ status: newStatus })
-      });
+      const result = await apiRequest(
+        endpoints.staff.updateAssignmentStatus(assignmentId),
+        {
+          method: "PATCH",
+          body: JSON.stringify({ status: newStatus }),
+        },
+      );
       if (result.success) {
         setStatus(newStatus);
         Alert.alert("Success", `Status updated to ${newStatus}`);
-        if (newStatus === "COMPLETED") {
-          navigation.navigate("OrderList");
-        }
       }
     } catch (error) {
-       console.error("Update status failed:", error);
-       Alert.alert("Error", "Failed to update status");
+      console.error("Update status failed:", error);
+      Alert.alert("Error", "Failed to update status");
     }
   };
 
   const submitDeviation = async () => {
     if (!deviationReason.trim()) {
-       Alert.alert("Lỗi", "Vui lòng nhập lý do (VD: Tắc đường, Ngập nước)");
-       return;
+      Alert.alert("Lỗi", "Vui lòng nhập lý do (VD: Tắc đường, Ngập nước)");
+      return;
     }
     try {
-       const result = await apiRequest(endpoints.staff.updateAssignmentRoute?.(assignmentId) || `/staff/assignments/${assignmentId}/route`, {
-         method: 'PATCH',
-         body: JSON.stringify({ reason: deviationReason })
-       });
-       if (result.success) {
-          Alert.alert("Thành công", "Đã báo cáo chuyển hướng/tắc đường về hệ thống");
-          setIsModalVisible(false);
-          setDeviationReason("");
-       }
+      const result = await apiRequest(
+        endpoints.staff.updateAssignmentRoute(assignmentId),
+        {
+          method: "PATCH",
+          body: JSON.stringify({ reason: deviationReason }),
+        },
+      );
+      if (result.success) {
+        Alert.alert(
+          "Thành công",
+          "Đã báo cáo chuyển hướng/tắc đường về hệ thống",
+        );
+        setIsModalVisible(false);
+        setDeviationReason("");
+      }
     } catch (error) {
-       Alert.alert("Lỗi", "Không thể báo cáo tại thời điểm này");
+      Alert.alert("Lỗi", "Không thể báo cáo tại thời điểm này");
     }
   };
 
@@ -90,13 +98,19 @@ const OrderMapScreen: React.FC = () => {
     switch (status) {
       case "PENDING":
         return (
-          <TouchableOpacity style={styles.actionBtn} onPress={() => updateStatus("IN_PROGRESS")}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => updateStatus("IN_PROGRESS")}
+          >
             <Text style={styles.actionBtnText}>ARRIVED AT PICKUP</Text>
           </TouchableOpacity>
         );
       case "IN_PROGRESS":
         return (
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#22C55E" }]} onPress={() => updateStatus("COMPLETED")}>
+          <TouchableOpacity
+            style={[styles.actionBtn, { backgroundColor: "#22C55E" }]}
+            onPress={() => updateStatus("COMPLETED")}
+          >
             <Text style={styles.actionBtnText}>FINISH DELIVERY</Text>
           </TouchableOpacity>
         );
@@ -117,80 +131,108 @@ const OrderMapScreen: React.FC = () => {
     <View style={styles.container}>
       {/* Real Map would go here. Using a placeholder for now */}
       <View style={styles.mapPlaceholder}>
-         {/* Since I cannot embed the generated image directly into code yet, I'll use a stylized View */}
-         <View style={styles.mapOverlay}>
-            <Text style={styles.mapText}>Optimal Route Active 📍</Text>
-            {routeDetails && (
-              <Text style={styles.routeCodeText}>Tuyến: {routeDetails.code}</Text>
-            )}
-            <View style={styles.pathGraphic}>
-               <View style={styles.dotStart} />
-               <View style={styles.pathLine} />
-               <View style={styles.dotEnd} />
-            </View>
-         </View>
-         <View style={styles.mockMapBackground} />
+        {/* Since I cannot embed the generated image directly into code yet, I'll use a stylized View */}
+        <View style={styles.mapOverlay}>
+          <Text style={styles.mapText}>Optimal Route Active 📍</Text>
+          {routeDetails && (
+            <Text style={styles.routeCodeText}>Tuyến: {routeDetails.code}</Text>
+          )}
+          <View style={styles.pathGraphic}>
+            <View style={styles.dotStart} />
+            <View style={styles.pathLine} />
+            <View style={styles.dotEnd} />
+          </View>
+        </View>
+        <View style={styles.mockMapBackground} />
       </View>
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+        >
           <Text style={styles.backIcon}>{"<"}</Text>
         </TouchableOpacity>
         <View style={styles.headerInfo}>
-           <Text style={styles.headerTitle}>Delivery Route</Text>
-           <Text style={styles.headerSubtitle}>Assign ID: {assignmentId.substring(0, 8)}...</Text>
+          <Text style={styles.headerTitle}>Delivery Route</Text>
+          <Text style={styles.headerSubtitle}>
+            Assign ID: {assignmentId.substring(0, 8)}...
+          </Text>
         </View>
       </View>
 
       <View style={styles.bottomSheet}>
         <View style={styles.sheetHandle} />
-        
+
         <View style={styles.infoRow}>
-           <View style={styles.infoBlock}>
-              <Text style={styles.infoLabel}>TIME</Text>
-              <Text style={styles.infoValue}>{routeDetails?.estimatedDurationMin || 25} min</Text>
-           </View>
-           <View style={styles.vDivider} />
-           <View style={styles.infoBlock}>
-              <Text style={styles.infoLabel}>DISTANCE</Text>
-              <Text style={styles.infoValue}>{routeDetails?.estimatedDistanceKm || 5.2} km</Text>
-           </View>
+          <View style={styles.infoBlock}>
+            <Text style={styles.infoLabel}>TIME</Text>
+            <Text style={styles.infoValue}>
+              {routeDetails?.estimatedDurationMin || 25} min
+            </Text>
+          </View>
+          <View style={styles.vDivider} />
+          <View style={styles.infoBlock}>
+            <Text style={styles.infoLabel}>DISTANCE</Text>
+            <Text style={styles.infoValue}>
+              {routeDetails?.estimatedDistanceKm || 5.2} km
+            </Text>
+          </View>
         </View>
 
         <View style={styles.addressSection}>
-            <Text style={styles.addrHeading}>To: {routeDetails?.toDistrict || "Cẩm Lệ"}, {routeDetails?.area || "Đà Nẵng"}</Text>
-            <Text style={styles.addrSub}>From: {routeDetails?.fromDistrict || "Hải Châu"}</Text>
+          <Text style={styles.addrHeading}>
+            To: {routeDetails?.toDistrict || "Cẩm Lệ"},{" "}
+            {routeDetails?.area || "Đà Nẵng"}
+          </Text>
+          <Text style={styles.addrSub}>
+            From: {routeDetails?.fromDistrict || "Hải Châu"}
+          </Text>
         </View>
 
-        <TouchableOpacity style={styles.deviateBtn} onPress={() => setIsModalVisible(true)}>
-             <Text style={styles.deviateBtnText}>⚠️ Báo Tắc Đường / Đổi Lộ Trình</Text>
+        <TouchableOpacity
+          style={styles.deviateBtn}
+          onPress={() => setIsModalVisible(true)}
+        >
+          <Text style={styles.deviateBtnText}>
+            ⚠️ Báo Tắc Đường / Đổi Lộ Trình
+          </Text>
         </TouchableOpacity>
 
         {renderActionButton()}
       </View>
 
       <Modal visible={isModalVisible} transparent={true} animationType="slide">
-          <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                  <Text style={styles.modalTitle}>Báo Cáo Sự Cố Tuyến Đường</Text>
-                  <Text style={styles.modalSub}>Vui lòng nhập lý do cần thay đổi lộ trình (Vd: Tắc đường, Cây đổ, Ngập nước...)</Text>
-                  <TextInput 
-                     style={styles.modalInput}
-                     placeholder="Nhập lý do thay đổi lộ trình..."
-                     value={deviationReason}
-                     onChangeText={setDeviationReason}
-                     multiline
-                  />
-                  <View style={styles.modalActions}>
-                      <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setIsModalVisible(false)}>
-                          <Text style={styles.modalCancelText}>Hủy</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={styles.modalSubmitBtn} onPress={submitDeviation}>
-                          <Text style={styles.modalSubmitText}>Gửi Báo Cáo</Text>
-                      </TouchableOpacity>
-                  </View>
-              </View>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Báo Cáo Sự Cố Tuyến Đường</Text>
+            <Text style={styles.modalSub}>
+              Vui lòng nhập lý do cần thay đổi lộ trình (Vd: Tắc đường, Cây đổ,
+              Ngập nước...)
+            </Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Nhập lý do thay đổi lộ trình..."
+              value={deviationReason}
+              onChangeText={setDeviationReason}
+              multiline
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setIsModalVisible(false)}
+              >
+                <Text style={styles.modalCancelText}>Hủy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalSubmitBtn}
+                onPress={submitDeviation}
+              >
+                <Text style={styles.modalSubmitText}>Gửi Báo Cáo</Text>
+              </TouchableOpacity>
+            </View>
           </View>
+        </View>
       </Modal>
     </View>
   );
@@ -387,24 +429,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
   },
   modalContent: {
     backgroundColor: "#FFF",
     padding: 24,
     borderRadius: radius.lg,
-    width: "85%"
+    width: "85%",
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: "800",
     marginBottom: 8,
-    color: colors.text
+    color: colors.text,
   },
   modalSub: {
     fontSize: 14,
     color: colors.muted,
-    marginBottom: 16
+    marginBottom: 16,
   },
   modalInput: {
     backgroundColor: "#F3F4F6",
@@ -412,33 +454,33 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     minHeight: 100,
     textAlignVertical: "top",
-    marginBottom: 20
+    marginBottom: 20,
   },
   modalActions: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    gap: 12
+    gap: 12,
   },
   modalCancelBtn: {
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
-    backgroundColor: "#F3F4F6"
+    backgroundColor: "#F3F4F6",
   },
   modalCancelText: {
     fontWeight: "700",
-    color: colors.text
+    color: colors.text,
   },
   modalSubmitBtn: {
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
-    backgroundColor: "#EF4444"
+    backgroundColor: "#EF4444",
   },
   modalSubmitText: {
     fontWeight: "700",
-    color: "#FFF"
-  }
+    color: "#FFF",
+  },
 });
 
 export default OrderMapScreen;
