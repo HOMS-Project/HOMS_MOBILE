@@ -108,13 +108,10 @@ const OrderMapScreen: React.FC = () => {
 
   const updateStatus = async (newStatus: string) => {
     try {
-      const result = await apiRequest(
-        endpoints.staff.updateAssignmentStatus(assignmentId),
-        {
-          method: "PATCH",
-          body: JSON.stringify({ status: newStatus }),
-        },
-      );
+      const result = await apiRequest(endpoints.staff.updateAssignmentStatus(assignmentId), {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus })
+      });
       if (result.success) {
         setStatus(newStatus);
         const statusName = newStatus === "IN_PROGRESS" ? "Đang giao hàng" : "Đã hoàn thành";
@@ -235,10 +232,7 @@ const OrderMapScreen: React.FC = () => {
       </View>
 
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}
-        >
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backIcon}>{"<"}</Text>
         </TouchableOpacity>
         <View style={styles.headerInfo}>
@@ -536,13 +530,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
-    alignItems: "center",
+    alignItems: "center"
   },
   modalContent: {
     backgroundColor: "#FFF",
     padding: 24,
     borderRadius: radius.lg,
-    width: "85%",
+    width: "85%"
   },
   modalTitle: {
     fontSize: 18,
@@ -556,28 +550,28 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     minHeight: 100,
     textAlignVertical: "top",
-    marginBottom: 20,
+    marginBottom: 20
   },
   modalActions: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    gap: 12,
+    gap: 12
   },
   modalCancelBtn: {
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#F3F4F6"
   },
   modalCancelText: {
     fontWeight: "700",
-    color: colors.text,
+    color: colors.text
   },
   modalSubmitBtn: {
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
-    backgroundColor: "#EF4444",
+    backgroundColor: "#EF4444"
   },
   modalSubmitText: {
     fontWeight: "700",

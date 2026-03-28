@@ -1,5 +1,4 @@
 // src/api.ts
-import axios, { AxiosRequestConfig } from 'axios';
 
 // Dưới đây là IP của Anh Bùi, ai code thì vô cmd gõ ipconfig sau đó cop ip của mình vào đây
 const BASE_URL = 'http://10.63.47.129:5000/api';
@@ -11,13 +10,14 @@ export const setAuthToken = (token: string | null) => {
   authToken = token;
 };
 
-const axiosClient = axios.create({
-  baseURL: BASE_URL,
-  timeout: 30000,
-});
+export const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
+  const url = `${BASE_URL}${endpoint}`;
+  console.log(`[API] Fetching: ${url}`);
 
-axiosClient.interceptors.request.use((config) => {
-  config.headers = {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
+  const headers = {
     Accept: 'application/json',
     'Content-Type': 'application/json',
     'X-Client': 'mobile-driver',
