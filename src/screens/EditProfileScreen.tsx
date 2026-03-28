@@ -54,13 +54,18 @@ const EditProfileScreen: React.FC = () => {
       return;
     }
 
-    const mediaTypes = ImagePicker.MediaTypeOptions.Images;
+    const mediaImages = (ImagePicker as any).MediaType?.Images;
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes,
+    const pickerOptions: any = {
       quality: 0.8,
       allowsEditing: false,
-    });
+    };
+
+    if (mediaImages) {
+      pickerOptions.mediaTypes = [mediaImages];
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync(pickerOptions);
 
     if (result.canceled || !result.assets?.length) return;
 
@@ -109,7 +114,7 @@ const EditProfileScreen: React.FC = () => {
           const u = result.data;
           setName(u.fullName || u.username || "");
           setEmail(u.email || "");
-          setPhone(u.phoneNumber || "");
+          setPhone(u.phoneNumber || (u as any).phone || "");
           setAvatar(u.avatar || null);
         }
       } catch (error) {

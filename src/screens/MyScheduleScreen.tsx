@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,18 +6,22 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { colors, spacing, radius } from "../theme";
 import type { RootStackParamList } from "../../App";
-import { apiRequest, endpoints } from "../api";
+import PrimaryButton from "../components/PrimaryButton";
+import { staffApi } from "../api";
+import { showToast } from "../utils/toast";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 type Job = {
   id: string;
   invoiceId: string;
+  assignmentId?: string;
   date: string;
   invoice: string;
   status: string;
@@ -29,50 +33,95 @@ const MyScheduleScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const [loading, setLoading] = useState(true);
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [acceptingId, setAcceptingId] = useState<string | null>(null);
 
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     try {
-      const result = await apiRequest(endpoints.staff.getOrders);
-      if (result.success) {
-        const formattedJobs = result.data.map((o: any) => ({
-          id: o.assignmentId || o.invoiceId,
+      // Backend currently exposes /staff/orders; filter ASSIGNED here
+      const result = await staffApi.getOrders();
+      const payload = (result as any)?.data ?? result;
+
+      const formattedJobs = (payload || [])
+        .filter((o: any) => (o.status || "").toUpperCase() === "ASSIGNED")
+        .map((o: any) => ({
+          id: o.invoiceId,
           invoiceId: o.invoiceId,
-          date: new Date(o.scheduledTime).toLocaleDateString(),
+          assignmentId: o.assignmentId,
+          date: o.scheduledTime
+            ? new Date(o.scheduledTime).toLocaleDateString()
+            : "",
           invoice: o.orderCode,
-          status: o.status,
-          pickup: { title: o.pickup.address.split(',')[0], address: o.pickup.address },
-          dropoff: { title: o.delivery.address.split(',')[0], address: o.delivery.address },
+          status: (o.status || "").toUpperCase(),
+          pickup: {
+            title: o.pickup?.address?.split(",")[0] || "Pickup",
+            address: o.pickup?.address || "",
+          },
+          dropoff: {
+            title: o.delivery?.address?.split(",")[0] || "Drop-off",
+            address: o.delivery?.address || "",
+          },
         }));
-        setJobs(formattedJobs);
-      }
-    } catch (error) {
-       console.error("Fetch jobs failed:", error);
+
+      setJobs(formattedJobs);
+    } catch (error: any) {
+      console.error("Fetch jobs failed:", error);
+      showToast(error?.message || "Failed to load schedule");
     } finally {
-       setLoading(false);
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchJobs();
+    }, [fetchJobs]),
+  );
+
+  const handleAccept = async (job: Job) => {
+    setAcceptingId(job.id);
+    try {
+      await staffApi.acceptOrder(job.invoiceId);
+      showToast("Job accepted");
+      setJobs((prev) => prev.filter((j) => j.id !== job.id));
+      navigation.navigate("OrderList");
+    } catch (error: any) {
+      console.error("Accept job failed:", error);
+      showToast(error?.message || "Could not accept job");
+    } finally {
+      setAcceptingId(null);
     }
   };
 
-  useEffect(() => {
+  const onRefresh = () => {
+    setRefreshing(true);
     fetchJobs();
-  }, []);
+  };
 
-  const upcoming = jobs.filter(j => j.status !== "COMPLETED");
-  const completed = jobs.filter(j => j.status === "COMPLETED");
+  const upcoming = jobs.filter((j) => j.status !== "COMPLETED");
+  const completed = jobs.filter((j) => j.status === "COMPLETED");
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "COMPLETED": return "#22C55E";
-      case "IN_PROGRESS": return "#1D9BF0";
-      case "PENDING": return "#F59E0B";
-      default: return colors.muted;
+      case "COMPLETED":
+        return "#22C55E";
+      case "IN_PROGRESS":
+        return "#1D9BF0";
+      case "PENDING":
+        return "#F59E0B";
+      default:
+        return colors.muted;
     }
   };
 
   const renderCard = (item: Job) => (
-    <TouchableOpacity 
-      key={item.id} 
+    <TouchableOpacity
+      key={item.id}
       style={styles.card}
-      onPress={() => navigation.navigate("OrderDetails", { invoiceId: item.invoiceId })}
+      onPress={() =>
+        navigation.navigate("OrderDetails", { invoiceId: item.invoiceId })
+      }
     >
       <View style={styles.cardHeader}>
         <View style={styles.dateRow}>
@@ -81,7 +130,10 @@ const MyScheduleScreen: React.FC = () => {
           <Text style={styles.cardInvoice}>{item.invoice}</Text>
         </View>
         <View
-          style={[styles.badge, { backgroundColor: getStatusColor(item.status) }]}
+          style={[
+            styles.badge,
+            { backgroundColor: getStatusColor(item.status) },
+          ]}
         >
           <Text style={styles.badgeText}>{item.status}</Text>
         </View>
@@ -95,13 +147,25 @@ const MyScheduleScreen: React.FC = () => {
 
       <View style={styles.addressBlock}>
         <Text style={styles.addrTitle}>{item.pickup.title}</Text>
-        <Text style={styles.addrDesc} numberOfLines={1}>{item.pickup.address}</Text>
+        <Text style={styles.addrDesc} numberOfLines={1}>
+          {item.pickup.address}
+        </Text>
       </View>
 
       <View style={styles.addressBlock}>
         <Text style={styles.addrTitle}>{item.dropoff.title}</Text>
-        <Text style={styles.addrDesc} numberOfLines={1}>{item.dropoff.address}</Text>
+        <Text style={styles.addrDesc} numberOfLines={1}>
+          {item.dropoff.address}
+        </Text>
       </View>
+
+      {item.status === "ASSIGNED" && (
+        <PrimaryButton
+          title="Accept"
+          onPress={() => handleAccept(item)}
+          loading={acceptingId === item.id}
+        />
+      )}
     </TouchableOpacity>
   );
 
@@ -115,6 +179,9 @@ const MyScheduleScreen: React.FC = () => {
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         >
           <View style={styles.header}>
             <TouchableOpacity
@@ -127,7 +194,7 @@ const MyScheduleScreen: React.FC = () => {
             <Text style={styles.headerTitle}>My schedule</Text>
           </View>
 
-          <Text style={styles.sectionTitle}>Active & Upcoming</Text>
+          <Text style={styles.sectionTitle}>Upcoming</Text>
           <View style={styles.list}>
             {upcoming.length > 0 ? (
               upcoming.map(renderCard)

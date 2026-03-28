@@ -18,7 +18,7 @@ import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { colors, spacing, radius } from "../theme";
 import type { RootStackParamList } from "../../App";
-import { apiRequest, endpoints } from "../api";
+import { staffApi, endpoints, apiRequest } from "../api";
 
 type OrderMapRouteProp = RouteProp<RootStackParamList, "OrderMap">;
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -34,6 +34,7 @@ const OrderMapScreen: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [deviationReason, setDeviationReason] = useState("");
   const [mapCoords, setMapCoords] = useState<{ pickup: any; delivery: any } | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
   const mapRef = useRef<MapView>(null);
   const assignmentId = route.params.assignmentId;
 
@@ -46,26 +47,27 @@ const OrderMapScreen: React.FC = () => {
         setRoutes(data.routes);
       }
     } catch (err) {
-      console.warn("OSRM fetch error (fallback to backend):", err);
+      console.warn("OSRM fetch error:", err);
     }
   };
 
   const fetchStatus = async () => {
     try {
-      const result = await apiRequest(endpoints.staff.getOrderDetails(route.params.invoiceId));
-      if (result.success) {
-        setStatus(result.data.status);
-        setOrderData(result.data);
+      const result = await staffApi.getOrderDetails(route.params.invoiceId);
+      // Axios response returns the data directly based on staffApi definition
+      const data = result.data || result; 
+      
+      setStatus(data.status?.toUpperCase() || "PENDING");
+      setOrderData(data);
 
-        const p = result.data.pickup?.coordinates;
-        const d = result.data.delivery?.coordinates;
-        if (p && d) {
-          setMapCoords({ pickup: p, delivery: d });
-          fetchRoutes(p, d);
-        }
+      const p = data.pickup?.coordinates;
+      const d = data.delivery?.coordinates;
+      if (p && d) {
+        setMapCoords({ pickup: p, delivery: d });
+        fetchRoutes(p, d);
       }
     } catch (error) {
-      console.error("Lỗi khi lấy thông tin trạng thái:", error);
+      console.error("Lỗi khi lấy thông tin đơn hàng:", error);
     } finally {
       setLoading(false);
     }
@@ -106,23 +108,29 @@ const OrderMapScreen: React.FC = () => {
     Linking.openURL(url).catch(() => Alert.alert("Lỗi", "Không thể mở ứng dụng bản đồ"));
   };
 
-  const updateStatus = async (newStatus: string) => {
+  const handleStatusUpdate = async (action: 'ACCEPT' | 'START' | 'COMPLETE') => {
+    setActionLoading(true);
     try {
-      const result = await apiRequest(endpoints.staff.updateAssignmentStatus(assignmentId), {
-        method: 'PATCH',
-        body: JSON.stringify({ status: newStatus })
-      });
-      if (result.success) {
-        setStatus(newStatus);
-        const statusName = newStatus === "IN_PROGRESS" ? "Đang giao hàng" : "Đã hoàn thành";
-        Alert.alert("Thành công", `Đã cập nhật trạng thái: ${statusName}`);
+      let result;
+      const invoiceId = route.params.invoiceId;
 
-        if (newStatus === "COMPLETED") {
-          navigation.navigate("OrderList");
-        }
+      if (action === 'ACCEPT') {
+        result = await staffApi.acceptOrder(invoiceId);
+      } else if (action === 'START') {
+        result = await staffApi.startOrder(invoiceId);
+      } else if (action === 'COMPLETE') {
+        result = await staffApi.completeOrder(invoiceId);
       }
-    } catch (error) {
-      Alert.alert("Lỗi", "Không thể cập nhật trạng thái");
+
+      if (result) {
+        Alert.alert("Thành công", "Đã cập nhật trạng thái đơn hàng");
+        fetchStatus(); // Refresh data
+        if (action === 'COMPLETE') navigation.navigate("OrderList");
+      }
+    } catch (error: any) {
+      Alert.alert("Lỗi", error.message || "Không thể cập nhật trạng thái");
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -132,7 +140,8 @@ const OrderMapScreen: React.FC = () => {
       return;
     }
     try {
-      const result = await apiRequest(endpoints.staff.updateAssignmentRoute?.(assignmentId) || `/staff/assignments/${assignmentId}/route`, {
+      // For deviation, we can still use apiRequest or specific staffApi if added
+      const result = await apiRequest(endpoints.staff.updateAssignmentRoute(assignmentId), {
         method: 'PATCH',
         body: JSON.stringify({ reason: deviationReason })
       });
@@ -147,21 +156,33 @@ const OrderMapScreen: React.FC = () => {
   };
 
   const renderActionButton = () => {
+    if (actionLoading) return <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 10 }} />;
+
     switch (status) {
-      case "PENDING":
+      case "ASSIGNED":
         return (
-          <TouchableOpacity style={styles.actionBtn} onPress={() => updateStatus("IN_PROGRESS")}>
-            <Text style={styles.actionBtnText}>ĐÃ TỚI ĐIỂM LẤY HÀNG</Text>
+          <TouchableOpacity style={styles.actionBtn} onPress={() => handleStatusUpdate('ACCEPT')}>
+            <Text style={styles.actionBtnText}>NHẬN ĐƠN HÀNG</Text>
+          </TouchableOpacity>
+        );
+      case "ACCEPTED":
+        return (
+          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#F59E0B" }]} onPress={() => handleStatusUpdate('START')}>
+            <Text style={styles.actionBtnText}>BẮT ĐẦU DI CHUYỂN</Text>
           </TouchableOpacity>
         );
       case "IN_PROGRESS":
         return (
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#22C55E" }]} onPress={() => updateStatus("COMPLETED")}>
+          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#22C55E" }]} onPress={() => handleStatusUpdate('COMPLETE')}>
             <Text style={styles.actionBtnText}>HOÀN TẤT GIAO HÀNG</Text>
           </TouchableOpacity>
         );
       default:
-        return null;
+        return (
+          <View style={{ alignItems: 'center', padding: 10 }}>
+            <Text style={{ color: colors.muted, fontStyle: 'italic' }}>Trạng thái: {status}</Text>
+          </View>
+        );
     }
   };
 

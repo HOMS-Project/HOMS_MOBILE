@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   Image,
   ActivityIndicator,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { colors, spacing, radius } from "../theme";
 import type { RootStackParamList } from "../../App";
@@ -53,10 +53,34 @@ const StaffHomeScreen: React.FC = () => {
     fetchData();
   }, []);
 
+  // Refetch when returning to this screen to sync updated avatar/profile
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, []),
+  );
+
+  const normalized = orders.map((o) => ({
+    ...o,
+    status: (o.status || "").toUpperCase(),
+  }));
+
   const currentOrder =
-    orders.find((o) => o.status === "IN_PROGRESS") || orders[0];
-  const recentOrders = orders
-    .filter((o) => o.status === "COMPLETED")
+    normalized.find((o) => o.status === "IN_PROGRESS") || null;
+
+  const recentOrders = normalized
+    .filter((o) => {
+      if (o.status !== "COMPLETED") return false;
+      const ts = new Date(o.scheduledTime).getTime();
+      if (Number.isNaN(ts)) return false;
+      const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000; // last 7 days
+      return ts >= cutoff;
+    })
+    .sort(
+      (a, b) =>
+        new Date(b.scheduledTime).getTime() -
+        new Date(a.scheduledTime).getTime(),
+    )
     .slice(0, 3);
 
   return (
@@ -105,10 +129,12 @@ const StaffHomeScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.quickCard}
               onPress={() =>
-                navigation.navigate("OrderMap", {
-                  assignmentId: currentOrder?.assignmentId || "placeholder",
-                  invoiceId: currentOrder?.invoiceId || "placeholder",
-                })
+                currentOrder
+                  ? navigation.navigate("OrderMap", {
+                    assignmentId: currentOrder.assignmentId,
+                    invoiceId: currentOrder.invoiceId,
+                  })
+                  : navigation.navigate("OrderList")
               }
             >
               <Text style={styles.quickLabel}>Map</Text>
@@ -181,20 +207,27 @@ const StaffHomeScreen: React.FC = () => {
         )}
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recent Order</Text>
-          <TouchableOpacity>
+          <Text style={styles.sectionTitle}>Recent Orders</Text>
+          <TouchableOpacity onPress={() => navigation.navigate("OrderList")}>
             <Text style={styles.link}>View All</Text>
           </TouchableOpacity>
         </View>
 
         {recentOrders.map((item) => (
-          <View key={item.invoiceId || item.id} style={styles.orderCard}>
+          <TouchableOpacity
+            key={item.invoiceId || item.id}
+            style={styles.orderCard}
+            onPress={() =>
+              navigation.navigate("OrderDetails", { invoiceId: item.invoiceId })
+            }
+          >
             <View style={styles.orderTopRow}>
               <Text style={styles.orderIcon}>📦</Text>
               <View style={{ flex: 1 }}>
-                <Text style={styles.orderCode}>{item.code}</Text>
+                <Text style={styles.orderCode}>{item.orderCode}</Text>
                 <Text style={styles.orderMeta}>
-                  {item.time} · {item.status} · {item.date}
+                  {new Date(item.scheduledTime).toLocaleDateString()} ·{" "}
+                  {item.status}
                 </Text>
               </View>
               <Text style={styles.chevron}>{">"}</Text>
@@ -202,14 +235,14 @@ const StaffHomeScreen: React.FC = () => {
             <View style={styles.addrRow}>
               <View style={styles.addrBlock}>
                 <Text style={styles.addrLabel}>From</Text>
-                <Text style={styles.addrValue}>{item.from}</Text>
+                <Text style={styles.addrValue}>{item.pickup?.address}</Text>
               </View>
               <View style={styles.addrBlockRight}>
                 <Text style={styles.addrLabel}>To</Text>
-                <Text style={styles.addrValue}>{item.to}</Text>
+                <Text style={styles.addrValue}>{item.delivery?.address}</Text>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
 
         <View style={{ height: 40 }} />

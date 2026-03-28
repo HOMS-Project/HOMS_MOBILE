@@ -19,18 +19,10 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false,
-      "config": {
-        "googleMaps": {
-          "apiKey": "***REMOVED***"
-        }
-      }
+      "predictiveBackGestureEnabled": false
     },
     "ios": {
-      "supportsTablet": true,
-      "config": {
-        "googleMapsApiKey": "***REMOVED***"
-      }
+      "supportsTablet": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
