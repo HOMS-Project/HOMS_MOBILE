@@ -12,7 +12,8 @@ import {
   Linking,
   Platform,
 } from "react-native";
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE, PROVIDER_DEFAULT } from "react-native-maps";
+import { WebView } from "react-native-webview";
+import Constants from 'expo-constants';
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -22,6 +23,35 @@ import { staffApi, endpoints, apiRequest } from "../api";
 
 type OrderMapRouteProp = RouteProp<RootStackParamList, "OrderMap">;
 type Nav = NativeStackNavigationProp<RootStackParamList>;
+
+// Hàm giải mã polyline từ Goong/Google
+const decodePolyline = (encoded: string) => {
+  if (!encoded) return [];
+  const poly = [];
+  let index = 0, len = encoded.length;
+  let lat = 0, lng = 0;
+  while (index < len) {
+    let b, shift = 0, result = 0;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    const dlat = (result & 1) ? ~(result >> 1) : (result >> 1);
+    lat += dlat;
+    shift = 0;
+    result = 0;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    const dlng = (result & 1) ? ~(result >> 1) : (result >> 1);
+    lng += dlng;
+    poly.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
+  }
+  return poly;
+};
 
 const OrderMapScreen: React.FC = () => {
   const route = useRoute<OrderMapRouteProp>();
@@ -35,28 +65,40 @@ const OrderMapScreen: React.FC = () => {
   const [deviationReason, setDeviationReason] = useState("");
   const [mapCoords, setMapCoords] = useState<{ pickup: any; delivery: any } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const mapRef = useRef<MapView>(null);
   const assignmentId = route.params.assignmentId;
+  const ORS_API_KEY = process.env.EXPO_PUBLIC_ORS_API_KEY || "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjM3NzkzMTk1YTc5NzQ5MzY4ZDU1MWRmYjI3Y2ZiMzZiIiwiaCI6Im11cm11cjY0In0=";
 
   const fetchRoutes = async (p: any, d: any) => {
+    if (!ORS_API_KEY) return;
     try {
-      const url = `https://router.project-osrm.org/route/v1/driving/${p.lng},${p.lat};${d.lng},${d.lat}?overview=full&geometries=geojson&alternatives=true`;
+      const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${ORS_API_KEY}&start=${p.lng},${p.lat}&end=${d.lng},${d.lat}`;
       const response = await fetch(url);
       const data = await response.json();
-      if (data.code === 'Ok') {
-        setRoutes(data.routes);
+
+      if (data.features && data.features.length > 0) {
+        const feature = data.features[0];
+        const mappedRoutes = [{
+          distance: feature.properties.summary.distance,
+          duration: feature.properties.summary.duration,
+          coordinates: feature.geometry.coordinates.map((c: any) => ({
+            latitude: c[1],
+            longitude: c[0]
+          }))
+        }];
+        setRoutes(mappedRoutes);
+      } else {
+        console.warn("ORS API Warn:", data.error || data);
       }
     } catch (err) {
-      console.warn("OSRM fetch error:", err);
+      console.warn("ORS Routing fetch error:", err);
     }
   };
 
   const fetchStatus = async () => {
     try {
       const result = await staffApi.getOrderDetails(route.params.invoiceId);
-      // Axios response returns the data directly based on staffApi definition
-      const data = result.data || result; 
-      
+      const data = result.data || result;
+
       setStatus(data.status?.toUpperCase() || "PENDING");
       setOrderData(data);
 
@@ -64,7 +106,22 @@ const OrderMapScreen: React.FC = () => {
       const d = data.delivery?.coordinates;
       if (p && d) {
         setMapCoords({ pickup: p, delivery: d });
-        fetchRoutes(p, d);
+
+        // Ưu tiên lấy Polyline đã được ĐIỀU SẴN TRONG DB (Backend/FE)
+        if (data.polyline && data.polyline.length > 0) {
+          const mappedRoute = [{
+            distance: data.distance || 0,
+            duration: data.duration || 0,
+            coordinates: data.polyline.map((point: any) => ({
+              latitude: point[1],
+              longitude: point[0]
+            }))
+          }];
+          setRoutes(mappedRoute);
+        } else {
+          // Chỉ lấy đường từ ORS nếu DB chưa có
+          fetchRoutes(p, d);
+        }
       }
     } catch (error) {
       console.error("Lỗi khi lấy thông tin đơn hàng:", error);
@@ -77,29 +134,7 @@ const OrderMapScreen: React.FC = () => {
     fetchStatus();
   }, []);
 
-  useEffect(() => {
-    if (mapCoords && mapRef.current) {
-      const coords = [
-        { latitude: mapCoords.pickup.lat, longitude: mapCoords.pickup.lng },
-        { latitude: mapCoords.delivery.lat, longitude: mapCoords.delivery.lng }
-      ];
-
-      if (routes.length > 0 && routes[selectedRouteIdx]?.geometry?.coordinates) {
-        routes[selectedRouteIdx].geometry.coordinates.forEach((c: any) => {
-          coords.push({ latitude: c[1], longitude: c[0] });
-        });
-      }
-
-      const timer = setTimeout(() => {
-        mapRef.current?.fitToCoordinates(coords, {
-          edgePadding: { top: 80, right: 50, bottom: 450, left: 50 },
-          animated: true,
-        });
-      }, 800);
-
-      return () => clearTimeout(timer);
-    }
-  }, [mapCoords, routes, selectedRouteIdx]);
+  // WebView handles auto-fitting internally
 
   const openExternalMap = () => {
     if (!orderData?.delivery?.coordinates) return;
@@ -194,62 +229,106 @@ const OrderMapScreen: React.FC = () => {
     );
   }
 
+  const generateMapHtml = () => {
+    const defaultCenter = [16.047079, 108.20623];
+    const pickup = mapCoords?.pickup ? [mapCoords.pickup.lat, mapCoords.pickup.lng] : null;
+    const delivery = mapCoords?.delivery ? [mapCoords.delivery.lat, mapCoords.delivery.lng] : null;
+
+    const activeRouteCoordinates = routes[selectedRouteIdx]?.coordinates?.map((c: any) => [c.latitude, c.longitude]) || [];
+
+    let backupPolyline: number[][] = [];
+    if (routes.length === 0 && orderData?.polyline?.length > 0) {
+      backupPolyline = orderData.polyline.map((p: any) => [p[1], p[0]]);
+    }
+
+    const restrictedPaths: number[][][] = [];
+    if (orderData?.routeValidation?.restrictedSegments) {
+      orderData.routeValidation.restrictedSegments.forEach((seg: any) => {
+        if (seg.geometry?.coordinates?.length > 0) {
+          restrictedPaths.push(seg.geometry.coordinates.map((p: any) => [p[1], p[0]]));
+        }
+      });
+    }
+
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { padding: 0; margin: 0; overflow: hidden; background: #e5e5e5; }
+        #map { width: 100vw; height: 100vh; }
+        .pickup-icon { background: #1D9BF0; border-radius: 50%; border: 2px solid white; width: 14px; height: 14px; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+        .delivery-icon { background: #EF4444; border-radius: 50%; border: 2px solid white; width: 14px; height: 14px; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        var center = ${pickup ? JSON.stringify(pickup) : JSON.stringify(defaultCenter)};
+        var map = L.map('map', { zoomControl: false, attributionControl: false }).setView(center, 13);
+        
+        L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            maxZoom: 20
+        }).addTo(map);
+
+        var bounds = L.latLngBounds();
+
+        var pickupCoord = ${JSON.stringify(pickup)};
+        if (pickupCoord) {
+            var iconP = L.divIcon({ className: 'pickup-icon', iconSize: [14, 14], iconAnchor: [7, 7] });
+            L.marker(pickupCoord, { icon: iconP }).addTo(map).bindPopup("Điểm lấy hàng");
+            bounds.extend(pickupCoord);
+        }
+
+        var deliveryCoord = ${JSON.stringify(delivery)};
+        if (deliveryCoord) {
+            var iconD = L.divIcon({ className: 'delivery-icon', iconSize: [14, 14], iconAnchor: [7, 7] });
+            L.marker(deliveryCoord, { icon: iconD }).addTo(map).bindPopup("Điểm giao hàng");
+            bounds.extend(deliveryCoord);
+        }
+
+        var activeRoute = ${JSON.stringify(activeRouteCoordinates)};
+        if (activeRoute && activeRoute.length > 0) {
+            L.polyline(activeRoute, {color: '#1D9BF0', weight: 5 }).addTo(map);
+            bounds.extend(L.polyline(activeRoute).getBounds());
+        }
+
+        var backupRoute = ${JSON.stringify(backupPolyline)};
+        if (backupRoute && backupRoute.length > 0 && activeRoute.length === 0) {
+            L.polyline(backupRoute, {color: '#1D9BF0', weight: 4 }).addTo(map);
+            bounds.extend(L.polyline(backupRoute).getBounds());
+        }
+
+        var restricted = ${JSON.stringify(restrictedPaths)};
+        if (restricted && restricted.length > 0) {
+            restricted.forEach(function(path) {
+                L.polyline(path, {color: '#DC2626', weight: 8 }).addTo(map);
+                bounds.extend(L.polyline(path).getBounds());
+            });
+        }
+
+        if (bounds.isValid()) {
+            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+        }
+    </script>
+</body>
+</html>
+    `;
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.mapContainer}>
-        <MapView
-          ref={mapRef}
-          provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : PROVIDER_DEFAULT}
-          style={styles.map}
-          initialRegion={{
-            latitude: orderData?.pickup?.coordinates?.lat || 16.047079,
-            longitude: orderData?.pickup?.coordinates?.lng || 108.20623,
-            latitudeDelta: 0.05,
-            longitudeDelta: 0.05,
-          }}
-        >
-          {mapCoords?.pickup && (
-            <Marker
-              coordinate={{ latitude: mapCoords.pickup.lat, longitude: mapCoords.pickup.lng }}
-              title="Điểm lấy hàng"
-              pinColor="#1D9BF0"
-            />
-          )}
-          {mapCoords?.delivery && (
-            <Marker
-              coordinate={{ latitude: mapCoords.delivery.lat, longitude: mapCoords.delivery.lng }}
-              title="Điểm giao hàng"
-              pinColor="#EF4444"
-            />
-          )}
-          {routes.map((r, idx) => (
-            <Polyline
-              key={`route-${idx}`}
-              coordinates={r.geometry.coordinates.map((c: any) => ({ latitude: c[1], longitude: c[0] }))}
-              strokeColor={idx === selectedRouteIdx ? "#1D9BF0" : "rgba(0,0,0,0.15)"}
-              strokeWidth={idx === selectedRouteIdx ? 6 : 4}
-              zIndex={idx === selectedRouteIdx ? 2 : 1}
-            />
-          ))}
-          {routes.length === 0 && orderData?.polyline?.length > 0 && (
-            <Polyline
-              coordinates={orderData.polyline.map((p: any) => ({ latitude: p[1], longitude: p[0] }))}
-              strokeColor="#1D9BF0"
-              strokeWidth={4}
-            />
-          )}
-          {orderData?.routeValidation?.restrictedSegments?.map((seg: any, idx: number) => (
-            seg.geometry?.coordinates?.length > 0 && (
-              <Polyline
-                key={`rest-seg-${idx}`}
-                coordinates={seg.geometry.coordinates.map((p: any) => ({ latitude: p[1], longitude: p[0] }))}
-                strokeColor="#DC2626"
-                strokeWidth={8}
-                zIndex={5}
-              />
-            )
-          ))}
-        </MapView>
+        <WebView
+          originWhitelist={['*']}
+          source={{ html: generateMapHtml() }}
+          style={{ flex: 1 }}
+          scrollEnabled={false}
+          bounces={false}
+        />
       </View>
 
       <View style={styles.header}>
@@ -352,10 +431,9 @@ const styles = StyleSheet.create({
   },
   mapContainer: {
     flex: 1,
-    ...StyleSheet.absoluteFillObject,
   },
   map: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
   },
   center: {
     flex: 1,

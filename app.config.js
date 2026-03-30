@@ -21,24 +21,26 @@ export default ({ config }) => {
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
+      "package": "com.anonymous.myApp",
       "predictiveBackGestureEnabled": false,
       "config": {
         "googleMaps": {
-          "apiKey": process.env.GOOGLE_MAPS_API_KEY
+          "apiKey": process.env.GOOGLE_MAP_API
         }
       }
     },
     "ios": {
-      "supportsTablet": true,
-      "config": {
-        "googleMapsApiKey": process.env.GOOGLE_MAPS_API_KEY
-      }
+      "supportsTablet": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "GOONG_API_KEY": process.env.GOONG_API_KEY
+    }
   };
 };
+
