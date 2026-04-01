@@ -103,9 +103,9 @@ const StaffHomeScreen: React.FC = () => {
             </View>
             <View style={styles.nameBlock}>
               <Text style={styles.name}>
-                {user?.fullName || user?.username || "Staff"}
+                {user?.fullName || user?.username || "Tài xế"}
               </Text>
-              <Text style={styles.role}>{user?.role || "Team Member"}</Text>
+              <Text style={styles.role}>{user?.role || "Nhân viên"}</Text>
             </View>
             <View style={styles.spacer} />
             <TouchableOpacity style={styles.notifyBtn}>
@@ -118,13 +118,13 @@ const StaffHomeScreen: React.FC = () => {
               style={styles.quickCard}
               onPress={() => navigation.navigate("MySchedule")}
             >
-              <Text style={styles.quickLabel}>My Schedule</Text>
+              <Text style={styles.quickLabel}>Lịch của tôi</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.quickCard}
               onPress={() => navigation.navigate("OrderList")}
             >
-              <Text style={styles.quickLabel}>Order List</Text>
+              <Text style={styles.quickLabel}>Danh sách đơn</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.quickCard}
@@ -140,15 +140,15 @@ const StaffHomeScreen: React.FC = () => {
                 }
               }}
             >
-              <Text style={styles.quickLabel}>Map</Text>
+              <Text style={styles.quickLabel}>Bản đồ</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Current Order</Text>
+          <Text style={styles.sectionTitle}>Đơn hàng hiện tại</Text>
           <TouchableOpacity onPress={() => navigation.navigate("OrderList")}>
-            <Text style={styles.link}>View All</Text>
+            <Text style={styles.link}>Xem tất cả</Text>
           </TouchableOpacity>
         </View>
 
@@ -177,7 +177,12 @@ const StaffHomeScreen: React.FC = () => {
                     hour: "2-digit",
                     minute: "2-digit",
                   })}{" "}
-                  · {currentOrder.status}
+                  · {
+                    currentOrder.status === 'PENDING' ? 'Chờ xác nhận' :
+                    currentOrder.status === 'ACCEPTED' ? 'Đã nhận đơn' :
+                    currentOrder.status === 'IN_PROGRESS' ? 'Đang thực hiện' :
+                    currentOrder.status === 'COMPLETED' ? 'Đã hoàn tất' : currentOrder.status
+                  }
                 </Text>
               </View>
               <Text style={styles.chevron}>{">"}</Text>
@@ -193,13 +198,13 @@ const StaffHomeScreen: React.FC = () => {
 
             <View style={styles.addrRow}>
               <View style={styles.addrBlock}>
-                <Text style={styles.addrLabel}>From</Text>
+                <Text style={styles.addrLabel}>Từ</Text>
                 <Text style={styles.addrValue}>
                   {currentOrder.pickup.address}
                 </Text>
               </View>
               <View style={styles.addrBlockRight}>
-                <Text style={styles.addrLabel}>To</Text>
+                <Text style={styles.addrLabel}>Đến</Text>
                 <Text style={styles.addrValue}>
                   {currentOrder.delivery.address}
                 </Text>
@@ -207,13 +212,13 @@ const StaffHomeScreen: React.FC = () => {
             </View>
           </TouchableOpacity>
         ) : (
-          <Text style={styles.emptyText}>No orders assigned</Text>
+          <Text style={styles.emptyText}>Chưa có đơn hàng được phân công</Text>
         )}
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recent Orders</Text>
+          <Text style={styles.sectionTitle}>Đơn hàng gần đây</Text>
           <TouchableOpacity onPress={() => navigation.navigate("OrderList")}>
-            <Text style={styles.link}>View All</Text>
+            <Text style={styles.link}>Xem tất cả</Text>
           </TouchableOpacity>
         </View>
 
@@ -234,18 +239,21 @@ const StaffHomeScreen: React.FC = () => {
                 <Text style={styles.orderCode}>{item.orderCode}</Text>
                 <Text style={styles.orderMeta}>
                   {new Date(item.scheduledTime).toLocaleDateString()} ·{" "}
-                  {item.status}
+                  {
+                    item.status === 'COMPLETED' ? 'Đã hoàn tất' :
+                    item.status === 'CANCELLED' ? 'Đã hủy' : item.status
+                  }
                 </Text>
               </View>
               <Text style={styles.chevron}>{">"}</Text>
             </View>
             <View style={styles.addrRow}>
               <View style={styles.addrBlock}>
-                <Text style={styles.addrLabel}>From</Text>
+                <Text style={styles.addrLabel}>Từ</Text>
                 <Text style={styles.addrValue}>{item.pickup?.address}</Text>
               </View>
               <View style={styles.addrBlockRight}>
-                <Text style={styles.addrLabel}>To</Text>
+                <Text style={styles.addrLabel}>Đến</Text>
                 <Text style={styles.addrValue}>{item.delivery?.address}</Text>
               </View>
             </View>

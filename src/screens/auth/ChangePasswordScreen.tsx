@@ -79,16 +79,15 @@ const ChangePasswordScreen: React.FC<Props> = ({ onSubmit }) => {
           </View>
 
           <View style={styles.form}>
-            <Text style={styles.title}>Change Password</Text>
+            <Text style={styles.title}>Đổi mật khẩu</Text>
             <Text style={styles.lead}>
-              Create a new password. Ensure it differs from the previous one for
-              security.
+              Tạo mật khẩu mới. Hãy đảm bảo mật khẩu mới khác với mật khẩu cũ để tăng cường bảo mật.
             </Text>
 
             <View style={styles.spacerAfterLead} />
 
             <LabeledTextInput
-              label="Enter Current Password"
+              label="Nhập mật khẩu hiện tại"
               placeholder="@#%"
               value={currentPassword}
               onChangeText={setCurrentPassword}
@@ -98,7 +97,7 @@ const ChangePasswordScreen: React.FC<Props> = ({ onSubmit }) => {
             <View style={styles.spacerBetweenInputs} />
 
             <LabeledTextInput
-              label="Enter New Password"
+              label="Nhập mật khẩu mới"
               placeholder="@#%"
               value={newPassword}
               onChangeText={setNewPassword}
@@ -108,7 +107,7 @@ const ChangePasswordScreen: React.FC<Props> = ({ onSubmit }) => {
             <View style={styles.spacerBetweenInputs} />
 
             <LabeledTextInput
-              label="Confirm Password"
+              label="Xác nhận mật khẩu mới"
               placeholder="@#%"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
@@ -116,7 +115,7 @@ const ChangePasswordScreen: React.FC<Props> = ({ onSubmit }) => {
             />
 
             <PrimaryButton
-              title={loading ? "Updating..." : "Update"}
+              title={loading ? "Đang cập nhật..." : "Cập nhật"}
               onPress={handleSubmit}
               disabled={loading}
             />

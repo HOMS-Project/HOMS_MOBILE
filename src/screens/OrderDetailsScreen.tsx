@@ -99,13 +99,17 @@ const OrderDetailsScreen: React.FC = () => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backIcon}>{"<"}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Order Details</Text>
+        <Text style={styles.headerTitle}>Chi tiết đơn hàng</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.mainInfo}>
           <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>{order.status}</Text>
+            <Text style={styles.statusText}>
+              {order.status === 'IN_PROGRESS' ? 'Đang thực hiện' :
+               order.status === 'ACCEPTED' ? 'Đã nhận đơn' :
+               order.status === 'COMPLETED' ? 'Đã hoàn tất' : order.status}
+            </Text>
           </View>
           <Text style={styles.orderCode}>{order.orderCode}</Text>
         </View>
@@ -195,7 +199,7 @@ const OrderDetailsScreen: React.FC = () => {
             invoiceId: order.id
           })}
         >
-          <Text style={styles.mapBtnText}>Go to Map & Update Status</Text>
+          <Text style={styles.mapBtnText}>Xem bản đồ & Cập nhật</Text>
         </TouchableOpacity>
       </View>
     </View>

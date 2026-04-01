@@ -35,15 +35,15 @@ const VerifyOTPScreen: React.FC<Props> = ({ onSubmit, digits = 4 }) => {
           </View>
 
           <View style={styles.form}>
-            <Text style={styles.title}>Verification</Text>
-            <Text style={styles.subtitle}>Enter verification code</Text>
+            <Text style={styles.title}>Xác thực</Text>
+            <Text style={styles.subtitle}>Nhập mã xác thực của bạn</Text>
 
             <View style={styles.spacerAfterSubtitle} />
 
             <OTPInput length={6} onChange={setCode} />
 
             <PrimaryButton
-              title={submitting ? "Verifying..." : "Verify"}
+              title={submitting ? "Đang xác thực..." : "Xác nhận"}
               disabled={submitting}
               onPress={async () => {
                 if (!email) {

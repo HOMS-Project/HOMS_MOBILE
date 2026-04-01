@@ -152,14 +152,14 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
           </View>
 
           <View style={styles.form}>
-            <Text style={styles.title}>Sign In</Text>
-            <Text style={styles.subtitle}>Welcome Back!</Text>
+            <Text style={styles.title}>Đăng nhập</Text>
+            <Text style={styles.subtitle}>Chào mừng bạn quay trở lại!</Text>
 
             <View style={styles.spacerAfterSubtitle} />
 
             <LabeledTextInput
               label="Email"
-              placeholder="Enter your email"
+              placeholder="Nhập email của bạn"
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
@@ -169,8 +169,8 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
             <View style={styles.spacerBetweenInputs} />
 
             <LabeledTextInput
-              label="Password"
-              placeholder="Enter your password"
+              label="Mật khẩu"
+              placeholder="Nhập mật khẩu của bạn"
               value={password}
               onChangeText={setPassword}
               secure
@@ -185,18 +185,18 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
                 (() => navigation.navigate("ForgotPassword"))
               }
             >
-              <Text style={styles.linkText}>Forgot password?</Text>
+              <Text style={styles.linkText}>Quên mật khẩu?</Text>
             </TouchableOpacity>
 
             <PrimaryButton
-              title={loading ? "Signing In..." : "Sign In"}
+              title={loading ? "Đang đăng nhập..." : "Đăng nhập"}
               onPress={handleSubmit}
               disabled={loading}
             />
 
             <View style={styles.dividerRow}>
               <View style={styles.divider} />
-              <Text style={styles.dividerText}>Sign In with</Text>
+              <Text style={styles.dividerText}>Hoặc đăng nhập với</Text>
               <View style={styles.divider} />
             </View>
 

@@ -235,12 +235,17 @@ const OrderMapScreen: React.FC = () => {
             <Text style={styles.actionBtnText}>HOÀN TẤT GIAO HÀNG</Text>
           </TouchableOpacity>
         );
-      default:
+      default: {
+        const displayStatus =
+          status === "COMPLETED" ? "ĐÃ HOÀN TẤT" :
+            status === "IN_PROGRESS" ? "ĐANG THỰC HIỆN" :
+              status === "ACCEPTED" ? "ĐÃ NHẬN ĐƠN" : status;
         return (
           <View style={{ alignItems: 'center', padding: 10 }}>
-            <Text style={{ color: colors.muted, fontStyle: 'italic' }}>Trạng thái: {status}</Text>
+            <Text style={{ color: colors.muted, fontStyle: 'italic' }}>Trạng thái: {displayStatus}</Text>
           </View>
         );
+      }
     }
   };
 

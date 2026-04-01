@@ -37,7 +37,7 @@ const LabeledTextInput: React.FC<Props> = ({
             onPress={() => setHidden((prev) => !prev)}
             style={styles.toggle}
           >
-            <Text style={styles.toggleText}>{hidden ? "Show" : "Hide"}</Text>
+            <Text style={styles.toggleText}>{hidden ? "Hiển thị" : "Ẩn"}</Text>
           </Pressable>
         )}
       </View>

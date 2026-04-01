@@ -139,12 +139,12 @@ const EditProfileScreen: React.FC = () => {
         }),
       });
       if (result.success) {
-        Alert.alert("Success", "Profile updated successfully");
+        Alert.alert("Thành công", "Cập nhật hồ sơ thành công");
         navigation.goBack();
       }
     } catch (error) {
       console.error("Update profile failed:", error);
-      Alert.alert("Error", "Failed to update profile");
+      Alert.alert("Lỗi", "Cập nhật hồ sơ thất bại");
     } finally {
       setSaving(false);
     }
@@ -164,7 +164,7 @@ const EditProfileScreen: React.FC = () => {
           >
             <Text style={styles.backText}>{"<"}</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Edit Profile</Text>
+          <Text style={styles.headerTitle}>Chỉnh sửa hồ sơ</Text>
         </View>
 
         <View style={styles.avatarWrap}>
@@ -187,8 +187,8 @@ const EditProfileScreen: React.FC = () => {
 
         <View style={styles.form}>
           <LabeledTextInput
-            label="Name"
-            placeholder="Your name"
+            label="Họ và tên"
+            placeholder="Tên của bạn"
             value={name}
             onChangeText={setName}
           />
@@ -203,8 +203,8 @@ const EditProfileScreen: React.FC = () => {
           />
 
           <LabeledTextInput
-            label="Phone Number"
-            placeholder="Phone number"
+            label="Số điện thoại"
+            placeholder="Số điện thoại"
             value={phone}
             onChangeText={setPhone}
             keyboardType="phone-pad"
@@ -212,7 +212,7 @@ const EditProfileScreen: React.FC = () => {
 
           <View style={{ marginTop: spacing.md, alignItems: "center" }}>
             <PrimaryButton
-              title={saving ? "Saving..." : "Save changes"}
+              title={saving ? "Đang lưu..." : "Lưu thay đổi"}
               onPress={handleSave}
               fullWidth={false}
               style={{ width: 280 }}

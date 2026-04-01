@@ -66,7 +66,7 @@ const ForgotPasswordScreen: React.FC<Props> = ({ onRequestOTP }) => {
           </View>
 
           <View style={styles.form}>
-            <Text style={styles.title}>Forgot Password</Text>
+            <Text style={styles.title}>Quên mật khẩu</Text>
             <Text style={styles.subtitle}>
               Nhập Email để nhận mã xác thực (OTP)
             </Text>
@@ -86,7 +86,7 @@ const ForgotPasswordScreen: React.FC<Props> = ({ onRequestOTP }) => {
             {error ? <Text style={styles.error}>{error}</Text> : null}
 
             <PrimaryButton
-              title={submitting ? "Sending..." : "Send OTP"}
+              title={submitting ? "Đang gửi..." : "Gửi mã OTP"}
               onPress={handleSendOTP}
               disabled={submitting}
             />

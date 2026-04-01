@@ -31,35 +31,35 @@ const options: Array<{
 }> = [
   {
     id: "edit",
-    label: "Edit Profile",
-    desc: "Make changes to your Profile",
+    label: "Chỉnh sửa hồ sơ",
+    desc: "Thay đổi thông tin cá nhân của bạn",
     route: "EditProfile" as const,
     icon: "person-outline" as keyof typeof Ionicons.glyphMap,
   },
   {
     id: "help",
-    label: "Help & Support",
+    label: "Trợ giúp & Hỗ trợ",
     desc: "",
     route: undefined,
     icon: "notifications-outline" as keyof typeof Ionicons.glyphMap,
   },
   {
     id: "about",
-    label: "About App",
+    label: "Về ứng dụng",
     desc: "",
     route: undefined,
     icon: "heart-outline" as keyof typeof Ionicons.glyphMap,
   },
   {
     id: "password",
-    label: "Change Password",
+    label: "Đổi mật khẩu",
     desc: "",
     route: "ChangePassword" as const,
     icon: "lock-closed-outline" as keyof typeof Ionicons.glyphMap,
   },
   {
     id: "logout",
-    label: "Log out",
+    label: "Đăng xuất",
     desc: "",
     route: "Login" as const,
     icon: "log-out-outline" as keyof typeof Ionicons.glyphMap,
@@ -107,7 +107,7 @@ const SettingsScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerRow}>
-          <Text style={styles.title}>Profile</Text>
+          <Text style={styles.title}>Hồ sơ</Text>
           <View style={styles.notifyCircle}>
             <Text style={styles.notifyIcon}>🔔</Text>
           </View>
@@ -126,11 +126,11 @@ const SettingsScreen: React.FC = () => {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.name}>
-              {user?.fullName || user?.username || "Staff"}
+              {user?.fullName || user?.username || "Tài xế"}
             </Text>
-            <Text style={styles.email}>{user?.email || "No email"}</Text>
+            <Text style={styles.email}>{user?.email || "Chưa có email"}</Text>
             <Text style={styles.phone}>
-              {user?.phone || user?.phoneNumber || "No phone"}
+              {user?.phone || user?.phoneNumber || "Chưa có SĐT"}
             </Text>
           </View>
         </View>

@@ -38,12 +38,12 @@ const ResetPasswordScreen: React.FC<Props> = ({ onSubmit }) => {
           </View>
 
           <View style={styles.form}>
-            <Text style={styles.title}>New Password</Text>
+            <Text style={styles.title}>Mật khẩu mới</Text>
 
             <View style={styles.spacerAfterTitle} />
 
             <LabeledTextInput
-              label="Enter New Password"
+              label="Nhập mật khẩu mới"
               placeholder="@#%"
               value={newPassword}
               onChangeText={setNewPassword}
@@ -53,7 +53,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ onSubmit }) => {
             <View style={styles.spacerBetweenInputs} />
 
             <LabeledTextInput
-              label="Confirm Password"
+              label="Xác nhận mật khẩu"
               placeholder="@#%"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
@@ -61,7 +61,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ onSubmit }) => {
             />
 
             <PrimaryButton
-              title={loading ? "Processing..." : "Send"}
+              title={loading ? "Đang xử lý..." : "Gửi"}
               disabled={loading}
               onPress={async () => {
                 if (onSubmit) {

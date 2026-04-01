@@ -102,7 +102,12 @@ const OrderListScreen: React.FC = () => {
             { backgroundColor: getStatusColor(order.status) },
           ]}
         >
-          <Text style={styles.statusText}>{order.status}</Text>
+          <Text style={styles.statusText}>
+            {order.status === 'IN_PROGRESS' ? 'Đang thực hiện' :
+             order.status === 'ACCEPTED' ? 'Đã nhận' :
+             order.status === 'COMPLETED' ? 'Đã hoàn tất' : 
+             order.status === 'PENDING' ? 'Chờ xử lý' : order.status}
+          </Text>
         </View>
       </View>
 
@@ -123,7 +128,7 @@ const OrderListScreen: React.FC = () => {
       </View>
 
       <View style={styles.cardFooter}>
-        <Text style={styles.itemCount}>{order.items.length} items</Text>
+        <Text style={styles.itemCount}>{order.items.length} món đồ</Text>
         <Text style={styles.timeText}>
           {new Date(order.scheduledTime).toLocaleTimeString([], {
             hour: "2-digit",
@@ -187,19 +192,19 @@ const OrderListScreen: React.FC = () => {
         >
           <Text style={styles.backIcon}>{"<"}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Assigned Orders</Text>
+        <Text style={styles.headerTitle}>Đơn hàng đã phân công</Text>
         <TouchableOpacity
           style={styles.filterBtn}
           onPress={() => setShowFilters((prev) => !prev)}
         >
-          <Text style={styles.filterText}>Filter</Text>
+          <Text style={styles.filterText}>Bộ lọc</Text>
         </TouchableOpacity>
       </View>
 
       {showFilters && (
         <View style={styles.filterBar}>
           <View style={styles.filterGroup}>
-            <Text style={styles.filterLabel}>Status</Text>
+            <Text style={styles.filterLabel}>Trạng thái</Text>
             <View style={styles.chipRow}>
               {(
                 [
@@ -222,14 +227,14 @@ const OrderListScreen: React.FC = () => {
                     ]}
                   >
                     {s === "IN_PROGRESS"
-                      ? "In Progress"
+                      ? "Đang thực hiện"
                       : s === "ACCEPTED"
-                        ? "Accepted"
+                        ? "Đã nhận"
                         : s === "COMPLETED"
-                          ? "Completed"
+                          ? "Đã hoàn tất"
                           : s === "OTHER"
-                            ? "Other"
-                            : "All"}
+                            ? "Khác"
+                            : "Tất cả"}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -237,7 +242,7 @@ const OrderListScreen: React.FC = () => {
           </View>
 
           <View style={styles.filterGroup}>
-            <Text style={styles.filterLabel}>Time</Text>
+            <Text style={styles.filterLabel}>Thời gian</Text>
             <View style={styles.chipRow}>
               {(["ALL", "TODAY", "WEEK", "MONTH"] as const).map((t) => (
                 <TouchableOpacity
@@ -252,12 +257,12 @@ const OrderListScreen: React.FC = () => {
                     ]}
                   >
                     {t === "TODAY"
-                      ? "Today"
+                      ? "Hôm nay"
                       : t === "WEEK"
-                        ? "This Week"
+                        ? "Tuần này"
                         : t === "MONTH"
-                          ? "This Month"
-                          : "All"}
+                          ? "Tháng này"
+                          : "Tất cả"}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -274,27 +279,27 @@ const OrderListScreen: React.FC = () => {
       >
         {inProgress.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>In Progress</Text>
+            <Text style={styles.sectionTitle}>Đang thực hiện</Text>
             {inProgress.map(renderOrderCard)}
           </>
         )}
 
         {accepted.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>Accepted</Text>
+            <Text style={styles.sectionTitle}>Đã nhận</Text>
             {accepted.map(renderOrderCard)}
           </>
         )}
 
         {others.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>Other</Text>
+            <Text style={styles.sectionTitle}>Khác</Text>
             {others.map(renderOrderCard)}
           </>
         )}
 
         {normalized.length === 0 && (
-          <Text style={styles.emptyText}>No orders</Text>
+          <Text style={styles.emptyText}>Không có đơn hàng nào</Text>
         )}
       </ScrollView>
     </View>
