@@ -16,6 +16,7 @@ import { WebView } from "react-native-webview";
 import Constants from 'expo-constants';
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
+import axios from "axios";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { colors, spacing, radius } from "../theme";
 import type { RootStackParamList } from "../../App";
@@ -53,6 +54,18 @@ const decodePolyline = (encoded: string) => {
   return poly;
 };
 
+// Helper to normalize coordinates (assuming Longitude > 100 for Vietnam)
+const normalizeLatLng = (coord: any) => {
+  if (!coord) return null;
+  let lat = coord.lat ?? coord.latitude ?? coord[1] ?? 0;
+  let lng = coord.lng ?? coord.longitude ?? coord[0] ?? 0;
+  // If lat/lng are swapped (Vietnam: Lng > 100, Lat < 30)
+  if (lat > lng) {
+    [lat, lng] = [lng, lat];
+  }
+  return { latitude: lat, longitude: lng };
+};
+
 const OrderMapScreen: React.FC = () => {
   const route = useRoute<OrderMapRouteProp>();
   const navigation = useNavigation<Nav>();
@@ -69,59 +82,67 @@ const OrderMapScreen: React.FC = () => {
   const ORS_API_KEY = process.env.EXPO_PUBLIC_ORS_API_KEY || "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjM3NzkzMTk1YTc5NzQ5MzY4ZDU1MWRmYjI3Y2ZiMzZiIiwiaCI6Im11cm11cjY0In0=";
 
   const fetchRoutes = async (p: any, d: any) => {
-    if (!ORS_API_KEY) return;
     try {
-      const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${ORS_API_KEY}&start=${p.lng},${p.lat}&end=${d.lng},${d.lat}`;
-      const response = await fetch(url);
-      const data = await response.json();
+      const pLng = Number(p.longitude);
+      const pLat = Number(p.latitude);
+      const dLng = Number(d.longitude);
+      const dLat = Number(d.latitude);
 
-      if (data.features && data.features.length > 0) {
-        const feature = data.features[0];
+      if (isNaN(pLng) || isNaN(pLat) || isNaN(dLng) || isNaN(dLat)) {
+        console.warn("Invalid coordinates for routing");
+        return;
+      }
+
+      console.log("[Route] Fetching proxy routing from backend...");
+      const data = await staffApi.getProxyRoute(`${pLng},${pLat}`, `${dLng},${dLat}`);
+
+      if (data.code === 'Ok' && data.routes?.length > 0) {
+        const route = data.routes[0];
         const mappedRoutes = [{
-          distance: feature.properties.summary.distance,
-          duration: feature.properties.summary.duration,
-          coordinates: feature.geometry.coordinates.map((c: any) => ({
+          distance: route.distance,
+          duration: route.duration,
+          coordinates: route.geometry.coordinates.map((c: any) => ({
             latitude: c[1],
             longitude: c[0]
           }))
         }];
         setRoutes(mappedRoutes);
       } else {
-        console.warn("ORS API Warn:", data.error || data);
+        console.warn("OSRM Proxy error:", data.code);
       }
-    } catch (err) {
-      console.warn("ORS Routing fetch error:", err);
+    } catch (err: any) {
+      console.warn("OSRM Routing Proxy error:", err.message);
     }
   };
 
   const fetchStatus = async () => {
+    const invoiceId = route.params?.invoiceId;
+    if (!invoiceId || invoiceId === "undefined") {
+      console.error("Invalid invoiceId provided to OrderMapScreen");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const result = await staffApi.getOrderDetails(route.params.invoiceId);
+      const result = await staffApi.getOrderDetails(invoiceId);
       const data = result.data || result;
 
-      setStatus(data.status?.toUpperCase() || "PENDING");
+      // Ưu tiên trạng thái của Assignment (phân công cá nhân) để các nút bấm hoạt động đúng
+      const currentStatus = data.assignmentStatus || data.status || "PENDING";
+      setStatus(currentStatus.toUpperCase());
       setOrderData(data);
 
-      const p = data.pickup?.coordinates;
-      const d = data.delivery?.coordinates;
+      const p = normalizeLatLng(data.pickup?.coordinates);
+      const d = normalizeLatLng(data.delivery?.coordinates);
+
       if (p && d) {
         setMapCoords({ pickup: p, delivery: d });
 
-        // Ưu tiên lấy Polyline đã được ĐIỀU SẴN TRONG DB (Backend/FE)
-        if (data.polyline && data.polyline.length > 0) {
-          const mappedRoute = [{
-            distance: data.distance || 0,
-            duration: data.duration || 0,
-            coordinates: data.polyline.map((point: any) => ({
-              latitude: point[1],
-              longitude: point[0]
-            }))
-          }];
-          setRoutes(mappedRoute);
-        } else {
-          // Chỉ lấy đường từ ORS nếu DB chưa có
-          fetchRoutes(p, d);
-        }
+        // Always fetch journey routes from OSRM
+        fetchRoutes(p, d);
+
+        // If backend provided pre-defined restrictions or a custom polyline
+        // (We don't setRoutes here because we want the dynamic OSRM route as the main one)
       }
     } catch (error) {
       console.error("Lỗi khi lấy thông tin đơn hàng:", error);
@@ -146,16 +167,16 @@ const OrderMapScreen: React.FC = () => {
   const handleStatusUpdate = async (action: 'ACCEPT' | 'START' | 'COMPLETE') => {
     setActionLoading(true);
     try {
-      let result;
-      const invoiceId = route.params.invoiceId;
-
-      if (action === 'ACCEPT') {
-        result = await staffApi.acceptOrder(invoiceId);
-      } else if (action === 'START') {
-        result = await staffApi.startOrder(invoiceId);
-      } else if (action === 'COMPLETE') {
-        result = await staffApi.completeOrder(invoiceId);
+      if (!assignmentId) {
+        throw new Error("Không tìm thấy ID phân công công việc.");
       }
+
+      let newStatus = '';
+      if (action === 'ACCEPT') newStatus = 'ACCEPTED';
+      else if (action === 'START') newStatus = 'IN_PROGRESS';
+      else if (action === 'COMPLETE') newStatus = 'COMPLETED';
+
+      const result = await staffApi.updateAssignmentStatus(assignmentId, newStatus);
 
       if (result) {
         Alert.alert("Thành công", "Đã cập nhật trạng thái đơn hàng");
@@ -194,6 +215,7 @@ const OrderMapScreen: React.FC = () => {
     if (actionLoading) return <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 10 }} />;
 
     switch (status) {
+      case "PENDING":
       case "ASSIGNED":
         return (
           <TouchableOpacity style={styles.actionBtn} onPress={() => handleStatusUpdate('ACCEPT')}>
@@ -201,6 +223,7 @@ const OrderMapScreen: React.FC = () => {
           </TouchableOpacity>
         );
       case "ACCEPTED":
+      case "CONFIRMED":
         return (
           <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#F59E0B" }]} onPress={() => handleStatusUpdate('START')}>
             <Text style={styles.actionBtnText}>BẮT ĐẦU DI CHUYỂN</Text>
@@ -231,23 +254,26 @@ const OrderMapScreen: React.FC = () => {
 
   const generateMapHtml = () => {
     const defaultCenter = [16.047079, 108.20623];
-    const pickup = mapCoords?.pickup ? [mapCoords.pickup.lat, mapCoords.pickup.lng] : null;
-    const delivery = mapCoords?.delivery ? [mapCoords.delivery.lat, mapCoords.delivery.lng] : null;
+    const pickup = mapCoords?.pickup ? [mapCoords.pickup.latitude, mapCoords.pickup.longitude] : null;
+    const delivery = mapCoords?.delivery ? [mapCoords.delivery.latitude, mapCoords.delivery.longitude] : null;
 
     const activeRouteCoordinates = routes[selectedRouteIdx]?.coordinates?.map((c: any) => [c.latitude, c.longitude]) || [];
 
     let backupPolyline: number[][] = [];
     if (routes.length === 0 && orderData?.polyline?.length > 0) {
-      backupPolyline = orderData.polyline.map((p: any) => [p[1], p[0]]);
+      backupPolyline = orderData.polyline.map((p: any) => {
+        const normalized = normalizeLatLng(p);
+        return normalized ? [normalized.latitude, normalized.longitude] : [0, 0];
+      });
     }
 
     const restrictedPaths: number[][][] = [];
-    if (orderData?.routeValidation?.restrictedSegments) {
-      orderData.routeValidation.restrictedSegments.forEach((seg: any) => {
-        if (seg.geometry?.coordinates?.length > 0) {
-          restrictedPaths.push(seg.geometry.coordinates.map((p: any) => [p[1], p[0]]));
-        }
-      });
+    if (orderData?.restrictions?.length > 0) {
+      // Restrictions from the assigned Route
+      restrictedPaths.push(orderData.restrictions.map((p: any) => {
+        const normalized = normalizeLatLng(p);
+        return normalized ? [normalized.latitude, normalized.longitude] : [0, 0];
+      }));
     }
 
     return `

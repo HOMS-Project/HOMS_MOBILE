@@ -66,7 +66,7 @@ const StaffHomeScreen: React.FC = () => {
   }));
 
   const currentOrder =
-    normalized.find((o) => o.status === "IN_PROGRESS") || null;
+    normalized.find((o) => ["IN_PROGRESS", "ACCEPTED"].includes(o.status)) || null;
 
   const recentOrders = normalized
     .filter((o) => {
@@ -128,14 +128,17 @@ const StaffHomeScreen: React.FC = () => {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.quickCard}
-              onPress={() =>
-                currentOrder
-                  ? navigation.navigate("OrderMap", {
+              onPress={() => {
+                const id = currentOrder?.invoiceId || currentOrder?.id || currentOrder?._id;
+                if (id) {
+                  navigation.navigate("OrderMap", {
                     assignmentId: currentOrder.assignmentId,
-                    invoiceId: currentOrder.invoiceId,
-                  })
-                  : navigation.navigate("OrderList")
-              }
+                    invoiceId: id,
+                  });
+                } else {
+                  navigation.navigate("OrderList");
+                }
+              }}
             >
               <Text style={styles.quickLabel}>Map</Text>
             </TouchableOpacity>
@@ -158,11 +161,12 @@ const StaffHomeScreen: React.FC = () => {
         ) : currentOrder ? (
           <TouchableOpacity
             style={styles.orderCard}
-            onPress={() =>
-              navigation.navigate("OrderDetails", {
-                invoiceId: currentOrder.invoiceId,
-              })
-            }
+            onPress={() => {
+              const id = currentOrder?.invoiceId || currentOrder?.id || currentOrder?._id;
+              if (id) {
+                navigation.navigate("OrderDetails", { invoiceId: id });
+              }
+            }}
           >
             <View style={styles.orderTopRow}>
               <Text style={styles.orderIcon}>📦</Text>
@@ -217,9 +221,12 @@ const StaffHomeScreen: React.FC = () => {
           <TouchableOpacity
             key={item.invoiceId || item.id}
             style={styles.orderCard}
-            onPress={() =>
-              navigation.navigate("OrderDetails", { invoiceId: item.invoiceId })
-            }
+            onPress={() => {
+              const id = item.invoiceId || item.id || item._id;
+              if (id) {
+                navigation.navigate("OrderDetails", { invoiceId: id });
+              }
+            }}
           >
             <View style={styles.orderTopRow}>
               <Text style={styles.orderIcon}>📦</Text>

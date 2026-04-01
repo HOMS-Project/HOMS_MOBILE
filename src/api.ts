@@ -77,11 +77,9 @@ export const endpoints = {
     updateAssignmentStatus: (assignmentId: string) => `/staff/assignments/${assignmentId}/status`,
     updateAssignmentRoute: (assignmentId: string) => `/staff/assignments/${assignmentId}/route`,
     getSchedule: '/staff/schedule',
-    acceptOrder: (orderId: string) => `/staff/orders/${orderId}/accept`,
-    startOrder: (orderId: string) => `/staff/orders/${orderId}/start`,
     pickup: (orderId: string) => `/staff/orders/${orderId}/pickup`,
     dropoff: (orderId: string) => `/staff/orders/${orderId}/dropoff`,
-    complete: (orderId: string) => `/staff/orders/${orderId}/complete`,
+    getProxyRoute: '/staff/routing/osrm',
   },
 };
 
@@ -90,10 +88,8 @@ export const staffApi = {
   getOrders: () => axiosClient.get(endpoints.staff.getOrders).then((res) => res.data),
   getOrderDetails: (invoiceId: string) =>
     axiosClient.get(endpoints.staff.getOrderDetails(invoiceId)).then((res) => res.data),
-  acceptOrder: (orderId: string) =>
-    axiosClient.put(endpoints.staff.acceptOrder(orderId)).then((res) => res.data),
-  startOrder: (orderId: string) =>
-    axiosClient.put(endpoints.staff.startOrder(orderId)).then((res) => res.data),
+  updateAssignmentStatus: (assignmentId: string, status: string) =>
+    axiosClient.patch(endpoints.staff.updateAssignmentStatus(assignmentId), { status }).then((res) => res.data),
   submitPickup: (orderId: string, formData: FormData) =>
     axiosClient
       .post(endpoints.staff.pickup(orderId), formData, {
@@ -106,6 +102,6 @@ export const staffApi = {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       .then((res) => res.data),
-  completeOrder: (orderId: string) =>
-    axiosClient.put(endpoints.staff.complete(orderId)).then((res) => res.data),
+  getProxyRoute: (p1: string, p2: string) =>
+    axiosClient.get(endpoints.staff.getProxyRoute, { params: { p1, p2 } }).then((res) => res.data),
 };

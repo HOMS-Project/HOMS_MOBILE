@@ -84,9 +84,12 @@ const OrderListScreen: React.FC = () => {
     <TouchableOpacity
       key={order.invoiceId}
       style={styles.card}
-      onPress={() =>
-        navigation.navigate("OrderDetails", { invoiceId: order.invoiceId })
-      }
+      onPress={() => {
+        const id = order.invoiceId || (order as any).id || (order as any)._id;
+        if (id) {
+          navigation.navigate("OrderDetails", { invoiceId: id });
+        }
+      }}
     >
       <View style={styles.cardHeader}>
         <View style={styles.codeRow}>

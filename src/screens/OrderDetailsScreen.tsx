@@ -48,8 +48,15 @@ const OrderDetailsScreen: React.FC = () => {
   const [order, setOrder] = useState<OrderDetail | null>(null);
 
   const fetchOrderDetails = async () => {
+    const invoiceId = route.params?.invoiceId;
+    if (!invoiceId || invoiceId === "undefined") {
+      console.error("Invalid invoiceId provided to OrderDetailsScreen");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const result = await apiRequest(endpoints.staff.getOrderDetails(route.params.invoiceId));
+      const result = await apiRequest(endpoints.staff.getOrderDetails(invoiceId));
       if (result.success) {
         setOrder(result.data);
       }
