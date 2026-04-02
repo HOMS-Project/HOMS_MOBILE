@@ -79,7 +79,7 @@ const OrderMapScreen: React.FC = () => {
   const [mapCoords, setMapCoords] = useState<{ pickup: any; delivery: any } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const assignmentId = route.params.assignmentId;
-  const ORS_API_KEY = process.env.EXPO_PUBLIC_ORS_API_KEY || "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjM3NzkzMTk1YTc5NzQ5MzY4ZDU1MWRmYjI3Y2ZiMzZiIiwiaCI6Im11cm11cjY0In0=";
+  const ORS_API_KEY = process.env.EXPO_PUBLIC_ORS_API_KEY;
 
   const fetchRoutes = async (p: any, d: any) => {
     try {
