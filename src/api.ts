@@ -2,10 +2,11 @@
 import axios, { AxiosRequestConfig } from 'axios';
 
 // Dưới đây là IP của Anh Bùi, ai code thì vô cmd gõ ipconfig sau đó cop ip của mình vào đây
-const BASE_URL = 'http://10.63.47.129:5000/api';
+const BASE_URL = 'http://192.168.2.8:5000/api';
 
 // In a real app, you would store this in AsyncStorage/ureStore
 let authToken: string | null = null;
+let csrfToken: string | null = null;
 
 export const setAuthToken = (token: string | null) => {
   authToken = token;
@@ -14,24 +15,74 @@ export const setAuthToken = (token: string | null) => {
 const axiosClient = axios.create({
   baseURL: BASE_URL,
   timeout: 30000,
+  withCredentials: true,
 });
 
-axiosClient.interceptors.request.use((config) => {
+const isUnsafeMethod = (method?: string) => {
+  const normalized = (method || 'GET').toUpperCase();
+  return normalized === 'POST' || normalized === 'PUT' || normalized === 'PATCH' || normalized === 'DELETE';
+};
+
+const fetchCsrfToken = async () => {
+  const response = await axiosClient.get('/csrf-token', {
+    withCredentials: true,
+  });
+
+  const token = response?.data?.csrfToken;
+  if (!token || typeof token !== 'string') {
+    throw new Error('Cannot obtain CSRF token');
+  }
+
+  csrfToken = token;
+  return csrfToken;
+};
+
+axiosClient.interceptors.request.use(async (config) => {
+  if (isUnsafeMethod(config.method)) {
+    if (!csrfToken) {
+      await fetchCsrfToken();
+    }
+  }
+
   config.headers = {
     Accept: 'application/json',
     'Content-Type': 'application/json',
     'X-Client': 'mobile-driver',
+    ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
     ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
     ...(config.headers || {}),
   } as any;
+
+  config.withCredentials = true;
 
   return config;
 });
 
 axiosClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const status = error?.response?.status;
     const message = error?.response?.data?.message || error.message || 'Something went wrong';
+    const originalRequest = error?.config;
+
+    // If CSRF token expired/invalid, refresh token and retry one time.
+    if (
+      status === 403 &&
+      typeof message === 'string' &&
+      message.toLowerCase().includes('csrf') &&
+      originalRequest &&
+      !originalRequest._csrfRetried &&
+      isUnsafeMethod(originalRequest.method)
+    ) {
+      originalRequest._csrfRetried = true;
+      await fetchCsrfToken();
+      originalRequest.headers = {
+        ...(originalRequest.headers || {}),
+        'X-CSRF-Token': csrfToken as string,
+      };
+      return axiosClient.request(originalRequest);
+    }
+
     console.error(`[API] Request failed: ${message}`);
     return Promise.reject(new Error(message));
   }
