@@ -1,18 +1,18 @@
-import React, { useState, useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
+  Pressable,
   RefreshControl,
+  ScrollView,
+  Text,
+  View,
 } from "react-native";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { colors, spacing, radius } from "../theme";
 import type { RootStackParamList } from "../../App";
 import { staffApi } from "../api";
+import Card from "../components/ui/Card";
 import { showToast } from "../utils/toast";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -29,18 +29,44 @@ type Order = {
   items: { name: string; quantity: number }[];
 };
 
+type StatusFilter = "ALL" | "IN_PROGRESS" | "ACCEPTED" | "COMPLETED" | "OTHER";
+type TimeFilter = "ALL" | "TODAY" | "WEEK" | "MONTH";
+
+const statusLabel = (status: string) => {
+  if (status === "IN_PROGRESS") return "Dang thuc hien";
+  if (status === "ACCEPTED") return "Da nhan";
+  if (status === "COMPLETED") return "Da hoan tat";
+  if (status === "PENDING") return "Cho xu ly";
+  return status;
+};
+
+const statusClass = (status: string) => {
+  if (status === "IN_PROGRESS") return "bg-sky-100 text-sky-700";
+  if (status === "ACCEPTED") return "bg-amber-100 text-amber-700";
+  if (status === "COMPLETED") return "bg-emerald-100 text-emerald-700";
+  return "bg-slate-100 text-slate-600";
+};
+
+const filterLabel = (filter: StatusFilter | TimeFilter) => {
+  if (filter === "ALL") return "Tat ca";
+  if (filter === "IN_PROGRESS") return "Dang thuc hien";
+  if (filter === "ACCEPTED") return "Da nhan";
+  if (filter === "COMPLETED") return "Da hoan tat";
+  if (filter === "OTHER") return "Khac";
+  if (filter === "TODAY") return "Hom nay";
+  if (filter === "WEEK") return "Tuan nay";
+  if (filter === "MONTH") return "Thang nay";
+  return filter;
+};
+
 const OrderListScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<
-    "ALL" | "IN_PROGRESS" | "ACCEPTED" | "COMPLETED" | "OTHER"
-  >("ALL");
-  const [timeFilter, setTimeFilter] = useState<
-    "ALL" | "TODAY" | "WEEK" | "MONTH"
-  >("ALL");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("ALL");
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -67,82 +93,10 @@ const OrderListScreen: React.FC = () => {
     fetchOrders();
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "COMPLETED":
-        return "#22C55E";
-      case "IN_PROGRESS":
-        return "#1D9BF0";
-      case "ACCEPTED":
-        return "#F59E0B";
-      default:
-        return colors.muted;
-    }
-  };
-
-  const renderOrderCard = (order: Order) => (
-    <TouchableOpacity
-      key={order.invoiceId}
-      style={styles.card}
-      onPress={() => {
-        const id = order.invoiceId || (order as any).id || (order as any)._id;
-        if (id) {
-          navigation.navigate("OrderDetails", { invoiceId: id });
-        }
-      }}
-    >
-      <View style={styles.cardHeader}>
-        <View style={styles.codeRow}>
-          <Text style={styles.boxIcon}>📦</Text>
-          <Text style={styles.orderCode}>{order.orderCode}</Text>
-        </View>
-        <View
-          style={[
-            styles.statusBadge,
-            { backgroundColor: getStatusColor(order.status) },
-          ]}
-        >
-          <Text style={styles.statusText}>
-            {order.status === 'IN_PROGRESS' ? 'Đang thực hiện' :
-             order.status === 'ACCEPTED' ? 'Đã nhận' :
-             order.status === 'COMPLETED' ? 'Đã hoàn tất' : 
-             order.status === 'PENDING' ? 'Chờ xử lý' : order.status}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.routeContainer}>
-        <View style={styles.routeDecor}>
-          <View style={styles.dotBlue} />
-          <View style={styles.line} />
-          <View style={styles.dotRed} />
-        </View>
-        <View style={styles.addressContainer}>
-          <Text style={styles.addressText} numberOfLines={1}>
-            {order.pickup.address}
-          </Text>
-          <Text style={styles.addressText} numberOfLines={1}>
-            {order.delivery.address}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.cardFooter}>
-        <Text style={styles.itemCount}>{order.items.length} món đồ</Text>
-        <Text style={styles.timeText}>
-          {new Date(order.scheduledTime).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
-
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View className="flex-1 items-center justify-center bg-slate-100">
+        <ActivityIndicator size="large" color="#10b981" />
       </View>
     );
   }
@@ -176,36 +130,142 @@ const OrderListScreen: React.FC = () => {
     return statusOk && timeOk;
   });
 
-  // Show all orders assigned to this staff; keep simple grouping for readability
   const inProgress = filtered.filter((o) => o.status === "IN_PROGRESS");
   const accepted = filtered.filter((o) => o.status === "ACCEPTED");
   const others = filtered.filter(
     (o) => !["IN_PROGRESS", "ACCEPTED"].includes(o.status),
   );
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}
-        >
-          <Text style={styles.backIcon}>{"<"}</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Đơn hàng đã phân công</Text>
-        <TouchableOpacity
-          style={styles.filterBtn}
-          onPress={() => setShowFilters((prev) => !prev)}
-        >
-          <Text style={styles.filterText}>Bộ lọc</Text>
-        </TouchableOpacity>
-      </View>
+  const renderOrderCard = (order: Order) => (
+    <Pressable
+      key={order.invoiceId}
+      className="mb-3"
+      onPress={() => {
+        const id = order.invoiceId || (order as any).id || (order as any)._id;
+        if (id) {
+          navigation.navigate("OrderDetails", { invoiceId: id });
+        }
+      }}
+    >
+      <Card className="gap-4 rounded-[24px] p-5">
+        <View className="flex-row items-start justify-between">
+          <View className="mr-3 flex-1">
+            <View className="flex-row items-center gap-2">
+              <Text className="text-xl">📦</Text>
+              <Text className="text-base font-bold text-slate-900">
+                {order.orderCode}
+              </Text>
+            </View>
+            <Text className="mt-1 text-sm text-slate-500">
+              {new Date(order.scheduledTime).toLocaleDateString()} ·{" "}
+              {new Date(order.scheduledTime).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </Text>
+          </View>
 
-      {showFilters && (
-        <View style={styles.filterBar}>
-          <View style={styles.filterGroup}>
-            <Text style={styles.filterLabel}>Trạng thái</Text>
-            <View style={styles.chipRow}>
+          <View
+            className={`rounded-full px-3 py-1 ${statusClass(order.status)}`}
+          >
+            <Text className="text-xs font-bold">
+              {statusLabel(order.status)}
+            </Text>
+          </View>
+        </View>
+
+        <View className="gap-3 rounded-2xl bg-slate-50 p-3">
+          <View className="flex-row items-start gap-2">
+            <Ionicons name="ellipse" size={10} color="#2563eb" />
+            <Text
+              className="flex-1 text-sm font-medium text-slate-700"
+              numberOfLines={1}
+            >
+              {order.pickup.address}
+            </Text>
+          </View>
+
+          <View className="ml-1 h-4 w-px bg-slate-300" />
+
+          <View className="flex-row items-start gap-2">
+            <Ionicons name="ellipse" size={10} color="#ef4444" />
+            <Text
+              className="flex-1 text-sm font-medium text-slate-700"
+              numberOfLines={1}
+            >
+              {order.delivery.address}
+            </Text>
+          </View>
+        </View>
+
+        <View className="flex-row items-center justify-between border-t border-slate-100 pt-2">
+          <Text className="text-sm font-medium text-slate-500">
+            {order.items.length} mon do
+          </Text>
+          <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+        </View>
+      </Card>
+    </Pressable>
+  );
+
+  const renderChip = (
+    value: StatusFilter | TimeFilter,
+    selected: boolean,
+    onPress: () => void,
+  ) => (
+    <Pressable
+      key={value}
+      className={`mb-2 mr-2 rounded-full border px-3 py-2 ${selected ? "border-emerald-500 bg-emerald-50" : "border-slate-200 bg-white"}`}
+      onPress={onPress}
+    >
+      <Text
+        className={`text-xs font-bold ${selected ? "text-emerald-700" : "text-slate-600"}`}
+      >
+        {filterLabel(value)}
+      </Text>
+    </Pressable>
+  );
+
+  return (
+    <View className="flex-1 bg-slate-100">
+      <View className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-300/35" />
+      <View className="absolute -left-16 bottom-14 h-56 w-56 rounded-full bg-sky-200/40" />
+
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ padding: 20, paddingBottom: 36 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        <View className="flex-row items-center">
+          <Pressable
+            className="h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm"
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="chevron-back" size={22} color="#0f172a" />
+          </Pressable>
+          <Text className="ml-3 flex-1 text-xl font-extrabold text-slate-900">
+            Don hang da phan cong
+          </Text>
+          <Pressable
+            className="h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm"
+            onPress={() => setShowFilters((prev) => !prev)}
+          >
+            <Ionicons
+              name={showFilters ? "close" : "options-outline"}
+              size={20}
+              color="#0f172a"
+            />
+          </Pressable>
+        </View>
+
+        {showFilters ? (
+          <Card className="mt-5 rounded-[24px] p-4">
+            <Text className="text-xs font-bold uppercase tracking-wide text-slate-500">
+              Trang thai
+            </Text>
+            <View className="mt-2 flex-row flex-wrap">
               {(
                 [
                   "ALL",
@@ -214,297 +274,59 @@ const OrderListScreen: React.FC = () => {
                   "COMPLETED",
                   "OTHER",
                 ] as const
-              ).map((s) => (
-                <TouchableOpacity
-                  key={s}
-                  style={[styles.chip, statusFilter === s && styles.chipActive]}
-                  onPress={() => setStatusFilter(s)}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      statusFilter === s && styles.chipTextActive,
-                    ]}
-                  >
-                    {s === "IN_PROGRESS"
-                      ? "Đang thực hiện"
-                      : s === "ACCEPTED"
-                        ? "Đã nhận"
-                        : s === "COMPLETED"
-                          ? "Đã hoàn tất"
-                          : s === "OTHER"
-                            ? "Khác"
-                            : "Tất cả"}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              ).map((s) =>
+                renderChip(s, statusFilter === s, () => setStatusFilter(s)),
+              )}
             </View>
-          </View>
 
-          <View style={styles.filterGroup}>
-            <Text style={styles.filterLabel}>Thời gian</Text>
-            <View style={styles.chipRow}>
-              {(["ALL", "TODAY", "WEEK", "MONTH"] as const).map((t) => (
-                <TouchableOpacity
-                  key={t}
-                  style={[styles.chip, timeFilter === t && styles.chipActive]}
-                  onPress={() => setTimeFilter(t)}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      timeFilter === t && styles.chipTextActive,
-                    ]}
-                  >
-                    {t === "TODAY"
-                      ? "Hôm nay"
-                      : t === "WEEK"
-                        ? "Tuần này"
-                        : t === "MONTH"
-                          ? "Tháng này"
-                          : "Tất cả"}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+            <Text className="mt-3 text-xs font-bold uppercase tracking-wide text-slate-500">
+              Thoi gian
+            </Text>
+            <View className="mt-2 flex-row flex-wrap">
+              {(["ALL", "TODAY", "WEEK", "MONTH"] as const).map((t) =>
+                renderChip(t, timeFilter === t, () => setTimeFilter(t)),
+              )}
             </View>
-          </View>
-        </View>
-      )}
+          </Card>
+        ) : null}
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        {inProgress.length > 0 && (
+        {inProgress.length > 0 ? (
           <>
-            <Text style={styles.sectionTitle}>Đang thực hiện</Text>
+            <Text className="mb-3 mt-6 text-lg font-extrabold text-slate-900">
+              Dang thuc hien
+            </Text>
             {inProgress.map(renderOrderCard)}
           </>
-        )}
+        ) : null}
 
-        {accepted.length > 0 && (
+        {accepted.length > 0 ? (
           <>
-            <Text style={styles.sectionTitle}>Đã nhận</Text>
+            <Text className="mb-3 mt-5 text-lg font-extrabold text-slate-900">
+              Da nhan
+            </Text>
             {accepted.map(renderOrderCard)}
           </>
-        )}
+        ) : null}
 
-        {others.length > 0 && (
+        {others.length > 0 ? (
           <>
-            <Text style={styles.sectionTitle}>Khác</Text>
+            <Text className="mb-3 mt-5 text-lg font-extrabold text-slate-900">
+              Khac
+            </Text>
             {others.map(renderOrderCard)}
           </>
-        )}
+        ) : null}
 
-        {normalized.length === 0 && (
-          <Text style={styles.emptyText}>Không có đơn hàng nào</Text>
-        )}
+        {filtered.length === 0 ? (
+          <Card className="mt-6 items-center py-10">
+            <Text className="text-sm font-medium text-slate-500">
+              Khong co don hang phu hop voi bo loc
+            </Text>
+          </Card>
+        ) : null}
       </ScrollView>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  header: {
-    paddingTop: 60,
-    paddingBottom: 20,
-    paddingHorizontal: spacing.xl,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.background,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  backBtn: {
-    padding: spacing.xs,
-  },
-  backIcon: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: colors.text,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: colors.text,
-    marginLeft: spacing.lg,
-  },
-  filterBtn: {
-    marginLeft: "auto",
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  filterText: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: colors.primary,
-  },
-  scrollContent: {
-    padding: spacing.xl,
-    gap: spacing.md,
-  },
-  filterBar: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.md,
-    gap: spacing.sm,
-    backgroundColor: colors.background,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  filterGroup: {
-    gap: spacing.xs,
-  },
-  filterLabel: {
-    color: colors.muted,
-    fontWeight: "700",
-    fontSize: 13,
-  },
-  chipRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.xs,
-  },
-  chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
-  },
-  chipActive: {
-    borderColor: colors.primary,
-    backgroundColor: "rgba(20,139,165,0.08)",
-  },
-  chipText: {
-    color: colors.text,
-    fontWeight: "700",
-  },
-  chipTextActive: {
-    color: colors.primary,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: colors.text,
-    marginBottom: spacing.xs,
-  },
-  card: {
-    backgroundColor: colors.background,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.lg,
-    gap: spacing.md,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  codeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs,
-  },
-  boxIcon: {
-    fontSize: 20,
-  },
-  orderCode: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: colors.text,
-  },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusText: {
-    color: colors.buttonText,
-    fontSize: 12,
-    fontWeight: "800",
-  },
-  routeContainer: {
-    flexDirection: "row",
-    gap: spacing.md,
-  },
-  routeDecor: {
-    alignItems: "center",
-    paddingVertical: 4,
-  },
-  dotBlue: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#1D9BF0",
-  },
-  line: {
-    width: 2,
-    flex: 1,
-    backgroundColor: colors.border,
-    marginVertical: 4,
-  },
-  dotRed: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#EF4444",
-  },
-  addressContainer: {
-    flex: 1,
-    justifyContent: "space-between",
-    gap: 8,
-  },
-  addressText: {
-    fontSize: 16,
-    color: colors.text,
-    fontWeight: "600",
-  },
-  cardFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  itemCount: {
-    color: colors.muted,
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  timeText: {
-    color: colors.primary,
-    fontWeight: "800",
-    fontSize: 14,
-  },
-  emptyText: {
-    textAlign: "center",
-    color: colors.muted,
-    fontSize: 16,
-    marginTop: 20,
-  },
-});
 
 export default OrderListScreen;

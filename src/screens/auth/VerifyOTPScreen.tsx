@@ -1,12 +1,20 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+} from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 import AuthHeader from "../../components/AuthHeader";
 import OTPInput from "../../components/OTPInput";
-import PrimaryButton from "../../components/PrimaryButton";
-import { colors, spacing } from "../../theme";
+import Card from "../../components/ui/Card";
+import Button from "../../components/ui/Button";
 import type { RootStackParamList } from "../../../App";
 import { apiRequest, endpoints } from "../../api";
 
@@ -24,100 +32,98 @@ const VerifyOTPScreen: React.FC<Props> = ({ onSubmit, digits = 4 }) => {
   const [submitting, setSubmitting] = useState(false);
 
   return (
-    <View style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+    <View className="flex-1 bg-slate-100">
+      <View className="absolute -right-16 -top-24 h-64 w-64 rounded-full bg-emerald-300/40" />
+      <View className="absolute -left-20 bottom-12 h-56 w-56 rounded-full bg-sky-200/40" />
+
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={styles.stack}>
-          <View style={styles.logoWrap}>
-            <AuthHeader size={333} />
-          </View>
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View className="px-6 pb-8 pt-12">
+            <View className="items-center">
+              <AuthHeader size={210} />
+            </View>
 
-          <View style={styles.form}>
-            <Text style={styles.title}>Xác thực</Text>
-            <Text style={styles.subtitle}>Nhập mã xác thực của bạn</Text>
+            <Card className="rounded-[30px] p-6">
+              <View className="mb-4 flex-row items-center gap-2">
+                <Ionicons
+                  name="shield-checkmark-outline"
+                  size={22}
+                  color="#0f766e"
+                />
+                <Text className="text-3xl font-extrabold text-slate-900">
+                  Xac thuc OTP
+                </Text>
+              </View>
 
-            <View style={styles.spacerAfterSubtitle} />
+              <Text className="text-base text-slate-500">
+                Nhap ma OTP da gui den email cua ban.
+              </Text>
+              {email ? (
+                <Text className="mt-1 text-sm font-semibold text-emerald-600">
+                  {email}
+                </Text>
+              ) : null}
 
-            <OTPInput length={6} onChange={setCode} />
+              <View className="mt-6">
+                <OTPInput length={digits || 6} onChange={setCode} />
+              </View>
 
-            <PrimaryButton
-              title={submitting ? "Đang xác thực..." : "Xác nhận"}
-              disabled={submitting}
-              onPress={async () => {
-                if (!email) {
-                  navigation.goBack();
-                  return;
-                }
-
-                if (onSubmit) {
-                  onSubmit(code);
-                  return;
-                }
-
-                setSubmitting(true);
-                try {
-                  const res = await apiRequest(endpoints.auth.verifyOtp, {
-                    method: "POST",
-                    body: JSON.stringify({ email, otp: code }),
-                  });
-
-                  if (res?.success !== false) {
-                    navigation.navigate("ResetPassword", { email });
+              <Button
+                title={submitting ? "Dang xac thuc..." : "Xac nhan"}
+                disabled={submitting}
+                loading={submitting}
+                className="mt-6 h-14"
+                onPress={async () => {
+                  if (!email) {
+                    navigation.goBack();
+                    return;
                   }
-                } catch (err) {
-                  // Consider showing toast/alert; silent fail for now
-                } finally {
-                  setSubmitting(false);
-                }
-              }}
-            />
+
+                  if (onSubmit) {
+                    onSubmit(code);
+                    return;
+                  }
+
+                  setSubmitting(true);
+                  try {
+                    const res = await apiRequest(endpoints.auth.verifyOtp, {
+                      method: "POST",
+                      body: JSON.stringify({ email, otp: code }),
+                    });
+
+                    if (res?.success !== false) {
+                      navigation.navigate("ResetPassword", { email });
+                    }
+                  } catch (err) {
+                    // Consider showing toast/alert; silent fail for now
+                  } finally {
+                    setSubmitting(false);
+                  }
+                }}
+              />
+
+              <Pressable
+                className="mt-5 self-center"
+                onPress={() => navigation.navigate("ForgotPassword")}
+              >
+                <Text className="text-sm font-semibold text-emerald-600">
+                  Gui lai ma
+                </Text>
+              </Pressable>
+            </Card>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    flexGrow: 1,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.xxl,
-  },
-  stack: {
-    flexGrow: 1,
-    width: "100%",
-    maxWidth: 420,
-    alignSelf: "center",
-    justifyContent: "center",
-    transform: [{ translateY: -12 }],
-  },
-  logoWrap: {
-    marginBottom: -spacing.sm,
-    transform: [{ translateY: -2 }],
-  },
-  form: {
-    width: "100%",
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: colors.text,
-    marginBottom: spacing.md,
-  },
-  subtitle: {
-    color: colors.muted,
-    marginBottom: spacing.lg,
-  },
-  spacerAfterSubtitle: {
-    height: spacing.sm,
-  },
-});
 
 export default VerifyOTPScreen;

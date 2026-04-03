@@ -1,26 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
   Image,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
 } from "react-native";
-import { useNavigation, useIsFocused } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { colors, spacing, radius } from "../theme";
-import type { RootStackParamList } from "../../App";
 import { Ionicons } from "@expo/vector-icons";
+import type { RootStackParamList } from "../../App";
+import Card from "../components/ui/Card";
+import Section from "../components/ui/Section";
 import { apiRequest, endpoints } from "../api";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
+type SettingsRoute = "EditProfile" | "ChangePassword" | "Login";
 
 const fallbackAvatar =
   "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80";
-
-type SettingsRoute = "EditProfile" | "ChangePassword" | "Login";
 
 const options: Array<{
   id: string;
@@ -31,38 +30,36 @@ const options: Array<{
 }> = [
   {
     id: "edit",
-    label: "Chỉnh sửa hồ sơ",
-    desc: "Thay đổi thông tin cá nhân của bạn",
-    route: "EditProfile" as const,
-    icon: "person-outline" as keyof typeof Ionicons.glyphMap,
-  },
-  {
-    id: "help",
-    label: "Trợ giúp & Hỗ trợ",
-    desc: "",
-    route: undefined,
-    icon: "notifications-outline" as keyof typeof Ionicons.glyphMap,
-  },
-  {
-    id: "about",
-    label: "Về ứng dụng",
-    desc: "",
-    route: undefined,
-    icon: "heart-outline" as keyof typeof Ionicons.glyphMap,
+    label: "Chinh sua ho so",
+    desc: "Cap nhat thong tin ca nhan",
+    route: "EditProfile",
+    icon: "person-circle-outline",
   },
   {
     id: "password",
-    label: "Đổi mật khẩu",
-    desc: "",
-    route: "ChangePassword" as const,
-    icon: "lock-closed-outline" as keyof typeof Ionicons.glyphMap,
+    label: "Doi mat khau",
+    desc: "Tang bao mat tai khoan",
+    route: "ChangePassword",
+    icon: "lock-closed-outline",
+  },
+  {
+    id: "help",
+    label: "Tro giup va ho tro",
+    desc: "Lien he bo phan van hanh",
+    icon: "help-circle-outline",
+  },
+  {
+    id: "about",
+    label: "Ve ung dung",
+    desc: "HOMS Driver v1",
+    icon: "information-circle-outline",
   },
   {
     id: "logout",
-    label: "Đăng xuất",
-    desc: "",
-    route: "Login" as const,
-    icon: "log-out-outline" as keyof typeof Ionicons.glyphMap,
+    label: "Dang xuat",
+    desc: "Thoat khoi tai khoan hien tai",
+    route: "Login",
+    icon: "log-out-outline",
   },
 ];
 
@@ -101,177 +98,96 @@ const SettingsScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-slate-100">
       <ScrollView
-        contentContainerStyle={styles.content}
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.headerRow}>
-          <Text style={styles.title}>Hồ sơ</Text>
-          <View style={styles.notifyCircle}>
-            <Text style={styles.notifyIcon}>🔔</Text>
-          </View>
-        </View>
-
-        <View style={styles.profileCard}>
-          <View style={styles.avatarCircle}>
-            {loading ? (
-              <ActivityIndicator color={colors.primary} />
-            ) : (
-              <Image
-                source={{ uri: user?.avatar || fallbackAvatar }}
-                style={styles.avatar}
-              />
-            )}
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.name}>
-              {user?.fullName || user?.username || "Tài xế"}
+        <View className="px-5 pb-5 pt-14">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-3xl font-extrabold text-slate-900">
+              Settings
             </Text>
-            <Text style={styles.email}>{user?.email || "Chưa có email"}</Text>
-            <Text style={styles.phone}>
-              {user?.phone || user?.phoneNumber || "Chưa có SĐT"}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.list}>
-          {options.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={styles.item}
-              onPress={() => handlePress(item.route)}
-            >
-              <View style={styles.itemLeft}>
-                <View style={styles.iconCircle}>
-                  <Ionicons name={item.icon} size={26} color={colors.primary} />
-                </View>
-                <View style={styles.itemTextWrap}>
-                  <Text style={styles.itemLabel}>{item.label}</Text>
-                  {item.desc ? (
-                    <Text style={styles.itemDesc}>{item.desc}</Text>
-                  ) : null}
-                </View>
-              </View>
+            <Pressable className="h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm">
               <Ionicons
-                name="chevron-forward-outline"
+                name="notifications-outline"
                 size={22}
-                color={colors.muted}
+                color="#0f172a"
               />
-            </TouchableOpacity>
-          ))}
-        </View>
+            </Pressable>
+          </View>
 
-        <View style={{ height: 40 }} />
+          <Card className="mt-6 rounded-[30px] p-6">
+            <View className="items-center">
+              <View className="h-24 w-24 overflow-hidden rounded-full border-4 border-emerald-100 bg-slate-200">
+                {loading ? (
+                  <View className="flex-1 items-center justify-center">
+                    <ActivityIndicator color="#0f766e" />
+                  </View>
+                ) : (
+                  <Image
+                    source={{ uri: user?.avatar || fallbackAvatar }}
+                    className="h-24 w-24"
+                  />
+                )}
+              </View>
+
+              <Text className="mt-4 text-xl font-extrabold text-slate-900">
+                {user?.fullName || user?.username || "Tai xe"}
+              </Text>
+              <Text className="mt-1 text-sm text-slate-500">
+                {user?.email || "No email"}
+              </Text>
+              <Text className="mt-1 text-sm text-slate-500">
+                {user?.phone || user?.phoneNumber || "No phone"}
+              </Text>
+
+              <Pressable
+                className="mt-4 rounded-full bg-emerald-500 px-5 py-2"
+                onPress={() => navigation.navigate("EditProfile")}
+              >
+                <Text className="text-sm font-bold text-white">
+                  Edit profile
+                </Text>
+              </Pressable>
+            </View>
+          </Card>
+
+          <Section title="Options" />
+
+          <View className="gap-3">
+            {options.map((item) => (
+              <Pressable
+                key={item.id}
+                className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"
+                onPress={() => handlePress(item.route)}
+              >
+                <View className="flex-row items-center">
+                  <View className="h-12 w-12 items-center justify-center rounded-2xl bg-slate-100">
+                    <Ionicons name={item.icon} size={21} color="#0f766e" />
+                  </View>
+                  <View className="ml-3 flex-1">
+                    <Text className="text-base font-bold text-slate-900">
+                      {item.label}
+                    </Text>
+                    <Text className="mt-1 text-sm text-slate-500">
+                      {item.desc}
+                    </Text>
+                  </View>
+                  <Ionicons
+                    name="chevron-forward-outline"
+                    size={20}
+                    color="#94a3b8"
+                  />
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        </View>
       </ScrollView>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    paddingHorizontal: spacing.xl + 6,
-    paddingVertical: spacing.xl + 6,
-    gap: spacing.xl,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "800",
-    color: colors.text,
-  },
-  notifyCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  notifyIcon: {
-    fontSize: 22,
-  },
-  profileCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    paddingBottom: spacing.xl,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  avatarCircle: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: "#E6F4EA",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  avatar: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-  },
-  name: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: colors.text,
-  },
-  email: {
-    color: colors.primary,
-    marginTop: 4,
-    fontSize: 17,
-  },
-  phone: {
-    color: colors.muted,
-    marginTop: 4,
-    fontSize: 17,
-  },
-  list: {
-    gap: spacing.md,
-  },
-  item: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  itemLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-  },
-  iconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#F1F3F5",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  itemTextWrap: {
-    gap: 4,
-  },
-  itemLabel: {
-    color: colors.text,
-    fontWeight: "700",
-    fontSize: 20,
-  },
-  itemDesc: {
-    color: colors.muted,
-    fontSize: 16,
-  },
-});
 
 export default SettingsScreen;

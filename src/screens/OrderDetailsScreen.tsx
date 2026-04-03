@@ -1,19 +1,23 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
   Linking,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
 } from "react-native";
-import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
+import {
+  useNavigation,
+  useRoute,
+  type RouteProp,
+} from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { colors, spacing, radius } from "../theme";
 import type { RootStackParamList } from "../../App";
 import { apiRequest, endpoints } from "../api";
+import Button from "../components/ui/Button";
+import Card from "../components/ui/Card";
 
 type OrderDetailsRouteProp = RouteProp<RootStackParamList, "OrderDetails">;
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -28,10 +32,10 @@ type OrderDetail = {
   items: { name: string; quantity: number; notes?: string }[];
   scheduledTime: string;
   dispatchTime?: string;
-  customer: {
-    name: string;
-    phone: string;
-    email: string;
+  customer?: {
+    name?: string;
+    phone?: string;
+    email?: string;
   };
 };
 
@@ -40,34 +44,30 @@ const stripSecTag = (name?: string) => {
   return name.replace(/^\s*\[SEC:[^\]]+\]\s*/i, "").trim();
 };
 
-const Tag: React.FC<{
-  children: React.ReactNode;
-  color: string;
-  style?: any;
-}> = ({ children, color, style }) => (
-  <View
-    style={[
-      {
-        backgroundColor: color + "20",
-        paddingHorizontal: 12,
-        paddingVertical: 4,
-        borderRadius: 20,
-      },
-      style,
-    ]}
-  >
-    <Text
-      style={{
-        color: color,
-        fontSize: 12,
-        fontWeight: "800",
-        textTransform: "uppercase",
-      }}
-    >
-      {children}
-    </Text>
-  </View>
-);
+const formatDate = (dateString?: string) => {
+  if (!dateString) return "Chua xac dinh";
+  const d = new Date(dateString);
+  return `${d.getDate().toString().padStart(2, "0")}/${(d.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}/${d.getFullYear()} ${d
+    .getHours()
+    .toString()
+    .padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+};
+
+const statusLabel = (status: string) => {
+  if (status === "IN_PROGRESS") return "Dang thuc hien";
+  if (status === "ACCEPTED") return "Da nhan don";
+  if (status === "COMPLETED") return "Da hoan tat";
+  return status;
+};
+
+const statusClass = (status: string) => {
+  if (status === "IN_PROGRESS") return "bg-sky-100 text-sky-700";
+  if (status === "ACCEPTED") return "bg-amber-100 text-amber-700";
+  if (status === "COMPLETED") return "bg-emerald-100 text-emerald-700";
+  return "bg-slate-100 text-slate-600";
+};
 
 const OrderDetailsScreen: React.FC = () => {
   const route = useRoute<OrderDetailsRouteProp>();
@@ -105,427 +105,220 @@ const OrderDetailsScreen: React.FC = () => {
     fetchOrderDetails();
   }, []);
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "Chưa xác định";
-    const d = new Date(dateString);
-    return `${d.getDate().toString().padStart(2, "0")}/${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getFullYear()} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
-  };
-
-  const handleContact = () => {
-    if (order?.customer.phone) {
-      Linking.openURL(`tel:${order.customer.phone}`);
-    }
-  };
-
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View className="flex-1 items-center justify-center bg-slate-100">
+        <ActivityIndicator size="large" color="#10b981" />
       </View>
     );
   }
 
-  if (!order) return null;
+  if (!order) {
+    return (
+      <View className="flex-1 items-center justify-center bg-slate-100 px-6">
+        <Text className="text-center text-base font-medium text-slate-500">
+          Khong the tai thong tin don hang
+        </Text>
+      </View>
+    );
+  }
 
   const customerName = order.customer?.name || "Khach hang";
+  const customerPhone = order.customer?.phone || "";
+
+  const handleContact = () => {
+    if (customerPhone) {
+      Linking.openURL(`tel:${customerPhone}`);
+    }
+  };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}
-        >
-          <Text style={styles.backIcon}>{"<"}</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Chi tiết đơn hàng</Text>
-      </View>
+    <View className="flex-1 bg-slate-100">
+      <View className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-300/35" />
+      <View className="absolute -left-16 bottom-14 h-56 w-56 rounded-full bg-sky-200/40" />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        className="flex-1"
+        contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.mainInfo}>
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>
-              {order.status === "IN_PROGRESS"
-                ? "Đang thực hiện"
-                : order.status === "ACCEPTED"
-                  ? "Đã nhận đơn"
-                  : order.status === "COMPLETED"
-                    ? "Đã hoàn tất"
-                    : order.status}
-            </Text>
-          </View>
-          <Text style={styles.orderCode}>{order.orderCode}</Text>
+        <View className="flex-row items-center">
+          <Pressable
+            className="h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm"
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="chevron-back" size={22} color="#0f172a" />
+          </Pressable>
+          <Text className="ml-3 text-xl font-extrabold text-slate-900">
+            Chi tiet don hang
+          </Text>
         </View>
 
-        <View style={styles.timeCard}>
-          <View style={styles.timeRow}>
-            <Ionicons
-              name="calendar-outline"
-              size={20}
-              color={colors.primary}
-            />
-            <View style={{ marginLeft: 12 }}>
-              <Text style={styles.timeLabel}>Lịch hẹn khách hàng</Text>
-              <Text style={styles.timeValue}>
+        <Card className="mt-6 items-center rounded-[28px] border-emerald-100 bg-emerald-50/80 p-6">
+          <View
+            className={`rounded-full px-3 py-1 ${statusClass(order.status)}`}
+          >
+            <Text className="text-xs font-bold">
+              {statusLabel(order.status)}
+            </Text>
+          </View>
+          <Text className="mt-3 text-3xl font-extrabold tracking-wide text-slate-900">
+            {order.orderCode}
+          </Text>
+        </Card>
+
+        <Card className="mt-5 gap-4 rounded-[24px] p-5">
+          <View className="flex-row items-start gap-3">
+            <Ionicons name="calendar-outline" size={20} color="#0f766e" />
+            <View className="flex-1">
+              <Text className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                Lich hen khach hang
+              </Text>
+              <Text className="mt-1 text-sm font-semibold text-slate-800">
                 {formatDate(order.scheduledTime)}
               </Text>
             </View>
           </View>
-          <View
-            style={[
-              styles.timeRow,
-              {
-                marginTop: 12,
-                paddingTop: 12,
-                borderTopWidth: 1,
-                borderTopColor: "#f0f0f0",
-              },
-            ]}
-          >
-            <Ionicons name="time-outline" size={20} color="#EAB308" />
-            <View style={{ marginLeft: 12 }}>
-              <Text style={styles.timeLabel}>Thời gian điều phối dự kiến</Text>
-              <Text style={styles.timeValue}>
+
+          <View className="h-px bg-slate-100" />
+
+          <View className="flex-row items-start gap-3">
+            <Ionicons name="time-outline" size={20} color="#d97706" />
+            <View className="flex-1">
+              <Text className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                Thoi gian dieu phoi du kien
+              </Text>
+              <Text className="mt-1 text-sm font-semibold text-slate-800">
                 {formatDate(order.dispatchTime || order.scheduledTime)}
               </Text>
             </View>
           </View>
-        </View>
+        </Card>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Lộ trình di chuyển</Text>
-          <View style={styles.locationCard}>
-            <View style={styles.locRow}>
-              <View style={[styles.dot, { backgroundColor: "#1D9BF0" }]} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.locLabel}>Điểm lấy hàng (Pickup)</Text>
-                <Text style={styles.locValue} numberOfLines={2}>
-                  {order.pickup.address}
+        <Card className="mt-5 gap-4 rounded-[24px] p-5">
+          <Text className="text-lg font-extrabold text-slate-900">
+            Lo trinh di chuyen
+          </Text>
+
+          <View className="gap-3 rounded-2xl bg-slate-50 p-3">
+            <View className="flex-row items-start gap-2">
+              <Ionicons name="ellipse" size={10} color="#2563eb" />
+              <View className="flex-1">
+                <Text className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                  Pickup
+                </Text>
+                <Text
+                  className="text-sm font-medium text-slate-700"
+                  numberOfLines={2}
+                >
+                  {order.pickup?.address}
                 </Text>
               </View>
             </View>
-            <View style={styles.connector} />
-            <View style={styles.locRow}>
-              <View style={[styles.dot, { backgroundColor: "#EF4444" }]} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.locLabel}>Điểm giao hàng (Drop-off)</Text>
-                <Text style={styles.locValue} numberOfLines={2}>
-                  {order.delivery.address}
+
+            <View className="ml-1 h-4 w-px bg-slate-300" />
+
+            <View className="flex-row items-start gap-2">
+              <Ionicons name="ellipse" size={10} color="#ef4444" />
+              <View className="flex-1">
+                <Text className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                  Drop-off
+                </Text>
+                <Text
+                  className="text-sm font-medium text-slate-700"
+                  numberOfLines={2}
+                >
+                  {order.delivery?.address}
                 </Text>
               </View>
             </View>
           </View>
-        </View>
+        </Card>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Thông tin khách hàng</Text>
-          <View style={styles.infoCard}>
-            <View style={styles.customerHeader}>
-              <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarText}>{customerName[0]}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.customerName}>{order.customer.name}</Text>
-                <Text style={styles.customerPhone}>{order.customer.phone}</Text>
-              </View>
-              <TouchableOpacity
-                style={styles.callIconBtn}
-                onPress={handleContact}
-              >
-                <Ionicons name="call" size={20} color="#FFF" />
-              </TouchableOpacity>
+        <Card className="mt-5 rounded-[24px] p-5">
+          <Text className="text-lg font-extrabold text-slate-900">
+            Thong tin khach hang
+          </Text>
+
+          <View className="mt-4 flex-row items-center gap-3">
+            <View className="h-12 w-12 items-center justify-center rounded-full bg-emerald-500">
+              <Text className="text-lg font-extrabold text-white">
+                {(customerName[0] || "K").toUpperCase()}
+              </Text>
+            </View>
+            <View className="flex-1">
+              <Text className="text-base font-bold text-slate-900">
+                {customerName}
+              </Text>
+              <Text className="text-sm text-slate-500">
+                {customerPhone || "Chua co so dien thoai"}
+              </Text>
+            </View>
+            <Pressable
+              className={`h-10 w-10 items-center justify-center rounded-full ${customerPhone ? "bg-emerald-500" : "bg-slate-200"}`}
+              onPress={handleContact}
+              disabled={!customerPhone}
+            >
+              <Ionicons
+                name="call"
+                size={18}
+                color={customerPhone ? "#ffffff" : "#64748b"}
+              />
+            </Pressable>
+          </View>
+        </Card>
+
+        <Card className="mt-5 rounded-[24px] p-5">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-lg font-extrabold text-slate-900">
+              Danh sach do dac
+            </Text>
+            <View className="rounded-full bg-emerald-100 px-3 py-1">
+              <Text className="text-xs font-bold text-emerald-700">
+                {order.items.length} mon
+              </Text>
             </View>
           </View>
-        </View>
 
-        <View style={styles.itemsSection}>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Text style={styles.sectionTitle}>Danh sách đồ đạc</Text>
-            <Tag color={colors.primary} style={{ borderRadius: 12 }}>
-              {order.items.length} món
-            </Tag>
-          </View>
-          <View style={styles.itemsCard}>
+          <View className="mt-4">
             {order.items.map((item, index) => (
               <View
                 key={index}
-                style={[
-                  styles.itemRow,
-                  index === order.items.length - 1 && { borderBottomWidth: 0 },
-                ]}
+                className={`flex-row items-start justify-between py-3 ${index !== order.items.length - 1 ? "border-b border-slate-100" : ""}`}
               >
-                <View style={styles.itemMain}>
-                  <Text style={styles.itemName}>{stripSecTag(item.name)}</Text>
-                  {item.notes && (
-                    <Text style={styles.itemNotes}>{item.notes}</Text>
-                  )}
+                <View className="mr-3 flex-1">
+                  <Text className="text-sm font-semibold text-slate-800">
+                    {stripSecTag(item.name)}
+                  </Text>
+                  {item.notes ? (
+                    <Text className="mt-1 text-xs text-slate-500">
+                      {item.notes}
+                    </Text>
+                  ) : null}
                 </View>
-                <Text style={styles.itemQty}>{item.quantity}</Text>
+                <Text className="text-sm font-extrabold text-emerald-700">
+                  {item.quantity}
+                </Text>
               </View>
             ))}
           </View>
-        </View>
-
-        <View style={{ height: 100 }} />
+        </Card>
       </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.mapBtn}
+      <View className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 p-4">
+        <Button
+          title="Xem ban do va cap nhat"
+          className="h-14"
           onPress={() =>
             navigation.navigate("OrderMap", {
               assignmentId: order.assignmentId,
               invoiceId: order.id,
             })
           }
-        >
-          <Text style={styles.mapBtnText}>Xem bản đồ & Cập nhật</Text>
-        </TouchableOpacity>
+        />
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  header: {
-    paddingTop: 60,
-    paddingBottom: 20,
-    paddingHorizontal: spacing.xl,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.background,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  backBtn: {
-    padding: spacing.xs,
-  },
-  backIcon: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: colors.text,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: colors.text,
-    marginLeft: spacing.lg,
-  },
-  content: {
-    padding: spacing.xl,
-    gap: spacing.xl,
-  },
-  mainInfo: {
-    alignItems: "center",
-    gap: 8,
-    marginTop: 10,
-  },
-  statusBadge: {
-    backgroundColor: "#E0F2FE",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  statusText: {
-    color: "#0284C7",
-    fontSize: 12,
-    fontWeight: "800",
-    textTransform: "uppercase",
-  },
-  orderCode: {
-    fontSize: 32,
-    fontWeight: "800",
-    color: colors.primary,
-    letterSpacing: 1,
-  },
-  timeCard: {
-    backgroundColor: colors.surface,
-    padding: spacing.lg,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: "#f0f0f0",
-  },
-  timeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  timeLabel: {
-    fontSize: 12,
-    color: colors.muted,
-    fontWeight: "600",
-  },
-  timeValue: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: colors.text,
-    marginTop: 2,
-  },
-  section: {
-    gap: spacing.md,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: colors.text,
-  },
-  locationCard: {
-    backgroundColor: colors.surface,
-    padding: spacing.lg,
-    borderRadius: radius.lg,
-    gap: spacing.sm,
-  },
-  locRow: {
-    flexDirection: "row",
-    gap: spacing.md,
-    alignItems: "center",
-  },
-  dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  locLabel: {
-    fontSize: 14,
-    color: colors.muted,
-    fontWeight: "700",
-  },
-  locValue: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: colors.text,
-  },
-  connector: {
-    width: 2,
-    height: 20,
-    backgroundColor: colors.border,
-    marginLeft: 5,
-  },
-  infoCard: {
-    backgroundColor: colors.surface,
-    padding: spacing.lg,
-    borderRadius: radius.lg,
-    gap: spacing.lg,
-  },
-  customerHeader: {
-    flexDirection: "row",
-    gap: spacing.md,
-    alignItems: "center",
-  },
-  avatarPlaceholder: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: colors.primary,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  avatarText: {
-    color: colors.buttonText,
-    fontSize: 24,
-    fontWeight: "800",
-  },
-  customerName: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: colors.text,
-  },
-  customerPhone: {
-    fontSize: 16,
-    color: colors.muted,
-    fontWeight: "600",
-  },
-  callIconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#22C55E",
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  itemsCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing.lg,
-    borderWidth: 1,
-    borderColor: "#f0f0f0",
-  },
-  itemsSection: {
-    gap: spacing.md,
-  },
-  itemRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  itemMain: {
-    flex: 1,
-  },
-  itemName: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: colors.text,
-  },
-  itemNotes: {
-    fontSize: 14,
-    color: colors.muted,
-    fontStyle: "italic",
-  },
-  itemQty: {
-    fontSize: 17,
-    fontWeight: "800",
-    color: colors.primary,
-  },
-  footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: spacing.xl,
-    backgroundColor: colors.background,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  mapBtn: {
-    backgroundColor: colors.primary,
-    paddingVertical: 18,
-    borderRadius: radius.lg,
-    alignItems: "center",
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  mapBtnText: {
-    color: colors.buttonText,
-    fontWeight: "800",
-    fontSize: 18,
-  },
-});
 
 export default OrderDetailsScreen;

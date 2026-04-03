@@ -1,3 +1,5 @@
+import "react-native-reanimated";
+import "./global.css";
 import React from "react";
 import { Text, Animated } from "react-native";
 import { StatusBar } from "expo-status-bar";
@@ -11,14 +13,14 @@ import ForgotPasswordScreen from "./src/screens/auth/ForgotPasswordScreen";
 import VerifyOTPScreen from "./src/screens/auth/VerifyOTPScreen";
 import ResetPasswordScreen from "./src/screens/auth/ResetPasswordScreen";
 import { colors } from "./src/theme";
-import StaffHomeScreen from "./src/screens/StaffHomeScreen.tsx";
-import SettingsScreen from "./src/screens/SettingsScreen.tsx";
-import EditProfileScreen from "./src/screens/EditProfileScreen.tsx";
-import MyScheduleScreen from "./src/screens/MyScheduleScreen.tsx";
-import MapPlaceholderScreen from "./src/screens/MapPlaceholderScreen.tsx";
-import OrderListScreen from "./src/screens/OrderListScreen.tsx";
-import OrderDetailsScreen from "./src/screens/OrderDetailsScreen.tsx";
-import OrderMapScreen from "./src/screens/OrderMapScreen.tsx";
+import StaffHomeScreen from "./src/screens/StaffHomeScreen";
+import SettingsScreen from "./src/screens/SettingsScreen";
+import EditProfileScreen from "./src/screens/EditProfileScreen";
+import MyScheduleScreen from "./src/screens/MyScheduleScreen";
+import MapPlaceholderScreen from "./src/screens/MapPlaceholderScreen";
+import OrderListScreen from "./src/screens/OrderListScreen";
+import OrderDetailsScreen from "./src/screens/OrderDetailsScreen";
+import OrderMapScreen from "./src/screens/OrderMapScreen";
 
 export type RootStackParamList = {
   Login: undefined;

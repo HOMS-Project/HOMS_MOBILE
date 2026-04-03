@@ -1,20 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Image,
-  TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import LabeledTextInput from "../components/LabeledTextInput";
-import PrimaryButton from "../components/PrimaryButton";
-import { colors, spacing, radius } from "../theme";
+import Card from "../components/ui/Card";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
 import type { RootStackParamList } from "../../App";
 import { apiRequest, endpoints } from "../api";
 
@@ -151,165 +153,113 @@ const EditProfileScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+    <View className="flex-1 bg-slate-100">
+      <View className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-300/35" />
+      <View className="absolute -left-16 bottom-14 h-56 w-56 rounded-full bg-sky-200/40" />
+
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backBtn}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          >
-            <Text style={styles.backText}>{"<"}</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Chỉnh sửa hồ sơ</Text>
-        </View>
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ paddingBottom: 32 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View className="px-6 pb-8 pt-12">
+            <View className="flex-row items-center justify-between">
+              <Pressable
+                className="h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm"
+                onPress={() => navigation.goBack()}
+              >
+                <Ionicons name="chevron-back" size={22} color="#0f172a" />
+              </Pressable>
+              <Text className="text-2xl font-extrabold text-slate-900">
+                Edit profile
+              </Text>
+              <View className="h-11 w-11" />
+            </View>
 
-        <View style={styles.avatarWrap}>
-          <Image
-            source={{ uri: avatar || fallbackAvatar }}
-            style={styles.avatar}
-          />
-          <TouchableOpacity
-            style={[styles.cameraBadge, uploadingAvatar && { opacity: 0.6 }]}
-            onPress={pickAvatar}
-            disabled={uploadingAvatar}
-          >
-            {uploadingAvatar ? (
-              <ActivityIndicator size="small" color={colors.text} />
-            ) : (
-              <Text style={styles.cameraIcon}>📷</Text>
-            )}
-          </TouchableOpacity>
-        </View>
+            <View className="mt-7 items-center">
+              <View className="relative">
+                <Image
+                  source={{ uri: avatar || fallbackAvatar }}
+                  className="h-44 w-44 rounded-full border-4 border-white"
+                />
 
-        <View style={styles.form}>
-          <LabeledTextInput
-            label="Họ và tên"
-            placeholder="Tên của bạn"
-            value={name}
-            onChangeText={setName}
-          />
+                <Pressable
+                  className={`absolute bottom-2 right-2 h-11 w-11 items-center justify-center rounded-full bg-white shadow-md ${uploadingAvatar ? "opacity-60" : ""}`}
+                  onPress={pickAvatar}
+                  disabled={uploadingAvatar}
+                >
+                  {uploadingAvatar ? (
+                    <ActivityIndicator size="small" color="#0f172a" />
+                  ) : (
+                    <Ionicons name="camera-outline" size={18} color="#0f172a" />
+                  )}
+                </Pressable>
+              </View>
 
-          <LabeledTextInput
-            label="Email"
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
+              <Text className="mt-3 text-sm font-medium text-slate-500">
+                Tap camera to update avatar
+              </Text>
+            </View>
 
-          <LabeledTextInput
-            label="Số điện thoại"
-            placeholder="Số điện thoại"
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-          />
+            <Card className="mt-7 rounded-[30px] p-6">
+              <Text className="text-xl font-extrabold text-slate-900">
+                Personal information
+              </Text>
+              <Text className="mt-1 text-sm text-slate-500">
+                Keep your details up to date for better support.
+              </Text>
 
-          <View style={{ marginTop: spacing.md, alignItems: "center" }}>
-            <PrimaryButton
-              title={saving ? "Đang lưu..." : "Lưu thay đổi"}
-              onPress={handleSave}
-              fullWidth={false}
-              style={{ width: 280 }}
-              loading={saving}
-              disabled={saving}
-            />
+              <View className="mt-5 gap-4">
+                <Input
+                  label="Ho va ten"
+                  placeholder="Ten cua ban"
+                  value={name}
+                  onChangeText={setName}
+                />
+
+                <Input
+                  label="Email"
+                  placeholder="Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+
+                <Input
+                  label="So dien thoai"
+                  placeholder="So dien thoai"
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
+                />
+
+                <Button
+                  title={saving ? "Dang luu..." : "Luu thay doi"}
+                  onPress={handleSave}
+                  loading={saving}
+                  disabled={saving || uploadingAvatar}
+                  className="mt-2 h-14"
+                />
+              </View>
+            </Card>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
-      {loading && (
-        <View style={[StyleSheet.absoluteFill, styles.loadingOverlay]}>
-          <ActivityIndicator size="large" color={colors.primary} />
+      {loading ? (
+        <View className="absolute inset-0 items-center justify-center bg-white/70">
+          <ActivityIndicator size="large" color="#10b981" />
         </View>
-      )}
+      ) : null}
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.xxl,
-    gap: spacing.xl,
-    alignItems: "center",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-    paddingTop: spacing.sm,
-  },
-  backBtn: {
-    position: "absolute",
-    left: -spacing.md,
-    top: 0,
-    padding: spacing.sm,
-  },
-  backText: {
-    fontSize: 32,
-    color: colors.text,
-    fontWeight: "700",
-  },
-  headerTitle: {
-    fontSize: 30,
-    fontWeight: "800",
-    color: colors.text,
-  },
-  avatarWrap: {
-    alignSelf: "center",
-    marginTop: spacing.xxl,
-    marginBottom: spacing.md,
-  },
-  avatar: {
-    width: 190,
-    height: 190,
-    borderRadius: 95,
-    borderWidth: 2,
-    borderColor: colors.border,
-  },
-  cameraBadge: {
-    position: "absolute",
-    bottom: 8,
-    right: 8,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.background,
-    borderWidth: 2,
-    borderColor: colors.border,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
-  },
-  cameraIcon: {
-    fontSize: 16,
-  },
-  form: {
-    gap: spacing.xl,
-    width: "100%",
-    maxWidth: 420,
-    marginTop: spacing.xl,
-  },
-  loadingOverlay: {
-    backgroundColor: "rgba(255,255,255,0.7)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-});
 
 export default EditProfileScreen;

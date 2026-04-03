@@ -1,19 +1,20 @@
-import React, { useState, useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
+  Pressable,
   RefreshControl,
+  ScrollView,
+  Text,
+  View,
 } from "react-native";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { colors, spacing, radius } from "../theme";
 import type { RootStackParamList } from "../../App";
-import PrimaryButton from "../components/PrimaryButton";
 import { staffApi } from "../api";
+import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
+import Section from "../components/ui/Section";
 import { showToast } from "../utils/toast";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -29,6 +30,36 @@ type Job = {
   dropoff: { title: string; address: string };
 };
 
+const getStatusStyle = (status: string) => {
+  switch (status) {
+    case "COMPLETED":
+      return "bg-emerald-100 text-emerald-700";
+    case "IN_PROGRESS":
+      return "bg-sky-100 text-sky-700";
+    case "PENDING":
+      return "bg-amber-100 text-amber-700";
+    case "ASSIGNED":
+      return "bg-violet-100 text-violet-700";
+    default:
+      return "bg-slate-100 text-slate-600";
+  }
+};
+
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case "COMPLETED":
+      return "Da hoan tat";
+    case "IN_PROGRESS":
+      return "Dang thuc hien";
+    case "PENDING":
+      return "Cho xu ly";
+    case "ASSIGNED":
+      return "Da phan cong";
+    default:
+      return status;
+  }
+};
+
 const MyScheduleScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const [loading, setLoading] = useState(true);
@@ -38,7 +69,6 @@ const MyScheduleScreen: React.FC = () => {
 
   const fetchJobs = useCallback(async () => {
     try {
-      // Backend currently exposes /staff/orders; filter ASSIGNED here
       const result = await staffApi.getOrders();
       const payload = (result as any)?.data ?? result;
 
@@ -82,7 +112,10 @@ const MyScheduleScreen: React.FC = () => {
   const handleAccept = async (job: Job) => {
     setAcceptingId(job.id);
     try {
-      await staffApi.acceptOrder(job.invoiceId);
+      if (!job.assignmentId) {
+        throw new Error("Missing assignment id");
+      }
+      await staffApi.updateAssignmentStatus(job.assignmentId, "ACCEPTED");
       showToast("Job accepted");
       setJobs((prev) => prev.filter((j) => j.id !== job.id));
       navigation.navigate("OrderList");
@@ -102,251 +135,171 @@ const MyScheduleScreen: React.FC = () => {
   const upcoming = jobs.filter((j) => j.status !== "COMPLETED");
   const completed = jobs.filter((j) => j.status === "COMPLETED");
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "COMPLETED":
-        return "#22C55E";
-      case "IN_PROGRESS":
-        return "#1D9BF0";
-      case "PENDING":
-        return "#F59E0B";
-      default:
-        return colors.muted;
-    }
-  };
-
-  const renderCard = (item: Job) => (
-    <TouchableOpacity
-      key={item.id}
-      style={styles.card}
-      onPress={() =>
-        navigation.navigate("OrderDetails", { invoiceId: item.invoiceId })
-      }
-    >
-      <View style={styles.cardHeader}>
-        <View style={styles.dateRow}>
-          <Text style={styles.orderIcon}>📦</Text>
-          <Text style={styles.cardDate}>{item.date}</Text>
-          <Text style={styles.cardInvoice}>{item.invoice}</Text>
-        </View>
-        <View
-          style={[
-            styles.badge,
-            { backgroundColor: getStatusColor(item.status) },
-          ]}
-        >
-          <Text style={styles.badgeText}>{item.status}</Text>
-        </View>
+  if (loading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-slate-100">
+        <ActivityIndicator size="large" color="#10b981" />
       </View>
-
-      <View style={styles.stepRow}>
-        <View style={styles.stepDotBlue} />
-        <View style={styles.stepLine} />
-        <View style={styles.stepDotRed} />
-      </View>
-
-      <View style={styles.addressBlock}>
-        <Text style={styles.addrTitle}>{item.pickup.title}</Text>
-        <Text style={styles.addrDesc} numberOfLines={1}>
-          {item.pickup.address}
-        </Text>
-      </View>
-
-      <View style={styles.addressBlock}>
-        <Text style={styles.addrTitle}>{item.dropoff.title}</Text>
-        <Text style={styles.addrDesc} numberOfLines={1}>
-          {item.dropoff.address}
-        </Text>
-      </View>
-
-      {item.status === "ASSIGNED" && (
-        <PrimaryButton
-          title="Accept"
-          onPress={() => handleAccept(item)}
-          loading={acceptingId === item.id}
-        />
-      )}
-    </TouchableOpacity>
-  );
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.primary} />
+    <View className="flex-1 bg-slate-100">
+      <View className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-300/35" />
+      <View className="absolute -left-16 bottom-14 h-56 w-56 rounded-full bg-sky-200/40" />
+
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ padding: 20, paddingBottom: 36 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        <View className="flex-row items-center justify-between">
+          <Pressable
+            className="h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm"
+            onPress={() => navigation.navigate("MainTabs")}
+          >
+            <Ionicons name="chevron-back" size={22} color="#0f172a" />
+          </Pressable>
+          <Text className="text-2xl font-extrabold text-slate-900">
+            My schedule
+          </Text>
+          <View className="h-11 w-11" />
         </View>
-      ) : (
-        <ScrollView
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-        >
-          <View style={styles.header}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate("MainTabs")}
-              style={styles.backBtn}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+
+        <Card className="mt-6 rounded-[28px] border-emerald-100 bg-emerald-50/80 p-5">
+          <Text className="text-sm font-semibold text-emerald-700">
+            Cong viec hom nay
+          </Text>
+          <Text className="mt-1 text-3xl font-extrabold text-slate-900">
+            {upcoming.length}
+          </Text>
+          <Text className="mt-1 text-sm text-slate-500">
+            don hang dang cho ban xac nhan
+          </Text>
+        </Card>
+
+        <Section title="Upcoming" />
+
+        {upcoming.length > 0 ? (
+          upcoming.map((item) => (
+            <Pressable
+              key={item.id}
+              className="mb-3"
+              onPress={() =>
+                navigation.navigate("OrderDetails", {
+                  invoiceId: item.invoiceId,
+                })
+              }
             >
-              <Text style={styles.backText}>{"<"}</Text>
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>My schedule</Text>
-          </View>
+              <Card className="gap-4 rounded-[26px] p-5">
+                <View className="flex-row items-start justify-between">
+                  <View className="mr-3 flex-1">
+                    <View className="flex-row items-center gap-2">
+                      <Text className="text-xl">📦</Text>
+                      <Text className="text-base font-bold text-slate-800">
+                        {item.invoice}
+                      </Text>
+                    </View>
+                    <Text className="mt-1 text-sm text-slate-500">
+                      {item.date}
+                    </Text>
+                  </View>
+                  <View
+                    className={`rounded-full px-3 py-1 ${getStatusStyle(item.status)}`}
+                  >
+                    <Text className="text-xs font-bold">
+                      {getStatusLabel(item.status)}
+                    </Text>
+                  </View>
+                </View>
 
-          <Text style={styles.sectionTitle}>Upcoming</Text>
-          <View style={styles.list}>
-            {upcoming.length > 0 ? (
-              upcoming.map(renderCard)
-            ) : (
-              <Text style={styles.emptyText}>No upcoming jobs</Text>
-            )}
-          </View>
+                <View className="gap-3 rounded-2xl bg-slate-50 p-3">
+                  <View className="flex-row items-start gap-2">
+                    <Ionicons name="ellipse" size={10} color="#2563eb" />
+                    <View className="flex-1">
+                      <Text className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                        {item.pickup.title}
+                      </Text>
+                      <Text
+                        className="text-sm font-medium text-slate-700"
+                        numberOfLines={1}
+                      >
+                        {item.pickup.address}
+                      </Text>
+                    </View>
+                  </View>
 
-          {completed.length > 0 && (
-            <>
-              <Text style={styles.sectionTitle}>Recently Completed</Text>
-              <View style={styles.list}>{completed.map(renderCard)}</View>
-            </>
-          )}
-        </ScrollView>
-      )}
+                  <View className="ml-1 h-4 w-px bg-slate-300" />
+
+                  <View className="flex-row items-start gap-2">
+                    <Ionicons name="ellipse" size={10} color="#ef4444" />
+                    <View className="flex-1">
+                      <Text className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                        {item.dropoff.title}
+                      </Text>
+                      <Text
+                        className="text-sm font-medium text-slate-700"
+                        numberOfLines={1}
+                      >
+                        {item.dropoff.address}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                {item.status === "ASSIGNED" ? (
+                  <Button
+                    title="Accept"
+                    onPress={() => handleAccept(item)}
+                    loading={acceptingId === item.id}
+                    disabled={acceptingId === item.id}
+                    className="h-12"
+                  />
+                ) : null}
+              </Card>
+            </Pressable>
+          ))
+        ) : (
+          <Card className="items-center py-10">
+            <Text className="text-sm font-medium text-slate-500">
+              No upcoming jobs
+            </Text>
+          </Card>
+        )}
+
+        {completed.length > 0 ? (
+          <>
+            <Section title="Recently Completed" />
+            {completed.map((item) => (
+              <Pressable
+                key={item.id}
+                className="mb-3"
+                onPress={() =>
+                  navigation.navigate("OrderDetails", {
+                    invoiceId: item.invoiceId,
+                  })
+                }
+              >
+                <Card className="rounded-[24px] p-5">
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-base font-bold text-slate-800">
+                      {item.invoice}
+                    </Text>
+                    <Text className="text-xs font-semibold text-emerald-700">
+                      Completed
+                    </Text>
+                  </View>
+                </Card>
+              </Pressable>
+            ))}
+          </>
+        ) : null}
+      </ScrollView>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.xl,
-    gap: spacing.md,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: spacing.sm,
-  },
-  backBtn: {
-    position: "absolute",
-    left: 0,
-    padding: spacing.xs,
-  },
-  backText: {
-    fontSize: 32,
-    color: colors.text,
-    fontWeight: "700",
-  },
-  headerTitle: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: colors.text,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: colors.text,
-    marginTop: spacing.sm,
-  },
-  list: {
-    gap: spacing.md,
-  },
-  card: {
-    backgroundColor: colors.background,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.lg,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-    gap: spacing.sm,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  dateRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  orderIcon: {
-    fontSize: 28,
-  },
-  cardDate: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: colors.text,
-  },
-  cardInvoice: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: colors.muted,
-  },
-  badge: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.md,
-  },
-  badgeText: {
-    color: colors.buttonText,
-    fontWeight: "700",
-    fontSize: 16,
-  },
-  stepRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  stepDotBlue: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: "#2563EB",
-  },
-  stepDotRed: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: "#EF4444",
-  },
-  stepLine: {
-    flex: 1,
-    height: 2,
-    backgroundColor: colors.border,
-  },
-  addressBlock: {
-    gap: 2,
-  },
-  addrTitle: {
-    fontWeight: "800",
-    fontSize: 18,
-    color: colors.text,
-  },
-  addrDesc: {
-    color: colors.muted,
-    fontSize: 16,
-  },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  emptyText: {
-    textAlign: "center",
-    color: colors.muted,
-    padding: spacing.xl,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});
 
 export default MyScheduleScreen;
