@@ -1,11 +1,20 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, Alert } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 import AuthHeader from "../../components/AuthHeader";
-import LabeledTextInput from "../../components/LabeledTextInput";
-import PrimaryButton from "../../components/PrimaryButton";
-import { colors, spacing } from "../../theme";
+import Card from "../../components/ui/Card";
+import Input from "../../components/ui/Input";
+import Button from "../../components/ui/Button";
 import type { RootStackParamList } from "../../../App";
 import { apiRequest, endpoints } from "../../api";
 
@@ -55,91 +64,77 @@ const ForgotPasswordScreen: React.FC<Props> = ({ onRequestOTP }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+    <View className="flex-1 bg-slate-100">
+      <View className="absolute -right-16 -top-24 h-64 w-64 rounded-full bg-emerald-300/40" />
+      <View className="absolute -left-20 bottom-12 h-56 w-56 rounded-full bg-sky-200/40" />
+
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={styles.stack}>
-          <View style={styles.logoWrap}>
-            <AuthHeader size={333} />
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View className="px-6 pb-8 pt-12">
+            <View className="items-center">
+              <AuthHeader size={210} />
+            </View>
+
+            <Card className="rounded-[30px] p-6">
+              <View className="mb-4 flex-row items-center gap-2">
+                <Ionicons name="mail-open-outline" size={22} color="#0f766e" />
+                <Text className="text-3xl font-extrabold text-slate-900">
+                  Quen mat khau
+                </Text>
+              </View>
+
+              <Text className="text-base text-slate-500">
+                Nhap email de nhan ma OTP va khoi phuc tai khoan an toan.
+              </Text>
+
+              <View className="mt-6 gap-4">
+                <Input
+                  label="Email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+
+                {error ? (
+                  <Text className="text-sm font-semibold text-rose-500">
+                    {error}
+                  </Text>
+                ) : null}
+
+                <Button
+                  title={submitting ? "Dang gui..." : "Gui ma OTP"}
+                  onPress={handleSendOTP}
+                  disabled={submitting}
+                  loading={submitting}
+                  className="mt-1 h-14"
+                />
+              </View>
+
+              <Pressable
+                className="mt-5 self-center"
+                onPress={() => navigation.navigate("Login")}
+              >
+                <Text className="text-sm font-semibold text-emerald-600">
+                  Quay lai dang nhap
+                </Text>
+              </Pressable>
+            </Card>
           </View>
-
-          <View style={styles.form}>
-            <Text style={styles.title}>Quên mật khẩu</Text>
-            <Text style={styles.subtitle}>
-              Nhập Email để nhận mã xác thực (OTP)
-            </Text>
-
-            <View style={styles.spacerAfterSubtitle} />
-
-            <LabeledTextInput
-              label="Email"
-              placeholder="you@example.com"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-
-            {error ? <Text style={styles.error}>{error}</Text> : null}
-
-            <PrimaryButton
-              title={submitting ? "Đang gửi..." : "Gửi mã OTP"}
-              onPress={handleSendOTP}
-              disabled={submitting}
-            />
-          </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    flexGrow: 1,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.xxl,
-  },
-  stack: {
-    flexGrow: 1,
-    width: "100%",
-    maxWidth: 420,
-    alignSelf: "center",
-    justifyContent: "center",
-    transform: [{ translateY: -12 }],
-  },
-  logoWrap: {
-    marginBottom: -spacing.sm,
-    transform: [{ translateY: -2 }],
-  },
-  form: {
-    width: "100%",
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: colors.text,
-    marginBottom: spacing.md,
-  },
-  subtitle: {
-    color: colors.muted,
-    marginBottom: spacing.lg,
-  },
-  spacerAfterSubtitle: {
-    height: spacing.sm,
-  },
-  error: {
-    color: "#E63946",
-    marginBottom: spacing.sm,
-    fontWeight: "600",
-  },
-});
 
 export default ForgotPasswordScreen;

@@ -1,37 +1,75 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
   ActivityIndicator,
+  Image,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
 } from "react-native";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { colors, spacing, radius } from "../theme";
+import { Ionicons } from "@expo/vector-icons";
 import type { RootStackParamList } from "../../App";
-
+import Card from "../components/ui/Card";
+import Section from "../components/ui/Section";
 import { apiRequest, endpoints } from "../api";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
+type DashboardOrder = {
+  _id?: string;
+  id?: string;
+  invoiceId?: string;
+  assignmentId?: string;
+  orderCode?: string;
+  status?: string;
+  scheduledTime?: string;
+  pickup?: { address?: string };
+  delivery?: { address?: string };
+};
+
 const fallbackAvatar =
   "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80";
+
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case "PENDING":
+      return "Cho xac nhan";
+    case "ASSIGNED":
+      return "Da phan cong";
+    case "ACCEPTED":
+      return "Da nhan don";
+    case "IN_PROGRESS":
+      return "Dang thuc hien";
+    case "COMPLETED":
+      return "Da hoan tat";
+    case "CANCELLED":
+      return "Da huy";
+    default:
+      return status || "Khong ro";
+  }
+};
+
+const getStatusStyle = (status: string) => {
+  if (status === "IN_PROGRESS") return "bg-sky-100 text-sky-700";
+  if (status === "ACCEPTED") return "bg-emerald-100 text-emerald-700";
+  if (status === "ASSIGNED") return "bg-amber-100 text-amber-700";
+  if (status === "COMPLETED") return "bg-slate-200 text-slate-700";
+  return "bg-slate-100 text-slate-600";
+};
 
 const StaffHomeScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const [loading, setLoading] = useState(true);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<DashboardOrder[]>([]);
   const [user, setUser] = useState<any>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
-      // Gọi song song nhưng xử lý độc lập để lỗi 1 cái không làm trắng màn hình
       const ordersPromise = apiRequest(endpoints.staff.getOrders)
         .then((res) => {
-          if (res.success) setOrders(res.data);
+          if (res.success) setOrders(res.data || []);
         })
         .catch((err) => console.error("Orders fetch failed:", err));
 
@@ -47,427 +85,285 @@ const StaffHomeScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
-  // Refetch when returning to this screen to sync updated avatar/profile
   useFocusEffect(
     useCallback(() => {
       fetchData();
-    }, []),
+    }, [fetchData]),
   );
 
-  const normalized = orders.map((o) => ({
-    ...o,
-    status: (o.status || "").toUpperCase(),
-  }));
+  const normalizedOrders = useMemo(
+    () =>
+      orders.map((o) => ({
+        ...o,
+        status: (o.status || "").toUpperCase(),
+      })),
+    [orders],
+  );
 
   const currentOrder =
-    normalized.find((o) => ["IN_PROGRESS", "ACCEPTED"].includes(o.status)) || null;
+    normalizedOrders.find((o) =>
+      ["IN_PROGRESS", "ACCEPTED", "ASSIGNED"].includes(o.status || ""),
+    ) || null;
 
-  const recentOrders = normalized
+  const recentOrders = normalizedOrders
     .filter((o) => {
       if (o.status !== "COMPLETED") return false;
-      const ts = new Date(o.scheduledTime).getTime();
+      const ts = new Date(o.scheduledTime || "").getTime();
       if (Number.isNaN(ts)) return false;
-      const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000; // last 7 days
+      const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
       return ts >= cutoff;
     })
     .sort(
       (a, b) =>
-        new Date(b.scheduledTime).getTime() -
-        new Date(a.scheduledTime).getTime(),
+        new Date(b.scheduledTime || "").getTime() -
+        new Date(a.scheduledTime || "").getTime(),
     )
-    .slice(0, 3);
+    .slice(0, 4);
+
+  const goToOrderMap = () => {
+    const invoiceId =
+      currentOrder?.invoiceId || currentOrder?.id || currentOrder?._id;
+    if (invoiceId && currentOrder?.assignmentId) {
+      navigation.navigate("OrderMap", {
+        assignmentId: currentOrder.assignmentId,
+        invoiceId,
+      });
+      return;
+    }
+    navigation.navigate("OrderList");
+  };
+
+  const renderOrderCard = (order: DashboardOrder) => {
+    const invoiceId = order.invoiceId || order.id || order._id;
+    if (!invoiceId) return null;
+
+    return (
+      <Pressable
+        key={invoiceId}
+        className="mb-3"
+        onPress={() => navigation.navigate("OrderDetails", { invoiceId })}
+      >
+        <Card className="gap-4 p-5">
+          <View className="flex-row items-start justify-between">
+            <View className="mr-3 flex-1">
+              <Text className="text-lg font-extrabold text-slate-900">
+                {order.orderCode || "Order"}
+              </Text>
+              <Text className="mt-1 text-sm text-slate-500">
+                {order.scheduledTime
+                  ? new Date(order.scheduledTime).toLocaleString()
+                  : "No schedule"}
+              </Text>
+            </View>
+            <View
+              className={`rounded-full px-3 py-1 ${getStatusStyle(order.status || "")}`}
+            >
+              <Text className="text-xs font-bold">
+                {getStatusLabel(order.status || "")}
+              </Text>
+            </View>
+          </View>
+
+          <View className="gap-2">
+            <View className="flex-row items-start gap-2">
+              <Ionicons name="ellipse" size={10} color="#2563eb" />
+              <Text className="flex-1 text-sm text-slate-700" numberOfLines={1}>
+                {order.pickup?.address || "No pickup address"}
+              </Text>
+            </View>
+            <View className="ml-1 h-4 w-px bg-slate-300" />
+            <View className="flex-row items-start gap-2">
+              <Ionicons name="ellipse" size={10} color="#ef4444" />
+              <Text className="flex-1 text-sm text-slate-700" numberOfLines={1}>
+                {order.delivery?.address || "No delivery address"}
+              </Text>
+            </View>
+          </View>
+        </Card>
+      </Pressable>
+    );
+  };
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-slate-100">
       <ScrollView
-        contentContainerStyle={styles.content}
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 36 }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.topBanner}>
-          <View style={styles.topRow}>
-            <View style={styles.avatarCircle}>
+        <View className="rounded-b-[34px] bg-slate-900 px-6 pb-7 pt-14">
+          <View className="flex-row items-center">
+            <View className="h-16 w-16 overflow-hidden rounded-full border-2 border-white/40 bg-slate-700">
               {loading ? (
-                <ActivityIndicator color={colors.primary} />
+                <View className="flex-1 items-center justify-center">
+                  <ActivityIndicator color="#ffffff" />
+                </View>
               ) : (
                 <Image
                   source={{ uri: user?.avatar || fallbackAvatar }}
-                  style={styles.avatar}
+                  className="h-16 w-16"
                 />
               )}
             </View>
-            <View style={styles.nameBlock}>
-              <Text style={styles.name}>
-                {user?.fullName || user?.username || "Tài xế"}
+
+            <View className="ml-4 flex-1">
+              <Text className="text-xl font-extrabold text-white">
+                {user?.fullName || user?.username || "Tai xe"}
               </Text>
-              <Text style={styles.role}>{user?.role || "Nhân viên"}</Text>
+              <Text className="mt-1 text-sm font-medium text-white/70">
+                {(user?.role || "Nhan vien").toString().toUpperCase()}
+              </Text>
             </View>
-            <View style={styles.spacer} />
-            <TouchableOpacity style={styles.notifyBtn}>
-              <Text style={styles.notifyIcon}>🔔</Text>
-            </TouchableOpacity>
+
+            <Pressable className="h-11 w-11 items-center justify-center rounded-2xl bg-white/15">
+              <Ionicons
+                name="notifications-outline"
+                size={22}
+                color="#ffffff"
+              />
+            </Pressable>
           </View>
 
-          <View style={styles.quickRow}>
-            <TouchableOpacity
-              style={styles.quickCard}
+          <View className="mt-6 flex-row gap-3">
+            <Pressable
+              className="flex-1 items-center rounded-2xl bg-white/90 px-3 py-4"
               onPress={() => navigation.navigate("MySchedule")}
             >
-              <Text style={styles.quickLabel}>Lịch của tôi</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.quickCard}
+              <Ionicons name="calendar-outline" size={20} color="#0f172a" />
+              <Text className="mt-2 text-center text-xs font-bold text-slate-900">
+                Lich cua toi
+              </Text>
+            </Pressable>
+
+            <Pressable
+              className="flex-1 items-center rounded-2xl bg-white/90 px-3 py-4"
               onPress={() => navigation.navigate("OrderList")}
             >
-              <Text style={styles.quickLabel}>Danh sách đơn</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.quickCard}
+              <Ionicons name="receipt-outline" size={20} color="#0f172a" />
+              <Text className="mt-2 text-center text-xs font-bold text-slate-900">
+                Danh sach don
+              </Text>
+            </Pressable>
+
+            <Pressable
+              className="flex-1 items-center rounded-2xl bg-white/90 px-3 py-4"
+              onPress={goToOrderMap}
+            >
+              <Ionicons name="map-outline" size={20} color="#0f172a" />
+              <Text className="mt-2 text-center text-xs font-bold text-slate-900">
+                Ban do
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+
+        <View className="px-5">
+          <Section
+            title="Current Order"
+            actionLabel="View all"
+            onActionPress={() => navigation.navigate("OrderList")}
+          />
+
+          {loading ? (
+            <View className="mt-2 items-center">
+              <ActivityIndicator color="#0f766e" />
+            </View>
+          ) : currentOrder ? (
+            <Pressable
               onPress={() => {
-                const id = currentOrder?.invoiceId || currentOrder?.id || currentOrder?._id;
-                if (id) {
-                  navigation.navigate("OrderMap", {
-                    assignmentId: currentOrder.assignmentId,
-                    invoiceId: id,
-                  });
-                } else {
-                  navigation.navigate("OrderList");
+                const invoiceId =
+                  currentOrder.invoiceId || currentOrder.id || currentOrder._id;
+                if (invoiceId) {
+                  navigation.navigate("OrderDetails", { invoiceId });
                 }
               }}
             >
-              <Text style={styles.quickLabel}>Bản đồ</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+              <Card className="gap-4 border-emerald-200 bg-emerald-50/70 p-5">
+                <View className="flex-row items-start justify-between">
+                  <View className="mr-3 flex-1">
+                    <Text className="text-lg font-extrabold text-slate-900">
+                      {currentOrder.orderCode || "Order"}
+                    </Text>
+                    <Text className="mt-1 text-sm text-slate-500">
+                      {currentOrder.scheduledTime
+                        ? new Date(
+                            currentOrder.scheduledTime,
+                          ).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "No schedule"}
+                    </Text>
+                  </View>
+                  <View
+                    className={`rounded-full px-3 py-1 ${getStatusStyle(currentOrder.status || "")}`}
+                  >
+                    <Text className="text-xs font-bold">
+                      {getStatusLabel(currentOrder.status || "")}
+                    </Text>
+                  </View>
+                </View>
 
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Đơn hàng hiện tại</Text>
-          <TouchableOpacity onPress={() => navigation.navigate("OrderList")}>
-            <Text style={styles.link}>Xem tất cả</Text>
-          </TouchableOpacity>
-        </View>
+                <View className="rounded-2xl bg-white/80 p-3">
+                  <View className="flex-row items-start gap-2">
+                    <Ionicons
+                      name="navigate-circle"
+                      size={18}
+                      color="#2563eb"
+                    />
+                    <Text
+                      className="flex-1 text-sm font-medium text-slate-700"
+                      numberOfLines={1}
+                    >
+                      {currentOrder.pickup?.address || "No pickup address"}
+                    </Text>
+                  </View>
+                  <View className="my-2 h-px bg-slate-200" />
+                  <View className="flex-row items-start gap-2">
+                    <Ionicons name="flag" size={18} color="#ef4444" />
+                    <Text
+                      className="flex-1 text-sm font-medium text-slate-700"
+                      numberOfLines={1}
+                    >
+                      {currentOrder.delivery?.address || "No delivery address"}
+                    </Text>
+                  </View>
+                </View>
+              </Card>
+            </Pressable>
+          ) : (
+            <Card className="items-center py-8">
+              <Text className="text-sm font-medium text-slate-500">
+                Chua co don hang duoc phan cong
+              </Text>
+            </Card>
+          )}
 
-        {loading ? (
-          <ActivityIndicator
-            size="small"
-            color={colors.primary}
-            style={{ marginTop: 20 }}
+          <Section
+            title="Recent Orders"
+            actionLabel="View all"
+            onActionPress={() => navigation.navigate("OrderList")}
           />
-        ) : currentOrder ? (
-          <TouchableOpacity
-            style={styles.orderCard}
-            onPress={() => {
-              const id = currentOrder?.invoiceId || currentOrder?.id || currentOrder?._id;
-              if (id) {
-                navigation.navigate("OrderDetails", { invoiceId: id });
-              }
-            }}
-          >
-            <View style={styles.orderTopRow}>
-              <Text style={styles.orderIcon}>📦</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.orderCode}>{currentOrder.orderCode}</Text>
-                <Text style={styles.orderMeta}>
-                  {new Date(currentOrder.scheduledTime).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}{" "}
-                  · {
-                    currentOrder.status === 'PENDING' ? 'Chờ xác nhận' :
-                    currentOrder.status === 'ACCEPTED' ? 'Đã nhận đơn' :
-                    currentOrder.status === 'IN_PROGRESS' ? 'Đang thực hiện' :
-                    currentOrder.status === 'COMPLETED' ? 'Đã hoàn tất' : currentOrder.status
-                  }
-                </Text>
-              </View>
-              <Text style={styles.chevron}>{">"}</Text>
-            </View>
 
-            <View style={styles.progress}>
-              <View style={styles.progressLine} />
-              <View style={styles.progressDotLeft}>
-                <Text style={styles.progressCheck}>✓</Text>
-              </View>
-              <View style={styles.progressDotRight} />
-            </View>
-
-            <View style={styles.addrRow}>
-              <View style={styles.addrBlock}>
-                <Text style={styles.addrLabel}>Từ</Text>
-                <Text style={styles.addrValue}>
-                  {currentOrder.pickup.address}
-                </Text>
-              </View>
-              <View style={styles.addrBlockRight}>
-                <Text style={styles.addrLabel}>Đến</Text>
-                <Text style={styles.addrValue}>
-                  {currentOrder.delivery.address}
-                </Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ) : (
-          <Text style={styles.emptyText}>Chưa có đơn hàng được phân công</Text>
-        )}
-
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Đơn hàng gần đây</Text>
-          <TouchableOpacity onPress={() => navigation.navigate("OrderList")}>
-            <Text style={styles.link}>Xem tất cả</Text>
-          </TouchableOpacity>
+          {recentOrders.length > 0 ? (
+            recentOrders.map((item) => renderOrderCard(item))
+          ) : (
+            <Card className="items-center py-8">
+              <Text className="text-sm font-medium text-slate-500">
+                Khong co don da hoan tat trong 7 ngay qua
+              </Text>
+            </Card>
+          )}
         </View>
-
-        {recentOrders.map((item) => (
-          <TouchableOpacity
-            key={item.invoiceId || item.id}
-            style={styles.orderCard}
-            onPress={() => {
-              const id = item.invoiceId || item.id || item._id;
-              if (id) {
-                navigation.navigate("OrderDetails", { invoiceId: id });
-              }
-            }}
-          >
-            <View style={styles.orderTopRow}>
-              <Text style={styles.orderIcon}>📦</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.orderCode}>{item.orderCode}</Text>
-                <Text style={styles.orderMeta}>
-                  {new Date(item.scheduledTime).toLocaleDateString()} ·{" "}
-                  {
-                    item.status === 'COMPLETED' ? 'Đã hoàn tất' :
-                    item.status === 'CANCELLED' ? 'Đã hủy' : item.status
-                  }
-                </Text>
-              </View>
-              <Text style={styles.chevron}>{">"}</Text>
-            </View>
-            <View style={styles.addrRow}>
-              <View style={styles.addrBlock}>
-                <Text style={styles.addrLabel}>Từ</Text>
-                <Text style={styles.addrValue}>{item.pickup?.address}</Text>
-              </View>
-              <View style={styles.addrBlockRight}>
-                <Text style={styles.addrLabel}>Đến</Text>
-                <Text style={styles.addrValue}>{item.delivery?.address}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
-
-        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    paddingBottom: 32,
-  },
-  topBanner: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.xl + 10,
-    paddingTop: spacing.xl + 12,
-    paddingBottom: spacing.xl + 10,
-    borderBottomLeftRadius: 26,
-    borderBottomRightRadius: 26,
-    gap: spacing.xl + 4,
-  },
-  topRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  avatarCircle: {
-    width: 78,
-    height: 78,
-    borderRadius: 39,
-    backgroundColor: "#E6F4EA",
-  },
-  avatar: {
-    width: 78,
-    height: 78,
-    borderRadius: 39,
-  },
-  nameBlock: {
-    marginLeft: spacing.md,
-  },
-  name: {
-    color: colors.buttonText,
-    fontWeight: "800",
-    fontSize: 24,
-  },
-  role: {
-    color: "#DCE7DC",
-    fontSize: 17,
-  },
-  spacer: {
-    flex: 1,
-  },
-  notifyBtn: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "rgba(255,255,255,0.15)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  notifyIcon: {
-    color: colors.buttonText,
-    fontSize: 20,
-  },
-  quickRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  quickCard: {
-    flex: 1,
-    marginHorizontal: 6,
-    paddingVertical: spacing.lg,
-    backgroundColor: colors.background,
-    borderRadius: radius.lg,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
-    alignItems: "center",
-  },
-  quickLabel: {
-    fontWeight: "700",
-    color: colors.text,
-    fontSize: 17,
-  },
-  sectionHeader: {
-    marginTop: spacing.xl,
-    paddingHorizontal: spacing.xl,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: colors.text,
-  },
-  link: {
-    color: colors.primary,
-    fontWeight: "700",
-    fontSize: 17,
-  },
-  orderCard: {
-    marginTop: spacing.sm,
-    marginHorizontal: spacing.xl,
-    padding: spacing.xl,
-    backgroundColor: colors.background,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-    gap: spacing.sm,
-  },
-  orderTopRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  orderIcon: {
-    fontSize: 32,
-  },
-  orderCode: {
-    fontWeight: "800",
-    color: colors.text,
-    fontSize: 21,
-  },
-  orderMeta: {
-    color: colors.muted,
-    marginTop: 2,
-    fontSize: 17,
-  },
-  chevron: {
-    color: colors.muted,
-    fontSize: 22,
-  },
-  progress: {
-    height: 22,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  progressLine: {
-    height: 3,
-    backgroundColor: "#1D9BF0",
-    borderRadius: 3,
-    width: "100%",
-  },
-  progressDotLeft: {
-    position: "absolute",
-    left: 0,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#1D9BF0",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  progressCheck: {
-    color: colors.background,
-    fontWeight: "800",
-    fontSize: 12,
-  },
-  progressDotRight: {
-    position: "absolute",
-    right: 0,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: colors.background,
-    borderWidth: 2,
-    borderColor: "#1D9BF0",
-  },
-  addrRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: spacing.md,
-  },
-  addrBlock: {
-    flex: 1,
-    alignItems: "flex-start",
-  },
-  addrBlockRight: {
-    flex: 1,
-    alignItems: "flex-end",
-  },
-  addrLabel: {
-    color: colors.muted,
-    fontWeight: "700",
-    marginBottom: 4,
-    fontSize: 17,
-  },
-  addrValue: {
-    color: colors.text,
-    fontWeight: "700",
-    textAlign: "right",
-    fontSize: 19,
-  },
-  emptyText: {
-    textAlign: "center",
-    color: colors.muted,
-    marginTop: 20,
-    fontSize: 17,
-  },
-});
 
 export default StaffHomeScreen;

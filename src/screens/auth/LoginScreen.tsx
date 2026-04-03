@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
-  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
   ScrollView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -11,10 +12,11 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
 import AuthHeader from "../../components/AuthHeader";
-import LabeledTextInput from "../../components/LabeledTextInput";
-import PrimaryButton from "../../components/PrimaryButton";
-import { colors, spacing } from "../../theme";
+import Card from "../../components/ui/Card";
+import Button from "../../components/ui/Button";
+import Input from "../../components/ui/Input";
 import type { RootStackParamList } from "../../../App";
 
 import { apiRequest, endpoints, setAuthToken } from "../../api";
@@ -141,174 +143,106 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+    <View className="flex-1 bg-slate-100">
+      <View className="absolute -right-16 -top-24 h-64 w-64 rounded-full bg-emerald-300/40" />
+      <View className="absolute -left-20 bottom-12 h-56 w-56 rounded-full bg-sky-200/40" />
+
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={styles.stack}>
-          <View style={styles.logoWrap}>
-            <AuthHeader size={333} />
-          </View>
-
-          <View style={styles.form}>
-            <Text style={styles.title}>Đăng nhập</Text>
-            <Text style={styles.subtitle}>Chào mừng bạn quay trở lại!</Text>
-
-            <View style={styles.spacerAfterSubtitle} />
-
-            <LabeledTextInput
-              label="Email"
-              placeholder="Nhập email của bạn"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-
-            <View style={styles.spacerBetweenInputs} />
-
-            <LabeledTextInput
-              label="Mật khẩu"
-              placeholder="Nhập mật khẩu của bạn"
-              value={password}
-              onChangeText={setPassword}
-              secure
-            />
-
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-            <TouchableOpacity
-              style={styles.link}
-              onPress={
-                onForgotPassword ||
-                (() => navigation.navigate("ForgotPassword"))
-              }
-            >
-              <Text style={styles.linkText}>Quên mật khẩu?</Text>
-            </TouchableOpacity>
-
-            <PrimaryButton
-              title={loading ? "Đang đăng nhập..." : "Đăng nhập"}
-              onPress={handleSubmit}
-              disabled={loading}
-            />
-
-            <View style={styles.dividerRow}>
-              <View style={styles.divider} />
-              <Text style={styles.dividerText}>Hoặc đăng nhập với</Text>
-              <View style={styles.divider} />
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="px-6 pb-8 pt-12">
+            <View className="items-center">
+              <AuthHeader size={210} />
             </View>
 
-            <TouchableOpacity
-              style={[styles.googleButton, googleLoading && { opacity: 0.6 }]}
-              disabled={!googleRequest || googleLoading}
-              onPress={() => promptGoogle()}
-            >
-              <Text style={styles.googleText}>
-                {googleLoading ? "..." : "G"}
+            <Card className="rounded-[30px] p-6">
+              <Text className="text-3xl font-extrabold text-slate-900">
+                Dang nhap
               </Text>
-            </TouchableOpacity>
+              <Text className="mt-2 text-base text-slate-500">
+                Chao mung ban quay tro lai voi HOMS Driver
+              </Text>
+
+              <View className="mt-6 gap-4">
+                <Input
+                  label="Email"
+                  placeholder="Nhap email cua ban"
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                />
+
+                <Input
+                  label="Mat khau"
+                  placeholder="Nhap mat khau cua ban"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                />
+
+                {error ? (
+                  <Text className="text-sm font-semibold text-rose-500">
+                    {error}
+                  </Text>
+                ) : null}
+
+                <Pressable
+                  className="self-end"
+                  onPress={
+                    onForgotPassword ||
+                    (() => navigation.navigate("ForgotPassword"))
+                  }
+                >
+                  <Text className="text-sm font-semibold text-emerald-600">
+                    Quen mat khau?
+                  </Text>
+                </Pressable>
+
+                <Button
+                  title={loading ? "Dang dang nhap..." : "Dang nhap"}
+                  onPress={handleSubmit}
+                  disabled={loading}
+                  loading={loading}
+                  className="mt-1 h-14"
+                />
+              </View>
+
+              <View className="my-6 flex-row items-center gap-3">
+                <View className="h-px flex-1 bg-slate-200" />
+                <Text className="text-sm font-medium text-slate-400">
+                  Sign in with
+                </Text>
+                <View className="h-px flex-1 bg-slate-200" />
+              </View>
+
+              <Pressable
+                className={`h-16 w-16 self-center items-center justify-center rounded-full bg-white shadow-lg ${googleLoading ? "opacity-60" : ""}`}
+                disabled={!googleRequest || googleLoading}
+                onPress={() => promptGoogle()}
+              >
+                {googleLoading ? (
+                  <Text className="text-2xl font-semibold text-slate-400">
+                    ...
+                  </Text>
+                ) : (
+                  <Ionicons name="logo-google" size={26} color="#4285F4" />
+                )}
+              </Pressable>
+            </Card>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    flexGrow: 1,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.xxl,
-  },
-  stack: {
-    flexGrow: 1,
-    width: "100%",
-    maxWidth: 420,
-    alignSelf: "center",
-    justifyContent: "center",
-    transform: [{ translateY: -12 }],
-  },
-  logoWrap: {
-    marginBottom: -spacing.sm,
-    transform: [{ translateY: -2 }],
-  },
-  form: {
-    width: "100%",
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: colors.text,
-    marginBottom: spacing.md,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: colors.muted,
-    marginBottom: spacing.lg,
-  },
-  spacerAfterSubtitle: {
-    height: spacing.md,
-  },
-  spacerBetweenInputs: {
-    height: spacing.sm,
-  },
-  link: {
-    alignSelf: "flex-end",
-    marginTop: spacing.xs,
-    marginBottom: spacing.sm,
-  },
-  linkText: {
-    color: colors.primary,
-    fontWeight: "600",
-  },
-  dividerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    marginTop: spacing.lg,
-    marginBottom: spacing.lg,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  dividerText: {
-    color: colors.muted,
-    fontWeight: "500",
-  },
-  googleButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    backgroundColor: "#F8FBFF",
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
-  },
-  googleText: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#4285F4",
-  },
-  errorText: {
-    color: "#E11D48",
-    fontWeight: "700",
-    marginTop: spacing.xs,
-  },
-});
 
 export default LoginScreen;
