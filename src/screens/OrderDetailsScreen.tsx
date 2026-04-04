@@ -144,37 +144,37 @@ const OrderDetailsScreen: React.FC = () => {
       >
         <View className="flex-row items-center">
           <Pressable
-            className="h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm"
+            className="h-14 w-14 items-center justify-center rounded-3xl bg-white shadow-sm"
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="chevron-back" size={22} color="#0f172a" />
+            <Ionicons name="chevron-back" size={28} color="#0f172a" />
           </Pressable>
-          <Text className="ml-3 text-xl font-extrabold text-slate-900">
+          <Text className="ml-3 text-3xl font-extrabold text-slate-900">
             Chi tiết đơn hàng
           </Text>
         </View>
 
-        <Card className="mt-6 items-center rounded-[28px] border-emerald-100 bg-emerald-50/80 p-6">
+        <Card className="mt-6 items-center rounded-[28px] border-emerald-100 bg-emerald-50/80 p-7">
           <View
-            className={`rounded-full px-3 py-1 ${statusClass(order.status)}`}
+            className={`rounded-full px-4 py-2 ${statusClass(order.status)}`}
           >
-            <Text className="text-xs font-bold">
+            <Text className="text-base font-bold">
               {statusLabel(order.status)}
             </Text>
           </View>
-          <Text className="mt-3 text-3xl font-extrabold tracking-wide text-slate-900">
+          <Text className="mt-3 text-5xl font-extrabold tracking-wide text-slate-900">
             {order.orderCode}
           </Text>
         </Card>
 
-        <Card className="mt-5 gap-4 rounded-[24px] p-5">
+        <Card className="mt-5 gap-4 rounded-[24px] p-6">
           <View className="flex-row items-start gap-3">
-            <Ionicons name="calendar-outline" size={20} color="#0f766e" />
+            <Ionicons name="calendar-outline" size={22} color="#0f766e" />
             <View className="flex-1">
-              <Text className="text-xs font-bold uppercase tracking-wide text-slate-500">
+              <Text className="text-base font-bold uppercase tracking-wide text-slate-500">
                 Lịch hẹn khách hàng
               </Text>
-              <Text className="mt-1 text-sm font-semibold text-slate-800">
+              <Text className="mt-1 text-lg font-semibold text-slate-800">
                 {formatDate(order.scheduledTime)}
               </Text>
             </View>
@@ -183,32 +183,32 @@ const OrderDetailsScreen: React.FC = () => {
           <View className="h-px bg-slate-100" />
 
           <View className="flex-row items-start gap-3">
-            <Ionicons name="time-outline" size={20} color="#d97706" />
+            <Ionicons name="time-outline" size={22} color="#d97706" />
             <View className="flex-1">
-              <Text className="text-xs font-bold uppercase tracking-wide text-slate-500">
+              <Text className="text-base font-bold uppercase tracking-wide text-slate-500">
                 Thời gian điều phối dự kiến
               </Text>
-              <Text className="mt-1 text-sm font-semibold text-slate-800">
+              <Text className="mt-1 text-lg font-semibold text-slate-800">
                 {formatDate(order.dispatchTime || order.scheduledTime)}
               </Text>
             </View>
           </View>
         </Card>
 
-        <Card className="mt-5 gap-4 rounded-[24px] p-5">
-          <Text className="text-lg font-extrabold text-slate-900">
+        <Card className="mt-5 gap-4 rounded-[24px] p-6">
+          <Text className="text-2xl font-extrabold text-slate-900">
             Lộ trình di chuyển
           </Text>
 
-          <View className="gap-3 rounded-2xl bg-slate-50 p-3">
+          <View className="gap-3 rounded-2xl bg-slate-50 p-4">
             <View className="flex-row items-start gap-2">
-              <Ionicons name="ellipse" size={10} color="#2563eb" />
+              <Ionicons name="ellipse" size={11} color="#2563eb" />
               <View className="flex-1">
-                <Text className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                <Text className="text-base font-bold uppercase tracking-wide text-slate-500">
                   Điểm lấy
                 </Text>
                 <Text
-                  className="text-sm font-medium text-slate-700"
+                  className="text-lg font-medium text-slate-700"
                   numberOfLines={2}
                 >
                   {order.pickup?.address}
@@ -219,13 +219,13 @@ const OrderDetailsScreen: React.FC = () => {
             <View className="ml-1 h-4 w-px bg-slate-300" />
 
             <View className="flex-row items-start gap-2">
-              <Ionicons name="ellipse" size={10} color="#ef4444" />
+              <Ionicons name="ellipse" size={11} color="#ef4444" />
               <View className="flex-1">
-                <Text className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                <Text className="text-base font-bold uppercase tracking-wide text-slate-500">
                   Điểm giao
                 </Text>
                 <Text
-                  className="text-sm font-medium text-slate-700"
+                  className="text-lg font-medium text-slate-700"
                   numberOfLines={2}
                 >
                   {order.delivery?.address}
@@ -235,46 +235,46 @@ const OrderDetailsScreen: React.FC = () => {
           </View>
         </Card>
 
-        <Card className="mt-5 rounded-[24px] p-5">
-          <Text className="text-lg font-extrabold text-slate-900">
+        <Card className="mt-5 rounded-[24px] p-6">
+          <Text className="text-2xl font-extrabold text-slate-900">
             Thông tin khách hàng
           </Text>
 
           <View className="mt-4 flex-row items-center gap-3">
-            <View className="h-12 w-12 items-center justify-center rounded-full bg-emerald-500">
-              <Text className="text-lg font-extrabold text-white">
+            <View className="h-14 w-14 items-center justify-center rounded-full bg-emerald-500">
+              <Text className="text-xl font-extrabold text-white">
                 {(customerName[0] || "K").toUpperCase()}
               </Text>
             </View>
             <View className="flex-1">
-              <Text className="text-base font-bold text-slate-900">
+              <Text className="text-xl font-bold text-slate-900">
                 {customerName}
               </Text>
-              <Text className="text-sm text-slate-500">
+              <Text className="text-lg text-slate-500">
                 {customerPhone || "Chưa có số điện thoại"}
               </Text>
             </View>
             <Pressable
-              className={`h-10 w-10 items-center justify-center rounded-full ${customerPhone ? "bg-emerald-500" : "bg-slate-200"}`}
+              className={`h-11 w-11 items-center justify-center rounded-full ${customerPhone ? "bg-emerald-500" : "bg-slate-200"}`}
               onPress={handleContact}
               disabled={!customerPhone}
             >
               <Ionicons
                 name="call"
-                size={18}
+                size={20}
                 color={customerPhone ? "#ffffff" : "#64748b"}
               />
             </Pressable>
           </View>
         </Card>
 
-        <Card className="mt-5 rounded-[24px] p-5">
+        <Card className="mt-5 rounded-[24px] p-6">
           <View className="flex-row items-center justify-between">
-            <Text className="text-lg font-extrabold text-slate-900">
+            <Text className="text-2xl font-extrabold text-slate-900">
               Danh sách đồ đạc
             </Text>
-            <View className="rounded-full bg-emerald-100 px-3 py-1">
-              <Text className="text-xs font-bold text-emerald-700">
+            <View className="rounded-full bg-emerald-100 px-4 py-1">
+              <Text className="text-base font-bold text-emerald-700">
                 {order.items.length} món
               </Text>
             </View>
@@ -284,19 +284,19 @@ const OrderDetailsScreen: React.FC = () => {
             {order.items.map((item, index) => (
               <View
                 key={index}
-                className={`flex-row items-start justify-between py-3 ${index !== order.items.length - 1 ? "border-b border-slate-100" : ""}`}
+                className={`flex-row items-start justify-between py-4 ${index !== order.items.length - 1 ? "border-b border-slate-100" : ""}`}
               >
                 <View className="mr-3 flex-1">
-                  <Text className="text-sm font-semibold text-slate-800">
+                  <Text className="text-lg font-semibold text-slate-800">
                     {stripSecTag(item.name)}
                   </Text>
                   {item.notes ? (
-                    <Text className="mt-1 text-xs text-slate-500">
+                    <Text className="mt-1 text-base text-slate-500">
                       {item.notes}
                     </Text>
                   ) : null}
                 </View>
-                <Text className="text-sm font-extrabold text-emerald-700">
+                <Text className="text-lg font-extrabold text-emerald-700">
                   {item.quantity}
                 </Text>
               </View>
@@ -308,7 +308,7 @@ const OrderDetailsScreen: React.FC = () => {
       <View className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 p-4">
         <Button
           title="Xem bản đồ và cập nhật"
-          className="h-14"
+          className="h-20"
           onPress={() =>
             navigation.navigate("OrderMap", {
               assignmentId: order.assignmentId,

@@ -12,7 +12,6 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import type { RootStackParamList } from "../../App";
 import Card from "../components/ui/Card";
-import Section from "../components/ui/Section";
 import { apiRequest, endpoints } from "../api";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -149,38 +148,38 @@ const StaffHomeScreen: React.FC = () => {
         className="mb-3"
         onPress={() => navigation.navigate("OrderDetails", { invoiceId })}
       >
-        <Card className="gap-4 p-5">
+        <Card className="gap-4 p-6">
           <View className="flex-row items-start justify-between">
             <View className="mr-3 flex-1">
-              <Text className="text-lg font-extrabold text-slate-900">
+              <Text className="text-2xl font-extrabold text-slate-900">
                 {order.orderCode || "Đơn hàng"}
               </Text>
-              <Text className="mt-1 text-sm text-slate-500">
+              <Text className="mt-1 text-base text-slate-500">
                 {order.scheduledTime
                   ? new Date(order.scheduledTime).toLocaleString()
                   : "Chưa có lịch"}
               </Text>
             </View>
             <View
-              className={`rounded-full px-3 py-1 ${getStatusStyle(order.status || "")}`}
+              className={`rounded-full px-4 py-2 ${getStatusStyle(order.status || "")}`}
             >
-              <Text className="text-xs font-bold">
+              <Text className="text-base font-bold">
                 {getStatusLabel(order.status || "")}
               </Text>
             </View>
           </View>
 
-          <View className="gap-2">
+          <View className="gap-3">
             <View className="flex-row items-start gap-2">
-              <Ionicons name="ellipse" size={10} color="#2563eb" />
-              <Text className="flex-1 text-sm text-slate-700" numberOfLines={1}>
+              <Ionicons name="ellipse" size={12} color="#2563eb" />
+              <Text className="flex-1 text-lg text-slate-700" numberOfLines={1}>
                 {order.pickup?.address || "Chưa có địa chỉ lấy hàng"}
               </Text>
             </View>
-            <View className="ml-1 h-4 w-px bg-slate-300" />
+            <View className="ml-1 h-5 w-px bg-slate-300" />
             <View className="flex-row items-start gap-2">
-              <Ionicons name="ellipse" size={10} color="#ef4444" />
-              <Text className="flex-1 text-sm text-slate-700" numberOfLines={1}>
+              <Ionicons name="ellipse" size={12} color="#ef4444" />
+              <Text className="flex-1 text-lg text-slate-700" numberOfLines={1}>
                 {order.delivery?.address || "Chưa có địa chỉ giao hàng"}
               </Text>
             </View>
@@ -197,9 +196,9 @@ const StaffHomeScreen: React.FC = () => {
         contentContainerStyle={{ paddingBottom: 36 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="rounded-b-[34px] bg-slate-900 px-6 pb-7 pt-14">
+        <View className="rounded-b-[34px] bg-slate-900 px-6 pb-8 pt-14">
           <View className="flex-row items-center">
-            <View className="h-16 w-16 overflow-hidden rounded-full border-2 border-white/40 bg-slate-700">
+            <View className="h-24 w-24 overflow-hidden rounded-full border-2 border-white/40 bg-slate-700">
               {loading ? (
                 <View className="flex-1 items-center justify-center">
                   <ActivityIndicator color="#ffffff" />
@@ -207,56 +206,56 @@ const StaffHomeScreen: React.FC = () => {
               ) : (
                 <Image
                   source={{ uri: user?.avatar || fallbackAvatar }}
-                  className="h-16 w-16"
+                  className="h-24 w-24"
                 />
               )}
             </View>
 
-            <View className="ml-4 flex-1">
-              <Text className="text-xl font-extrabold text-white">
+            <View className="ml-5 flex-1">
+              <Text className="text-4xl font-extrabold text-white">
                 {user?.fullName || user?.username || "Tài xế"}
               </Text>
-              <Text className="mt-1 text-sm font-medium text-white/70">
+              <Text className="mt-1 text-lg font-semibold text-white/75">
                 {(user?.role || "Nhân viên").toString().toUpperCase()}
               </Text>
             </View>
 
-            <Pressable className="h-11 w-11 items-center justify-center rounded-2xl bg-white/15">
+            <Pressable className="h-12 w-12 items-center justify-center rounded-2xl bg-white/15">
               <Ionicons
                 name="notifications-outline"
-                size={22}
+                size={24}
                 color="#ffffff"
               />
             </Pressable>
           </View>
 
-          <View className="mt-6 flex-row gap-3">
+          <View className="mt-7 flex-row gap-3">
             <Pressable
-              className="flex-1 items-center rounded-2xl bg-white/90 px-3 py-4"
+              className="flex-1 items-center rounded-2xl bg-white/90 px-3 py-5"
               onPress={() => navigation.navigate("MySchedule")}
             >
-              <Ionicons name="calendar-outline" size={20} color="#0f172a" />
-              <Text className="mt-2 text-center text-xs font-bold text-slate-900">
+              <Ionicons name="calendar-outline" size={28} color="#0f172a" />
+              <Text className="mt-2 text-center text-base font-extrabold text-slate-900">
                 Lịch của tôi
               </Text>
             </Pressable>
 
             <Pressable
-              className="flex-1 items-center rounded-2xl bg-white/90 px-3 py-4"
+              className="flex-1 items-center rounded-2xl bg-white/90 px-3 py-5"
               onPress={() => navigation.navigate("OrderList")}
             >
-              <Ionicons name="receipt-outline" size={20} color="#0f172a" />
-              <Text className="mt-2 text-center text-xs font-bold text-slate-900">
+              <Ionicons name="receipt-outline" size={28} color="#0f172a" />
+              <Text className="mt-2 text-center text-base font-extrabold text-slate-900">
                 Danh sách đơn
               </Text>
             </Pressable>
 
             <Pressable
-              className="flex-1 items-center rounded-2xl bg-white/90 px-3 py-4"
+              className="flex-1 items-center rounded-2xl bg-white/90 px-3 py-5"
               onPress={goToOrderMap}
             >
-              <Ionicons name="map-outline" size={20} color="#0f172a" />
-              <Text className="mt-2 text-center text-xs font-bold text-slate-900">
+              <Ionicons name="map-outline" size={28} color="#0f172a" />
+              <Text className="mt-2 text-center text-base font-extrabold text-slate-900">
                 Bản đồ
               </Text>
             </Pressable>
@@ -264,11 +263,16 @@ const StaffHomeScreen: React.FC = () => {
         </View>
 
         <View className="px-5">
-          <Section
-            title="Current Order"
-            actionLabel="Xem tất cả"
-            onActionPress={() => navigation.navigate("OrderList")}
-          />
+          <View className="mb-3 mt-6 flex-row items-center justify-between">
+            <Text className="text-3xl font-extrabold text-slate-900">
+              Current Order
+            </Text>
+            <Pressable onPress={() => navigation.navigate("OrderList")}>
+              <Text className="text-xl font-bold text-emerald-600">
+                Xem tất cả
+              </Text>
+            </Pressable>
+          </View>
 
           {loading ? (
             <View className="mt-2 items-center">
@@ -287,10 +291,10 @@ const StaffHomeScreen: React.FC = () => {
               <Card className="gap-4 border-emerald-200 bg-emerald-50/70 p-5">
                 <View className="flex-row items-start justify-between">
                   <View className="mr-3 flex-1">
-                    <Text className="text-lg font-extrabold text-slate-900">
+                    <Text className="text-xl font-extrabold text-slate-900">
                       {currentOrder.orderCode || "Đơn hàng"}
                     </Text>
-                    <Text className="mt-1 text-sm text-slate-500">
+                    <Text className="mt-1 text-base text-slate-500">
                       {currentOrder.scheduledTime
                         ? new Date(
                             currentOrder.scheduledTime,
@@ -304,7 +308,7 @@ const StaffHomeScreen: React.FC = () => {
                   <View
                     className={`rounded-full px-3 py-1 ${getStatusStyle(currentOrder.status || "")}`}
                   >
-                    <Text className="text-xs font-bold">
+                    <Text className="text-sm font-bold">
                       {getStatusLabel(currentOrder.status || "")}
                     </Text>
                   </View>
@@ -314,11 +318,11 @@ const StaffHomeScreen: React.FC = () => {
                   <View className="flex-row items-start gap-2">
                     <Ionicons
                       name="navigate-circle"
-                      size={18}
+                      size={20}
                       color="#2563eb"
                     />
                     <Text
-                      className="flex-1 text-sm font-medium text-slate-700"
+                      className="flex-1 text-base font-medium text-slate-700"
                       numberOfLines={1}
                     >
                       {currentOrder.pickup?.address ||
@@ -327,9 +331,9 @@ const StaffHomeScreen: React.FC = () => {
                   </View>
                   <View className="my-2 h-px bg-slate-200" />
                   <View className="flex-row items-start gap-2">
-                    <Ionicons name="flag" size={18} color="#ef4444" />
+                    <Ionicons name="flag" size={20} color="#ef4444" />
                     <Text
-                      className="flex-1 text-sm font-medium text-slate-700"
+                      className="flex-1 text-base font-medium text-slate-700"
                       numberOfLines={1}
                     >
                       {currentOrder.delivery?.address ||
@@ -340,24 +344,29 @@ const StaffHomeScreen: React.FC = () => {
               </Card>
             </Pressable>
           ) : (
-            <Card className="items-center py-8">
-              <Text className="text-sm font-medium text-slate-500">
+            <Card className="items-center py-10">
+              <Text className="text-xl font-medium text-slate-500">
                 Chưa có đơn hàng được phân công
               </Text>
             </Card>
           )}
 
-          <Section
-            title="Recent Orders"
-            actionLabel="Xem tất cả"
-            onActionPress={() => navigation.navigate("OrderList")}
-          />
+          <View className="mb-3 mt-6 flex-row items-center justify-between">
+            <Text className="text-3xl font-extrabold text-slate-900">
+              Recent Orders
+            </Text>
+            <Pressable onPress={() => navigation.navigate("OrderList")}>
+              <Text className="text-xl font-bold text-emerald-600">
+                Xem tất cả
+              </Text>
+            </Pressable>
+          </View>
 
           {recentOrders.length > 0 ? (
             recentOrders.map((item) => renderOrderCard(item))
           ) : (
             <Card className="items-center py-8">
-              <Text className="text-sm font-medium text-slate-500">
+              <Text className="text-lg font-medium text-slate-500">
                 Không có đơn đã hoàn tất trong 7 ngày qua
               </Text>
             </Card>

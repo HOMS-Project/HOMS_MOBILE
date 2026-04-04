@@ -1,11 +1,14 @@
 import "react-native-reanimated";
 import "./global.css";
 import React from "react";
-import { Text, Animated } from "react-native";
+import { Text, View, Pressable } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import {
+  createBottomTabNavigator,
+  type BottomTabBarProps,
+} from "@react-navigation/bottom-tabs";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import LoginScreen from "./src/screens/auth/LoginScreen";
 import ChangePasswordScreen from "./src/screens/auth/ChangePasswordScreen";
@@ -45,50 +48,95 @@ export type MainTabParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-const tabActive = "#148BA5";
-const tabInactive = "#9E9E9E";
+const tabActive = "#1F7A3D";
+const tabInactive = "#8A8A8A";
+
+const tabMeta: Record<
+  keyof MainTabParamList,
+  {
+    label: string;
+    activeIcon: keyof typeof Ionicons.glyphMap;
+    inactiveIcon: keyof typeof Ionicons.glyphMap;
+  }
+> = {
+  Home: {
+    label: "Home",
+    activeIcon: "home",
+    inactiveIcon: "home-outline",
+  },
+  TeamList: {
+    label: "Team List",
+    activeIcon: "people",
+    inactiveIcon: "people-outline",
+  },
+  Settings: {
+    label: "Setting",
+    activeIcon: "person",
+    inactiveIcon: "person-outline",
+  },
+};
+
+const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
+  return (
+    <View
+      className="absolute bottom-0 left-0 right-0 px-[22px] pb-[14px]"
+      pointerEvents="box-none"
+    >
+      <View
+        className="h-[86px] flex-row items-center justify-between rounded-full bg-[#F2F7F2] px-[10px] py-[7px]"
+        style={{
+          elevation: 12,
+          shadowColor: "#0F172A",
+          shadowOpacity: 0.14,
+          shadowRadius: 14,
+          shadowOffset: { width: 0, height: 7 },
+        }}
+      >
+        {state.routes.map((route, index) => {
+          const focused = state.index === index;
+          const routeName = route.name as keyof MainTabParamList;
+          const { label, activeIcon, inactiveIcon } = tabMeta[routeName];
+
+          const onPress = () => {
+            const event = navigation.emit({
+              type: "tabPress",
+              target: route.key,
+              canPreventDefault: true,
+            });
+
+            if (!focused && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
+          };
+
+          return (
+            <Pressable
+              key={route.key}
+              onPress={onPress}
+              className={`mx-1 h-16 flex-1 items-center justify-center rounded-[32px] ${focused ? "bg-[#1F7A3D]" : ""}`}
+            >
+              <Ionicons
+                name={focused ? activeIcon : inactiveIcon}
+                size={34}
+                color={focused ? "#FFFFFF" : tabInactive}
+              />
+              <Text
+                className={`mt-[2px] text-[11px] font-bold leading-[13px] ${focused ? "text-white" : "text-[#8A8A8A]"}`}
+              >
+                {label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+};
 
 const MainTabs = () => (
   <Tab.Navigator
-    screenOptions={({ route }) => ({
-      headerShown: false,
-      tabBarActiveTintColor: tabActive,
-      tabBarInactiveTintColor: tabInactive,
-      tabBarStyle: { paddingTop: 14, paddingBottom: 20, height: 110 },
-      tabBarLabel: ({ focused, color }) => (
-        <Text
-          style={{
-            color,
-            fontWeight: "700",
-            fontSize: 22,
-            marginBottom: 8,
-          }}
-        >
-          {route.name === "TeamList"
-            ? "Team List"
-            : route.name === "Settings"
-              ? "Setting"
-              : "Home"}
-        </Text>
-      ),
-      tabBarIcon: ({ color, size, focused }) => {
-        let iconName: keyof typeof Ionicons.glyphMap = "home";
-        if (route.name === "Home") iconName = focused ? "home" : "home-outline";
-        else if (route.name === "TeamList")
-          iconName = focused ? "people" : "people-outline";
-        else iconName = focused ? "person" : "person-outline";
-        const scale = focused ? 1.2 : 1;
-        return (
-          <Animated.View style={{ transform: [{ scale }] }}>
-            <Ionicons
-              name={iconName}
-              size={(size ?? 34) + (focused ? 4 : 0)}
-              color={color}
-            />
-          </Animated.View>
-        );
-      },
-    })}
+    screenOptions={{ headerShown: false }}
+    tabBar={(props) => <CustomTabBar {...props} />}
   >
     <Tab.Screen name="Home" component={StaffHomeScreen} />
     <Tab.Screen name="TeamList" component={MapPlaceholderScreen} />

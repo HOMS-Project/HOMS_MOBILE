@@ -29,7 +29,7 @@ const Button: React.FC<ButtonProps> = ({
       {loading ? (
         <ActivityIndicator color="#ffffff" />
       ) : (
-        <Text className={`text-base font-bold text-white ${textClassName}`}>
+        <Text className={`text-lg font-bold text-white ${textClassName}`}>
           {title}
         </Text>
       )}

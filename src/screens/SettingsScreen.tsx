@@ -12,7 +12,6 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import type { RootStackParamList } from "../../App";
 import Card from "../components/ui/Card";
-import Section from "../components/ui/Section";
 import { apiRequest, endpoints } from "../api";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -106,21 +105,21 @@ const SettingsScreen: React.FC = () => {
       >
         <View className="px-5 pb-5 pt-14">
           <View className="flex-row items-center justify-between">
-            <Text className="text-3xl font-extrabold text-slate-900">
+            <Text className="text-5xl font-extrabold text-slate-900">
               Cài đặt
             </Text>
-            <Pressable className="h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm">
+            <Pressable className="h-14 w-14 items-center justify-center rounded-3xl bg-white shadow-sm">
               <Ionicons
                 name="notifications-outline"
-                size={22}
+                size={28}
                 color="#0f172a"
               />
             </Pressable>
           </View>
 
-          <Card className="mt-6 rounded-[30px] p-6">
+          <Card className="mt-6 rounded-[30px] p-8">
             <View className="items-center">
-              <View className="h-24 w-24 overflow-hidden rounded-full border-4 border-emerald-100 bg-slate-200">
+              <View className="h-32 w-32 overflow-hidden rounded-full border-4 border-emerald-100 bg-slate-200">
                 {loading ? (
                   <View className="flex-1 items-center justify-center">
                     <ActivityIndicator color="#0f766e" />
@@ -128,56 +127,61 @@ const SettingsScreen: React.FC = () => {
                 ) : (
                   <Image
                     source={{ uri: user?.avatar || fallbackAvatar }}
-                    className="h-24 w-24"
+                    className="h-32 w-32"
                   />
                 )}
               </View>
 
-              <Text className="mt-4 text-xl font-extrabold text-slate-900">
+              <Text className="mt-5 text-4xl font-extrabold text-slate-900">
                 {user?.fullName || user?.username || "Tài xế"}
               </Text>
-              <Text className="mt-1 text-sm text-slate-500">
+              <Text className="mt-2 text-lg text-slate-500">
                 {user?.email || "Chưa có email"}
               </Text>
-              <Text className="mt-1 text-sm text-slate-500">
+              <Text className="mt-1 text-lg text-slate-500">
                 {user?.phone || user?.phoneNumber || "Chưa có số điện thoại"}
               </Text>
 
               <Pressable
-                className="mt-4 rounded-full bg-emerald-500 px-5 py-2"
+                className="mt-5 rounded-full bg-emerald-500 px-7 py-3"
                 onPress={() => navigation.navigate("EditProfile")}
               >
-                <Text className="text-sm font-bold text-white">
+                <Text className="text-lg font-bold text-white">
                   Chỉnh sửa hồ sơ
                 </Text>
               </Pressable>
             </View>
           </Card>
 
-          <Section title="Tùy chọn" />
+          <View className="mb-3 mt-6 flex-row items-center justify-between">
+            <Text className="text-3xl font-extrabold text-slate-900">
+              Tùy chọn
+            </Text>
+            <View />
+          </View>
 
           <View className="gap-3">
             {options.map((item) => (
               <Pressable
                 key={item.id}
-                className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"
+                className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm"
                 onPress={() => handlePress(item.route)}
               >
                 <View className="flex-row items-center">
-                  <View className="h-12 w-12 items-center justify-center rounded-2xl bg-slate-100">
-                    <Ionicons name={item.icon} size={21} color="#0f766e" />
+                  <View className="h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
+                    <Ionicons name={item.icon} size={26} color="#0f766e" />
                   </View>
-                  <View className="ml-3 flex-1">
-                    <Text className="text-base font-bold text-slate-900">
+                  <View className="ml-4 flex-1">
+                    <Text className="text-2xl font-bold text-slate-900">
                       {item.label}
                     </Text>
-                    <Text className="mt-1 text-sm text-slate-500">
+                    <Text className="mt-1 text-base text-slate-500">
                       {item.desc}
                     </Text>
                   </View>
                   <Ionicons
                     name="chevron-forward-outline"
-                    size={20}
+                    size={28}
                     color="#94a3b8"
                   />
                 </View>
