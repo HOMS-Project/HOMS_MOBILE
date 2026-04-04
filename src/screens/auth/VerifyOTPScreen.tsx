@@ -59,12 +59,12 @@ const VerifyOTPScreen: React.FC<Props> = ({ onSubmit, digits = 4 }) => {
                   color="#0f766e"
                 />
                 <Text className="text-3xl font-extrabold text-slate-900">
-                  Xac thuc OTP
+                  Xác thực OTP
                 </Text>
               </View>
 
               <Text className="text-base text-slate-500">
-                Nhap ma OTP da gui den email cua ban.
+                Nhập mã OTP đã gửi đến email của bạn.
               </Text>
               {email ? (
                 <Text className="mt-1 text-sm font-semibold text-emerald-600">
@@ -77,7 +77,7 @@ const VerifyOTPScreen: React.FC<Props> = ({ onSubmit, digits = 4 }) => {
               </View>
 
               <Button
-                title={submitting ? "Dang xac thuc..." : "Xac nhan"}
+                title={submitting ? "Đang xác thực..." : "Xác nhận"}
                 disabled={submitting}
                 loading={submitting}
                 className="mt-6 h-14"
@@ -115,7 +115,7 @@ const VerifyOTPScreen: React.FC<Props> = ({ onSubmit, digits = 4 }) => {
                 onPress={() => navigation.navigate("ForgotPassword")}
               >
                 <Text className="text-sm font-semibold text-emerald-600">
-                  Gui lai ma
+                  Gửi lại mã
                 </Text>
               </Pressable>
             </Card>

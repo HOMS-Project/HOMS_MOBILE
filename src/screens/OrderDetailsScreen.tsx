@@ -45,7 +45,7 @@ const stripSecTag = (name?: string) => {
 };
 
 const formatDate = (dateString?: string) => {
-  if (!dateString) return "Chua xac dinh";
+  if (!dateString) return "Chưa xác định";
   const d = new Date(dateString);
   return `${d.getDate().toString().padStart(2, "0")}/${(d.getMonth() + 1)
     .toString()
@@ -56,9 +56,9 @@ const formatDate = (dateString?: string) => {
 };
 
 const statusLabel = (status: string) => {
-  if (status === "IN_PROGRESS") return "Dang thuc hien";
-  if (status === "ACCEPTED") return "Da nhan don";
-  if (status === "COMPLETED") return "Da hoan tat";
+  if (status === "IN_PROGRESS") return "Đang thực hiện";
+  if (status === "ACCEPTED") return "Đã nhận đơn";
+  if (status === "COMPLETED") return "Đã hoàn tất";
   return status;
 };
 
@@ -117,13 +117,13 @@ const OrderDetailsScreen: React.FC = () => {
     return (
       <View className="flex-1 items-center justify-center bg-slate-100 px-6">
         <Text className="text-center text-base font-medium text-slate-500">
-          Khong the tai thong tin don hang
+          Không thể tải thông tin đơn hàng
         </Text>
       </View>
     );
   }
 
-  const customerName = order.customer?.name || "Khach hang";
+  const customerName = order.customer?.name || "Khách hàng";
   const customerPhone = order.customer?.phone || "";
 
   const handleContact = () => {
@@ -150,7 +150,7 @@ const OrderDetailsScreen: React.FC = () => {
             <Ionicons name="chevron-back" size={22} color="#0f172a" />
           </Pressable>
           <Text className="ml-3 text-xl font-extrabold text-slate-900">
-            Chi tiet don hang
+            Chi tiết đơn hàng
           </Text>
         </View>
 
@@ -172,7 +172,7 @@ const OrderDetailsScreen: React.FC = () => {
             <Ionicons name="calendar-outline" size={20} color="#0f766e" />
             <View className="flex-1">
               <Text className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                Lich hen khach hang
+                Lịch hẹn khách hàng
               </Text>
               <Text className="mt-1 text-sm font-semibold text-slate-800">
                 {formatDate(order.scheduledTime)}
@@ -186,7 +186,7 @@ const OrderDetailsScreen: React.FC = () => {
             <Ionicons name="time-outline" size={20} color="#d97706" />
             <View className="flex-1">
               <Text className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                Thoi gian dieu phoi du kien
+                Thời gian điều phối dự kiến
               </Text>
               <Text className="mt-1 text-sm font-semibold text-slate-800">
                 {formatDate(order.dispatchTime || order.scheduledTime)}
@@ -197,7 +197,7 @@ const OrderDetailsScreen: React.FC = () => {
 
         <Card className="mt-5 gap-4 rounded-[24px] p-5">
           <Text className="text-lg font-extrabold text-slate-900">
-            Lo trinh di chuyen
+            Lộ trình di chuyển
           </Text>
 
           <View className="gap-3 rounded-2xl bg-slate-50 p-3">
@@ -205,7 +205,7 @@ const OrderDetailsScreen: React.FC = () => {
               <Ionicons name="ellipse" size={10} color="#2563eb" />
               <View className="flex-1">
                 <Text className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                  Pickup
+                  Điểm lấy
                 </Text>
                 <Text
                   className="text-sm font-medium text-slate-700"
@@ -222,7 +222,7 @@ const OrderDetailsScreen: React.FC = () => {
               <Ionicons name="ellipse" size={10} color="#ef4444" />
               <View className="flex-1">
                 <Text className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                  Drop-off
+                  Điểm giao
                 </Text>
                 <Text
                   className="text-sm font-medium text-slate-700"
@@ -237,7 +237,7 @@ const OrderDetailsScreen: React.FC = () => {
 
         <Card className="mt-5 rounded-[24px] p-5">
           <Text className="text-lg font-extrabold text-slate-900">
-            Thong tin khach hang
+            Thông tin khách hàng
           </Text>
 
           <View className="mt-4 flex-row items-center gap-3">
@@ -251,7 +251,7 @@ const OrderDetailsScreen: React.FC = () => {
                 {customerName}
               </Text>
               <Text className="text-sm text-slate-500">
-                {customerPhone || "Chua co so dien thoai"}
+                {customerPhone || "Chưa có số điện thoại"}
               </Text>
             </View>
             <Pressable
@@ -271,11 +271,11 @@ const OrderDetailsScreen: React.FC = () => {
         <Card className="mt-5 rounded-[24px] p-5">
           <View className="flex-row items-center justify-between">
             <Text className="text-lg font-extrabold text-slate-900">
-              Danh sach do dac
+              Danh sách đồ đạc
             </Text>
             <View className="rounded-full bg-emerald-100 px-3 py-1">
               <Text className="text-xs font-bold text-emerald-700">
-                {order.items.length} mon
+                {order.items.length} món
               </Text>
             </View>
           </View>
@@ -307,7 +307,7 @@ const OrderDetailsScreen: React.FC = () => {
 
       <View className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 p-4">
         <Button
-          title="Xem ban do va cap nhat"
+          title="Xem bản đồ và cập nhật"
           className="h-14"
           onPress={() =>
             navigation.navigate("OrderMap", {

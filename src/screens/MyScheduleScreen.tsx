@@ -48,13 +48,13 @@ const getStatusStyle = (status: string) => {
 const getStatusLabel = (status: string) => {
   switch (status) {
     case "COMPLETED":
-      return "Da hoan tat";
+      return "Đã hoàn tất";
     case "IN_PROGRESS":
-      return "Dang thuc hien";
+      return "Đang thực hiện";
     case "PENDING":
-      return "Cho xu ly";
+      return "Chờ xử lý";
     case "ASSIGNED":
-      return "Da phan cong";
+      return "Đã phân công";
     default:
       return status;
   }
@@ -84,11 +84,11 @@ const MyScheduleScreen: React.FC = () => {
           invoice: o.orderCode,
           status: (o.status || "").toUpperCase(),
           pickup: {
-            title: o.pickup?.address?.split(",")[0] || "Pickup",
+            title: o.pickup?.address?.split(",")[0] || "Điểm lấy",
             address: o.pickup?.address || "",
           },
           dropoff: {
-            title: o.delivery?.address?.split(",")[0] || "Drop-off",
+            title: o.delivery?.address?.split(",")[0] || "Điểm giao",
             address: o.delivery?.address || "",
           },
         }));
@@ -96,7 +96,7 @@ const MyScheduleScreen: React.FC = () => {
       setJobs(formattedJobs);
     } catch (error: any) {
       console.error("Fetch jobs failed:", error);
-      showToast(error?.message || "Failed to load schedule");
+      showToast(error?.message || "Không thể tải lịch làm việc");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -113,15 +113,15 @@ const MyScheduleScreen: React.FC = () => {
     setAcceptingId(job.id);
     try {
       if (!job.assignmentId) {
-        throw new Error("Missing assignment id");
+        throw new Error("Thiếu mã phân công");
       }
       await staffApi.updateAssignmentStatus(job.assignmentId, "ACCEPTED");
-      showToast("Job accepted");
+      showToast("Đã nhận đơn thành công");
       setJobs((prev) => prev.filter((j) => j.id !== job.id));
       navigation.navigate("OrderList");
     } catch (error: any) {
       console.error("Accept job failed:", error);
-      showToast(error?.message || "Could not accept job");
+      showToast(error?.message || "Không thể nhận đơn");
     } finally {
       setAcceptingId(null);
     }
@@ -164,24 +164,24 @@ const MyScheduleScreen: React.FC = () => {
             <Ionicons name="chevron-back" size={22} color="#0f172a" />
           </Pressable>
           <Text className="text-2xl font-extrabold text-slate-900">
-            My schedule
+            Lịch của tôi
           </Text>
           <View className="h-11 w-11" />
         </View>
 
         <Card className="mt-6 rounded-[28px] border-emerald-100 bg-emerald-50/80 p-5">
           <Text className="text-sm font-semibold text-emerald-700">
-            Cong viec hom nay
+            Công việc hôm nay
           </Text>
           <Text className="mt-1 text-3xl font-extrabold text-slate-900">
             {upcoming.length}
           </Text>
           <Text className="mt-1 text-sm text-slate-500">
-            don hang dang cho ban xac nhan
+            đơn hàng đang chờ bạn xác nhận
           </Text>
         </Card>
 
-        <Section title="Upcoming" />
+        <Section title="Sắp tới" />
 
         {upcoming.length > 0 ? (
           upcoming.map((item) => (
@@ -252,7 +252,7 @@ const MyScheduleScreen: React.FC = () => {
 
                 {item.status === "ASSIGNED" ? (
                   <Button
-                    title="Accept"
+                    title="Nhận đơn"
                     onPress={() => handleAccept(item)}
                     loading={acceptingId === item.id}
                     disabled={acceptingId === item.id}
@@ -265,14 +265,14 @@ const MyScheduleScreen: React.FC = () => {
         ) : (
           <Card className="items-center py-10">
             <Text className="text-sm font-medium text-slate-500">
-              No upcoming jobs
+              Không có công việc sắp tới
             </Text>
           </Card>
         )}
 
         {completed.length > 0 ? (
           <>
-            <Section title="Recently Completed" />
+            <Section title="Đơn hoàn tất gần đây" />
             {completed.map((item) => (
               <Pressable
                 key={item.id}
@@ -289,7 +289,7 @@ const MyScheduleScreen: React.FC = () => {
                       {item.invoice}
                     </Text>
                     <Text className="text-xs font-semibold text-emerald-700">
-                      Completed
+                      Hoàn tất
                     </Text>
                   </View>
                 </Card>

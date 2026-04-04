@@ -30,34 +30,34 @@ const options: Array<{
 }> = [
   {
     id: "edit",
-    label: "Chinh sua ho so",
-    desc: "Cap nhat thong tin ca nhan",
+    label: "Chỉnh sửa hồ sơ",
+    desc: "Cập nhật thông tin cá nhân",
     route: "EditProfile",
     icon: "person-circle-outline",
   },
   {
     id: "password",
-    label: "Doi mat khau",
-    desc: "Tang bao mat tai khoan",
+    label: "Đổi mật khẩu",
+    desc: "Tăng bảo mật tài khoản",
     route: "ChangePassword",
     icon: "lock-closed-outline",
   },
   {
     id: "help",
-    label: "Tro giup va ho tro",
-    desc: "Lien he bo phan van hanh",
+    label: "Trợ giúp và hỗ trợ",
+    desc: "Liên hệ bộ phận vận hành",
     icon: "help-circle-outline",
   },
   {
     id: "about",
-    label: "Ve ung dung",
+    label: "Về ứng dụng",
     desc: "HOMS Driver v1",
     icon: "information-circle-outline",
   },
   {
     id: "logout",
-    label: "Dang xuat",
-    desc: "Thoat khoi tai khoan hien tai",
+    label: "Đăng xuất",
+    desc: "Thoát khỏi tài khoản hiện tại",
     route: "Login",
     icon: "log-out-outline",
   },
@@ -107,7 +107,7 @@ const SettingsScreen: React.FC = () => {
         <View className="px-5 pb-5 pt-14">
           <View className="flex-row items-center justify-between">
             <Text className="text-3xl font-extrabold text-slate-900">
-              Settings
+              Cài đặt
             </Text>
             <Pressable className="h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm">
               <Ionicons
@@ -134,13 +134,13 @@ const SettingsScreen: React.FC = () => {
               </View>
 
               <Text className="mt-4 text-xl font-extrabold text-slate-900">
-                {user?.fullName || user?.username || "Tai xe"}
+                {user?.fullName || user?.username || "Tài xế"}
               </Text>
               <Text className="mt-1 text-sm text-slate-500">
-                {user?.email || "No email"}
+                {user?.email || "Chưa có email"}
               </Text>
               <Text className="mt-1 text-sm text-slate-500">
-                {user?.phone || user?.phoneNumber || "No phone"}
+                {user?.phone || user?.phoneNumber || "Chưa có số điện thoại"}
               </Text>
 
               <Pressable
@@ -148,13 +148,13 @@ const SettingsScreen: React.FC = () => {
                 onPress={() => navigation.navigate("EditProfile")}
               >
                 <Text className="text-sm font-bold text-white">
-                  Edit profile
+                  Chỉnh sửa hồ sơ
                 </Text>
               </Pressable>
             </View>
           </Card>
 
-          <Section title="Options" />
+          <Section title="Tùy chọn" />
 
           <View className="gap-3">
             {options.map((item) => (

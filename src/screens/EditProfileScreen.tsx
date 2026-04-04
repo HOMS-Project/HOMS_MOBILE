@@ -176,7 +176,7 @@ const EditProfileScreen: React.FC = () => {
                 <Ionicons name="chevron-back" size={22} color="#0f172a" />
               </Pressable>
               <Text className="text-2xl font-extrabold text-slate-900">
-                Edit profile
+                Chỉnh sửa hồ sơ
               </Text>
               <View className="h-11 w-11" />
             </View>
@@ -202,22 +202,22 @@ const EditProfileScreen: React.FC = () => {
               </View>
 
               <Text className="mt-3 text-sm font-medium text-slate-500">
-                Tap camera to update avatar
+                Nhấn biểu tượng camera để cập nhật ảnh đại diện
               </Text>
             </View>
 
             <Card className="mt-7 rounded-[30px] p-6">
               <Text className="text-xl font-extrabold text-slate-900">
-                Personal information
+                Thông tin cá nhân
               </Text>
               <Text className="mt-1 text-sm text-slate-500">
-                Keep your details up to date for better support.
+                Luôn cập nhật thông tin để được hỗ trợ tốt hơn.
               </Text>
 
               <View className="mt-5 gap-4">
                 <Input
-                  label="Ho va ten"
-                  placeholder="Ten cua ban"
+                  label="Họ và tên"
+                  placeholder="Tên của bạn"
                   value={name}
                   onChangeText={setName}
                 />
@@ -233,15 +233,15 @@ const EditProfileScreen: React.FC = () => {
                 />
 
                 <Input
-                  label="So dien thoai"
-                  placeholder="So dien thoai"
+                  label="Số điện thoại"
+                  placeholder="Số điện thoại"
                   value={phone}
                   onChangeText={setPhone}
                   keyboardType="phone-pad"
                 />
 
                 <Button
-                  title={saving ? "Dang luu..." : "Luu thay doi"}
+                  title={saving ? "Đang lưu..." : "Lưu thay đổi"}
                   onPress={handleSave}
                   loading={saving}
                   disabled={saving || uploadingAvatar}

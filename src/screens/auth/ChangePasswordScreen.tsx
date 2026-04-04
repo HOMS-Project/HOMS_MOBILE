@@ -105,17 +105,17 @@ const ChangePasswordScreen: React.FC<Props> = ({ onSubmit }) => {
                   color="#0f766e"
                 />
                 <Text className="text-3xl font-extrabold text-slate-900">
-                  Doi mat khau
+                  Đổi mật khẩu
                 </Text>
               </View>
 
               <Text className="text-base text-slate-500">
-                Tao mat khau moi va dam bao khac voi mat khau cu.
+                Tạo mật khẩu mới và đảm bảo khác với mật khẩu cũ.
               </Text>
 
               <View className="mt-6 gap-4">
                 <Input
-                  label="Nhap mat khau hien tai"
+                  label="Nhập mật khẩu hiện tại"
                   placeholder="@#%"
                   value={currentPassword}
                   onChangeText={setCurrentPassword}
@@ -123,7 +123,7 @@ const ChangePasswordScreen: React.FC<Props> = ({ onSubmit }) => {
                 />
 
                 <Input
-                  label="Nhap mat khau moi"
+                  label="Nhập mật khẩu mới"
                   placeholder="@#%"
                   value={newPassword}
                   onChangeText={setNewPassword}
@@ -131,7 +131,7 @@ const ChangePasswordScreen: React.FC<Props> = ({ onSubmit }) => {
                 />
 
                 <Input
-                  label="Xac nhan mat khau moi"
+                  label="Xác nhận mật khẩu mới"
                   placeholder="@#%"
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
@@ -139,7 +139,7 @@ const ChangePasswordScreen: React.FC<Props> = ({ onSubmit }) => {
                 />
 
                 <Button
-                  title={loading ? "Dang cap nhat..." : "Cap nhat"}
+                  title={loading ? "Đang cập nhật..." : "Cập nhật"}
                   onPress={handleSubmit}
                   disabled={loading}
                   loading={loading}
@@ -152,7 +152,7 @@ const ChangePasswordScreen: React.FC<Props> = ({ onSubmit }) => {
                 onPress={() => navigation.goBack()}
               >
                 <Text className="text-sm font-semibold text-emerald-600">
-                  Quay lai cai dat
+                  Quay lại cài đặt
                 </Text>
               </Pressable>
             </Card>

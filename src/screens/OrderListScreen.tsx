@@ -33,10 +33,10 @@ type StatusFilter = "ALL" | "IN_PROGRESS" | "ACCEPTED" | "COMPLETED" | "OTHER";
 type TimeFilter = "ALL" | "TODAY" | "WEEK" | "MONTH";
 
 const statusLabel = (status: string) => {
-  if (status === "IN_PROGRESS") return "Dang thuc hien";
-  if (status === "ACCEPTED") return "Da nhan";
-  if (status === "COMPLETED") return "Da hoan tat";
-  if (status === "PENDING") return "Cho xu ly";
+  if (status === "IN_PROGRESS") return "Đang thực hiện";
+  if (status === "ACCEPTED") return "Đã nhận";
+  if (status === "COMPLETED") return "Đã hoàn tất";
+  if (status === "PENDING") return "Chờ xử lý";
   return status;
 };
 
@@ -48,14 +48,14 @@ const statusClass = (status: string) => {
 };
 
 const filterLabel = (filter: StatusFilter | TimeFilter) => {
-  if (filter === "ALL") return "Tat ca";
-  if (filter === "IN_PROGRESS") return "Dang thuc hien";
-  if (filter === "ACCEPTED") return "Da nhan";
-  if (filter === "COMPLETED") return "Da hoan tat";
-  if (filter === "OTHER") return "Khac";
-  if (filter === "TODAY") return "Hom nay";
-  if (filter === "WEEK") return "Tuan nay";
-  if (filter === "MONTH") return "Thang nay";
+  if (filter === "ALL") return "Tất cả";
+  if (filter === "IN_PROGRESS") return "Đang thực hiện";
+  if (filter === "ACCEPTED") return "Đã nhận";
+  if (filter === "COMPLETED") return "Đã hoàn tất";
+  if (filter === "OTHER") return "Khác";
+  if (filter === "TODAY") return "Hôm nay";
+  if (filter === "WEEK") return "Tuần này";
+  if (filter === "MONTH") return "Tháng này";
   return filter;
 };
 
@@ -75,7 +75,7 @@ const OrderListScreen: React.FC = () => {
       setOrders(payload || []);
     } catch (error: any) {
       console.error("Fetch orders failed:", error);
-      showToast(error?.message || "Failed to load orders");
+      showToast(error?.message || "Không thể tải danh sách đơn");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -200,7 +200,7 @@ const OrderListScreen: React.FC = () => {
 
         <View className="flex-row items-center justify-between border-t border-slate-100 pt-2">
           <Text className="text-sm font-medium text-slate-500">
-            {order.items.length} mon do
+            {order.items.length} món đồ
           </Text>
           <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
         </View>
@@ -246,7 +246,7 @@ const OrderListScreen: React.FC = () => {
             <Ionicons name="chevron-back" size={22} color="#0f172a" />
           </Pressable>
           <Text className="ml-3 flex-1 text-xl font-extrabold text-slate-900">
-            Don hang da phan cong
+            Đơn hàng đã phân công
           </Text>
           <Pressable
             className="h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm"
@@ -263,7 +263,7 @@ const OrderListScreen: React.FC = () => {
         {showFilters ? (
           <Card className="mt-5 rounded-[24px] p-4">
             <Text className="text-xs font-bold uppercase tracking-wide text-slate-500">
-              Trang thai
+              Trạng thái
             </Text>
             <View className="mt-2 flex-row flex-wrap">
               {(
@@ -280,7 +280,7 @@ const OrderListScreen: React.FC = () => {
             </View>
 
             <Text className="mt-3 text-xs font-bold uppercase tracking-wide text-slate-500">
-              Thoi gian
+              Thời gian
             </Text>
             <View className="mt-2 flex-row flex-wrap">
               {(["ALL", "TODAY", "WEEK", "MONTH"] as const).map((t) =>
@@ -293,7 +293,7 @@ const OrderListScreen: React.FC = () => {
         {inProgress.length > 0 ? (
           <>
             <Text className="mb-3 mt-6 text-lg font-extrabold text-slate-900">
-              Dang thuc hien
+              Đang thực hiện
             </Text>
             {inProgress.map(renderOrderCard)}
           </>
@@ -302,7 +302,7 @@ const OrderListScreen: React.FC = () => {
         {accepted.length > 0 ? (
           <>
             <Text className="mb-3 mt-5 text-lg font-extrabold text-slate-900">
-              Da nhan
+              Đã nhận
             </Text>
             {accepted.map(renderOrderCard)}
           </>
@@ -311,7 +311,7 @@ const OrderListScreen: React.FC = () => {
         {others.length > 0 ? (
           <>
             <Text className="mb-3 mt-5 text-lg font-extrabold text-slate-900">
-              Khac
+              Khác
             </Text>
             {others.map(renderOrderCard)}
           </>
@@ -320,7 +320,7 @@ const OrderListScreen: React.FC = () => {
         {filtered.length === 0 ? (
           <Card className="mt-6 items-center py-10">
             <Text className="text-sm font-medium text-slate-500">
-              Khong co don hang phu hop voi bo loc
+              Không có đơn hàng phù hợp với bộ lọc
             </Text>
           </Card>
         ) : null}

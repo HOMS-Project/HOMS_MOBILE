@@ -9,7 +9,7 @@ type SectionProps = {
 
 const Section: React.FC<SectionProps> = ({
   title,
-  actionLabel = "View all",
+  actionLabel = "Xem tất cả",
   onActionPress,
 }) => {
   return (

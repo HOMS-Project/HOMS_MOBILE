@@ -164,16 +164,16 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
 
             <Card className="rounded-[30px] p-6">
               <Text className="text-3xl font-extrabold text-slate-900">
-                Dang nhap
+                Đăng nhập
               </Text>
               <Text className="mt-2 text-base text-slate-500">
-                Chao mung ban quay tro lai voi HOMS Driver
+                Chào mừng bạn quay trở lại với HOMS Driver
               </Text>
 
               <View className="mt-6 gap-4">
                 <Input
                   label="Email"
-                  placeholder="Nhap email cua ban"
+                  placeholder="Nhập email của bạn"
                   value={email}
                   onChangeText={setEmail}
                   autoCapitalize="none"
@@ -182,8 +182,8 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
                 />
 
                 <Input
-                  label="Mat khau"
-                  placeholder="Nhap mat khau cua ban"
+                  label="Mật khẩu"
+                  placeholder="Nhập mật khẩu của bạn"
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
@@ -203,12 +203,12 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
                   }
                 >
                   <Text className="text-sm font-semibold text-emerald-600">
-                    Quen mat khau?
+                    Quên mật khẩu?
                   </Text>
                 </Pressable>
 
                 <Button
-                  title={loading ? "Dang dang nhap..." : "Dang nhap"}
+                  title={loading ? "Đang đăng nhập..." : "Đăng nhập"}
                   onPress={handleSubmit}
                   disabled={loading}
                   loading={loading}
@@ -219,7 +219,7 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
               <View className="my-6 flex-row items-center gap-3">
                 <View className="h-px flex-1 bg-slate-200" />
                 <Text className="text-sm font-medium text-slate-400">
-                  Sign in with
+                  Đăng nhập với
                 </Text>
                 <View className="h-px flex-1 bg-slate-200" />
               </View>

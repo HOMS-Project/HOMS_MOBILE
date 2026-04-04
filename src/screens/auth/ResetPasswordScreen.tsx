@@ -59,17 +59,17 @@ const ResetPasswordScreen: React.FC<Props> = ({ onSubmit }) => {
               <View className="mb-4 flex-row items-center gap-2">
                 <Ionicons name="key-outline" size={22} color="#0f766e" />
                 <Text className="text-3xl font-extrabold text-slate-900">
-                  Mat khau moi
+                  Mật khẩu mới
                 </Text>
               </View>
 
               <Text className="text-base text-slate-500">
-                Tao mat khau moi de bao ve tai khoan cua ban.
+                Tạo mật khẩu mới để bảo vệ tài khoản của bạn.
               </Text>
 
               <View className="mt-6 gap-4">
                 <Input
-                  label="Nhap mat khau moi"
+                  label="Nhập mật khẩu mới"
                   placeholder="@#%"
                   value={newPassword}
                   onChangeText={setNewPassword}
@@ -77,7 +77,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ onSubmit }) => {
                 />
 
                 <Input
-                  label="Xac nhan mat khau"
+                  label="Xác nhận mật khẩu"
                   placeholder="@#%"
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
@@ -85,7 +85,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ onSubmit }) => {
                 />
 
                 <Button
-                  title={loading ? "Dang xu ly..." : "Xac nhan"}
+                  title={loading ? "Đang xử lý..." : "Xác nhận"}
                   disabled={loading}
                   loading={loading}
                   className="mt-1 h-14"
@@ -152,7 +152,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ onSubmit }) => {
                 onPress={() => navigation.goBack()}
               >
                 <Text className="text-sm font-semibold text-emerald-600">
-                  Quay lai
+                  Quay lại
                 </Text>
               </Pressable>
             </Card>

@@ -87,12 +87,12 @@ const ForgotPasswordScreen: React.FC<Props> = ({ onRequestOTP }) => {
               <View className="mb-4 flex-row items-center gap-2">
                 <Ionicons name="mail-open-outline" size={22} color="#0f766e" />
                 <Text className="text-3xl font-extrabold text-slate-900">
-                  Quen mat khau
+                  Quên mật khẩu
                 </Text>
               </View>
 
               <Text className="text-base text-slate-500">
-                Nhap email de nhan ma OTP va khoi phuc tai khoan an toan.
+                Nhập email để nhận mã OTP và khôi phục tài khoản an toàn.
               </Text>
 
               <View className="mt-6 gap-4">
@@ -113,7 +113,7 @@ const ForgotPasswordScreen: React.FC<Props> = ({ onRequestOTP }) => {
                 ) : null}
 
                 <Button
-                  title={submitting ? "Dang gui..." : "Gui ma OTP"}
+                  title={submitting ? "Đang gửi..." : "Gửi mã OTP"}
                   onPress={handleSendOTP}
                   disabled={submitting}
                   loading={submitting}
@@ -126,7 +126,7 @@ const ForgotPasswordScreen: React.FC<Props> = ({ onRequestOTP }) => {
                 onPress={() => navigation.navigate("Login")}
               >
                 <Text className="text-sm font-semibold text-emerald-600">
-                  Quay lai dang nhap
+                  Quay lại đăng nhập
                 </Text>
               </Pressable>
             </Card>

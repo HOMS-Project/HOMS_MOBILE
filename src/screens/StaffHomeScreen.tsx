@@ -35,19 +35,19 @@ const fallbackAvatar =
 const getStatusLabel = (status: string) => {
   switch (status) {
     case "PENDING":
-      return "Cho xac nhan";
+      return "Chờ xác nhận";
     case "ASSIGNED":
-      return "Da phan cong";
+      return "Đã phân công";
     case "ACCEPTED":
-      return "Da nhan don";
+      return "Đã nhận đơn";
     case "IN_PROGRESS":
-      return "Dang thuc hien";
+      return "Đang thực hiện";
     case "COMPLETED":
-      return "Da hoan tat";
+      return "Đã hoàn tất";
     case "CANCELLED":
-      return "Da huy";
+      return "Đã hủy";
     default:
-      return status || "Khong ro";
+      return status || "Không rõ";
   }
 };
 
@@ -153,12 +153,12 @@ const StaffHomeScreen: React.FC = () => {
           <View className="flex-row items-start justify-between">
             <View className="mr-3 flex-1">
               <Text className="text-lg font-extrabold text-slate-900">
-                {order.orderCode || "Order"}
+                {order.orderCode || "Đơn hàng"}
               </Text>
               <Text className="mt-1 text-sm text-slate-500">
                 {order.scheduledTime
                   ? new Date(order.scheduledTime).toLocaleString()
-                  : "No schedule"}
+                  : "Chưa có lịch"}
               </Text>
             </View>
             <View
@@ -174,14 +174,14 @@ const StaffHomeScreen: React.FC = () => {
             <View className="flex-row items-start gap-2">
               <Ionicons name="ellipse" size={10} color="#2563eb" />
               <Text className="flex-1 text-sm text-slate-700" numberOfLines={1}>
-                {order.pickup?.address || "No pickup address"}
+                {order.pickup?.address || "Chưa có địa chỉ lấy hàng"}
               </Text>
             </View>
             <View className="ml-1 h-4 w-px bg-slate-300" />
             <View className="flex-row items-start gap-2">
               <Ionicons name="ellipse" size={10} color="#ef4444" />
               <Text className="flex-1 text-sm text-slate-700" numberOfLines={1}>
-                {order.delivery?.address || "No delivery address"}
+                {order.delivery?.address || "Chưa có địa chỉ giao hàng"}
               </Text>
             </View>
           </View>
@@ -214,10 +214,10 @@ const StaffHomeScreen: React.FC = () => {
 
             <View className="ml-4 flex-1">
               <Text className="text-xl font-extrabold text-white">
-                {user?.fullName || user?.username || "Tai xe"}
+                {user?.fullName || user?.username || "Tài xế"}
               </Text>
               <Text className="mt-1 text-sm font-medium text-white/70">
-                {(user?.role || "Nhan vien").toString().toUpperCase()}
+                {(user?.role || "Nhân viên").toString().toUpperCase()}
               </Text>
             </View>
 
@@ -237,7 +237,7 @@ const StaffHomeScreen: React.FC = () => {
             >
               <Ionicons name="calendar-outline" size={20} color="#0f172a" />
               <Text className="mt-2 text-center text-xs font-bold text-slate-900">
-                Lich cua toi
+                Lịch của tôi
               </Text>
             </Pressable>
 
@@ -247,7 +247,7 @@ const StaffHomeScreen: React.FC = () => {
             >
               <Ionicons name="receipt-outline" size={20} color="#0f172a" />
               <Text className="mt-2 text-center text-xs font-bold text-slate-900">
-                Danh sach don
+                Danh sách đơn
               </Text>
             </Pressable>
 
@@ -257,7 +257,7 @@ const StaffHomeScreen: React.FC = () => {
             >
               <Ionicons name="map-outline" size={20} color="#0f172a" />
               <Text className="mt-2 text-center text-xs font-bold text-slate-900">
-                Ban do
+                Bản đồ
               </Text>
             </Pressable>
           </View>
@@ -266,7 +266,7 @@ const StaffHomeScreen: React.FC = () => {
         <View className="px-5">
           <Section
             title="Current Order"
-            actionLabel="View all"
+            actionLabel="Xem tất cả"
             onActionPress={() => navigation.navigate("OrderList")}
           />
 
@@ -288,7 +288,7 @@ const StaffHomeScreen: React.FC = () => {
                 <View className="flex-row items-start justify-between">
                   <View className="mr-3 flex-1">
                     <Text className="text-lg font-extrabold text-slate-900">
-                      {currentOrder.orderCode || "Order"}
+                      {currentOrder.orderCode || "Đơn hàng"}
                     </Text>
                     <Text className="mt-1 text-sm text-slate-500">
                       {currentOrder.scheduledTime
@@ -298,7 +298,7 @@ const StaffHomeScreen: React.FC = () => {
                             hour: "2-digit",
                             minute: "2-digit",
                           })
-                        : "No schedule"}
+                        : "Chưa có lịch"}
                     </Text>
                   </View>
                   <View
@@ -321,7 +321,8 @@ const StaffHomeScreen: React.FC = () => {
                       className="flex-1 text-sm font-medium text-slate-700"
                       numberOfLines={1}
                     >
-                      {currentOrder.pickup?.address || "No pickup address"}
+                      {currentOrder.pickup?.address ||
+                        "Chưa có địa chỉ lấy hàng"}
                     </Text>
                   </View>
                   <View className="my-2 h-px bg-slate-200" />
@@ -331,7 +332,8 @@ const StaffHomeScreen: React.FC = () => {
                       className="flex-1 text-sm font-medium text-slate-700"
                       numberOfLines={1}
                     >
-                      {currentOrder.delivery?.address || "No delivery address"}
+                      {currentOrder.delivery?.address ||
+                        "Chưa có địa chỉ giao hàng"}
                     </Text>
                   </View>
                 </View>
@@ -340,14 +342,14 @@ const StaffHomeScreen: React.FC = () => {
           ) : (
             <Card className="items-center py-8">
               <Text className="text-sm font-medium text-slate-500">
-                Chua co don hang duoc phan cong
+                Chưa có đơn hàng được phân công
               </Text>
             </Card>
           )}
 
           <Section
             title="Recent Orders"
-            actionLabel="View all"
+            actionLabel="Xem tất cả"
             onActionPress={() => navigation.navigate("OrderList")}
           />
 
@@ -356,7 +358,7 @@ const StaffHomeScreen: React.FC = () => {
           ) : (
             <Card className="items-center py-8">
               <Text className="text-sm font-medium text-slate-500">
-                Khong co don da hoan tat trong 7 ngay qua
+                Không có đơn đã hoàn tất trong 7 ngày qua
               </Text>
             </Card>
           )}

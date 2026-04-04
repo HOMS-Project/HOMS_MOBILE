@@ -5,8 +5,8 @@ import { colors, spacing } from "../theme";
 const MapPlaceholderScreen: React.FC = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Map (coming soon)</Text>
-      <Text style={styles.sub}>We are building this screen.</Text>
+      <Text style={styles.title}>Bản đồ (sắp ra mắt)</Text>
+      <Text style={styles.sub}>Màn hình này đang được phát triển.</Text>
     </View>
   );
 };
