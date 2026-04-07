@@ -220,7 +220,10 @@ const StaffHomeScreen: React.FC = () => {
               </Text>
             </View>
 
-            <Pressable className="h-12 w-12 items-center justify-center rounded-2xl bg-white/15">
+            <Pressable 
+              className="h-12 w-12 items-center justify-center rounded-2xl bg-white/15"
+              onPress={() => navigation.navigate("Notifications")}
+            >
               <Ionicons
                 name="notifications-outline"
                 size={24}

@@ -2,7 +2,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
 
 // Dưới đây là IP của Anh Bùi, ai code thì vô cmd gõ ipconfig sau đó cop ip của mình vào đây
-const BASE_URL = 'http://192.168.2.8:5000/api';
+const BASE_URL = 'http://10.63.47.129:5000/api';
 
 // In a real app, you would store this in AsyncStorage/ureStore
 let authToken: string | null = null;
@@ -131,6 +131,8 @@ export const endpoints = {
     pickup: (orderId: string) => `/staff/orders/${orderId}/pickup`,
     dropoff: (orderId: string) => `/staff/orders/${orderId}/dropoff`,
     getProxyRoute: '/staff/routing/osrm',
+    getNotifications: '/notifications',
+    markNotificationRead: (id: string) => `/notifications/${id}/read`,
   },
 };
 
@@ -155,4 +157,7 @@ export const staffApi = {
       .then((res) => res.data),
   getProxyRoute: (p1: string, p2: string) =>
     axiosClient.get(endpoints.staff.getProxyRoute, { params: { p1, p2 } }).then((res) => res.data),
+  getNotifications: () => axiosClient.get(endpoints.staff.getNotifications).then((res) => res.data),
+  markNotificationRead: (id: string) =>
+    axiosClient.patch(endpoints.staff.markNotificationRead(id)).then((res) => res.data),
 };

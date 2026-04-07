@@ -1,0 +1,7 @@
+AIzaSyAXT2EMh7Teag3RXdOwN3qA7_Vw95vAcGY==>***REMOVED***
+
+git filter-branch --tree-filter "sed -i 's/AIzaSyAA22RdzDxg4wXAgSDAel-a-JLhL4d0Wlg/***REMOVED***/g' src/app.config.js" HEAD
+
+git filter-branch -f --tree-filter "git grep -l 'AIzaSyAA22RdzDxg4wXAgSDAel-a-JLhL4d0Wlg' | xargs sed -i 's/AIzaSyAA22RdzDxg4wXAgSDAel-a-JLhL4d0Wlg/***REMOVED***/g' || true" HEAD
+
+git filter-branch -f --tree-filter "test -f src/app.config.js && sed -i 's/AIzaSyAA22RdzDxg4wXAgSDAel-a-JLhL4d0Wlg/***REMOVED***/g' src/app.config.js || true" HEAD

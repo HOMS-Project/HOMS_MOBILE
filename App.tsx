@@ -24,6 +24,7 @@ import MapPlaceholderScreen from "./src/screens/MapPlaceholderScreen";
 import OrderListScreen from "./src/screens/OrderListScreen";
 import OrderDetailsScreen from "./src/screens/OrderDetailsScreen";
 import OrderMapScreen from "./src/screens/OrderMapScreen";
+import NotificationScreen from "./src/screens/NotificationScreen";
 
 export type RootStackParamList = {
   Login: undefined;
@@ -37,6 +38,7 @@ export type RootStackParamList = {
   OrderList: undefined;
   OrderDetails: { invoiceId: string };
   OrderMap: { assignmentId: string; invoiceId: string };
+  Notifications: undefined;
 };
 
 export type MainTabParamList = {
@@ -167,6 +169,7 @@ export default function App() {
         <Stack.Screen name="OrderList" component={OrderListScreen} />
         <Stack.Screen name="OrderDetails" component={OrderDetailsScreen} />
         <Stack.Screen name="OrderMap" component={OrderMapScreen} />
+        <Stack.Screen name="Notifications" component={NotificationScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
