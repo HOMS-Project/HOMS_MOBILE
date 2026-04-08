@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Animated,
   View,
   Text,
   StyleSheet,
@@ -10,10 +11,15 @@ import {
   TextInput,
   ScrollView,
   Linking,
+  Image,
   Platform,
+  Dimensions,
+  Easing,
+  PanResponder,
 } from "react-native";
 import { WebView } from "react-native-webview";
-import Constants from 'expo-constants';
+import * as ImagePicker from "expo-image-picker";
+import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import axios from "axios";
@@ -25,50 +31,105 @@ import { staffApi, endpoints, apiRequest } from "../api";
 type OrderMapRouteProp = RouteProp<RootStackParamList, "OrderMap">;
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-// Hàm giải mã polyline từ Goong/Google
+type EvidenceGroup = {
+  beforeImages?: string[];
+  afterImages?: string[];
+  beforeNote?: string;
+  afterNote?: string;
+};
+
+// Reserved imports for upcoming GPS tracking integration.
+const __trackingReserved = {
+  httpClient: axios,
+  platform: Platform.OS,
+  appOwnership: Constants.appOwnership,
+};
+void __trackingReserved;
+
+// Decode encoded polyline (Google/Goong format) to lat/lng coordinates.
 const decodePolyline = (encoded: string) => {
-  if (!encoded) return [];
-  const poly = [];
-  let index = 0, len = encoded.length;
-  let lat = 0, lng = 0;
+  if (!encoded) return [] as Array<{ latitude: number; longitude: number }>;
+
+  const poly: Array<{ latitude: number; longitude: number }> = [];
+  let index = 0;
+  const len = encoded.length;
+  let lat = 0;
+  let lng = 0;
+
   while (index < len) {
-    let b, shift = 0, result = 0;
+    let b;
+    let shift = 0;
+    let result = 0;
+
     do {
       b = encoded.charCodeAt(index++) - 63;
       result |= (b & 0x1f) << shift;
       shift += 5;
     } while (b >= 0x20);
-    const dlat = (result & 1) ? ~(result >> 1) : (result >> 1);
-    lat += dlat;
+
+    const dLat = result & 1 ? ~(result >> 1) : result >> 1;
+    lat += dLat;
+
     shift = 0;
     result = 0;
+
     do {
       b = encoded.charCodeAt(index++) - 63;
       result |= (b & 0x1f) << shift;
       shift += 5;
     } while (b >= 0x20);
-    const dlng = (result & 1) ? ~(result >> 1) : (result >> 1);
-    lng += dlng;
-    poly.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
+
+    const dLng = result & 1 ? ~(result >> 1) : result >> 1;
+    lng += dLng;
+
+    poly.push({
+      latitude: lat / 1e5,
+      longitude: lng / 1e5,
+    });
   }
+
   return poly;
 };
 
-// Helper to normalize coordinates (assuming Longitude > 100 for Vietnam)
 const normalizeLatLng = (coord: any) => {
   if (!coord) return null;
   let lat = coord.lat ?? coord.latitude ?? coord[1] ?? 0;
   let lng = coord.lng ?? coord.longitude ?? coord[0] ?? 0;
-  // If lat/lng are swapped (Vietnam: Lng > 100, Lat < 30)
+
   if (lat > lng) {
     [lat, lng] = [lng, lat];
   }
+
   return { latitude: lat, longitude: lng };
 };
 
+const getMimeType = (uri: string) => {
+  const lowerUri = uri.toLowerCase();
+  if (lowerUri.endsWith(".png")) return "image/png";
+  if (lowerUri.endsWith(".webp")) return "image/webp";
+  if (lowerUri.endsWith(".heic")) return "image/heic";
+  return "image/jpeg";
+};
+
+const getFileName = (uri: string, prefix: string, idx: number) => {
+  const uriParts = uri.split("/");
+  const rawName = uriParts[uriParts.length - 1];
+  if (rawName && rawName.includes(".")) return rawName;
+
+  const extFromUri = uri.split(".").pop();
+  const ext = extFromUri && extFromUri.length <= 5 ? extFromUri : "jpg";
+  return `${prefix}-${Date.now()}-${idx}.${ext}`;
+};
+
 const OrderMapScreen: React.FC = () => {
+  // Navigation params
   const route = useRoute<OrderMapRouteProp>();
   const navigation = useNavigation<Nav>();
+
+  const assignmentId = route.params?.assignmentId;
+  const invoiceId = route.params?.invoiceId;
+
+  // Screen state
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState("PENDING");
   const [orderData, setOrderData] = useState<any>(null);
@@ -76,11 +137,106 @@ const OrderMapScreen: React.FC = () => {
   const [selectedRouteIdx, setSelectedRouteIdx] = useState(0);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [deviationReason, setDeviationReason] = useState("");
-  const [mapCoords, setMapCoords] = useState<{ pickup: any; delivery: any } | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
-  const assignmentId = route.params.assignmentId;
-  const ORS_API_KEY = process.env.EXPO_PUBLIC_ORS_API_KEY;
+  const [mapCoords, setMapCoords] = useState<{
+    pickup: any;
+    delivery: any;
+  } | null>(null);
 
+  const [pickupImages, setPickupImages] = useState<string[]>([]);
+  const [dropoffImages, setDropoffImages] = useState<string[]>([]);
+  const [pickupNote, setPickupNote] = useState("");
+  const [dropoffNote, setDropoffNote] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
+  const sheetMaxHeight = Math.round(Dimensions.get("window").height * 0.65);
+  const sheetPeekHeight = 52;
+  const collapsedTranslateY = Math.max(0, sheetMaxHeight - sheetPeekHeight);
+  const sheetTranslateY = useRef(new Animated.Value(0)).current;
+  const [isSheetCollapsed, setIsSheetCollapsed] = useState(false);
+  const dragStartY = useRef(0);
+  const currentTranslateY = useRef(0);
+
+  // Bottom sheet animation lifecycle
+  useEffect(() => {
+    const id = sheetTranslateY.addListener(({ value }) => {
+      currentTranslateY.current = value;
+    });
+
+    return () => {
+      sheetTranslateY.removeListener(id);
+    };
+  }, [sheetTranslateY]);
+
+  // Bottom sheet controls
+  const toggleSheet = (collapsed: boolean) => {
+    setIsSheetCollapsed(collapsed);
+    Animated.timing(sheetTranslateY, {
+      toValue: collapsed ? collapsedTranslateY : 0,
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  };
+
+  // Drag gesture for bottom sheet
+  const sheetPanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_evt, gestureState) =>
+          Math.abs(gestureState.dy) > 8 &&
+          Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
+        onPanResponderGrant: () => {
+          sheetTranslateY.stopAnimation((value) => {
+            dragStartY.current = value;
+          });
+        },
+        onPanResponderMove: (_evt, gestureState) => {
+          const next = dragStartY.current + gestureState.dy;
+          const clamped = Math.max(0, Math.min(collapsedTranslateY, next));
+          sheetTranslateY.setValue(clamped);
+        },
+        onPanResponderRelease: (_evt, gestureState) => {
+          const shouldCollapse =
+            gestureState.vy > 0.25 ||
+            (gestureState.vy >= -0.1 &&
+              currentTranslateY.current > collapsedTranslateY * 0.45);
+          toggleSheet(shouldCollapse);
+        },
+        onPanResponderTerminate: () => {
+          toggleSheet(currentTranslateY.current > collapsedTranslateY * 0.45);
+        },
+      }),
+    [collapsedTranslateY],
+  );
+
+  // Derived state from assignment status
+  const canUploadPickupEvidence =
+    status === "ACCEPTED" || status === "CONFIRMED";
+  const canUploadDropoffEvidence = status === "IN_PROGRESS";
+  const canEditPickupNote = canUploadPickupEvidence;
+  const canEditDropoffNote = canUploadDropoffEvidence;
+
+  const evidenceStageMessage =
+    status === "PENDING" || status === "ASSIGNED"
+      ? "Bạn cần nhận đơn hàng để thêm ảnh trước khi vận chuyển"
+      : status === "ACCEPTED" || status === "CONFIRMED"
+        ? "Ảnh sau khi giao chỉ mở khi đơn chuyển sang ĐANG THỰC HIỆN"
+        : status === "COMPLETED"
+          ? "Đơn đã hoàn tất"
+          : "";
+
+  const completionEvidence: EvidenceGroup = orderData?.completionEvidence || {
+    beforeImages: [],
+    afterImages: [],
+  };
+
+  const existingBeforeImages = Array.isArray(completionEvidence.beforeImages)
+    ? completionEvidence.beforeImages
+    : [];
+  const existingAfterImages = Array.isArray(completionEvidence.afterImages)
+    ? completionEvidence.afterImages
+    : [];
+
+  // Data fetching
   const fetchRoutes = async (p: any, d: any) => {
     try {
       const pLng = Number(p.longitude);
@@ -88,35 +244,43 @@ const OrderMapScreen: React.FC = () => {
       const dLng = Number(d.longitude);
       const dLat = Number(d.latitude);
 
-      if (isNaN(pLng) || isNaN(pLat) || isNaN(dLng) || isNaN(dLat)) {
+      if (
+        Number.isNaN(pLng) ||
+        Number.isNaN(pLat) ||
+        Number.isNaN(dLng) ||
+        Number.isNaN(dLat)
+      ) {
         console.warn("Invalid coordinates for routing");
         return;
       }
 
-      console.log("[Route] Fetching proxy routing from backend...");
-      const data = await staffApi.getProxyRoute(`${pLng},${pLat}`, `${dLng},${dLat}`);
+      const data = await staffApi.getProxyRoute(
+        `${pLng},${pLat}`,
+        `${dLng},${dLat}`,
+      );
 
-      if (data.code === 'Ok' && data.routes?.length > 0) {
-        const route = data.routes[0];
-        const mappedRoutes = [{
-          distance: route.distance,
-          duration: route.duration,
-          coordinates: route.geometry.coordinates.map((c: any) => ({
-            latitude: c[1],
-            longitude: c[0]
-          }))
-        }];
+      if (data.code === "Ok" && data.routes?.length > 0) {
+        const mappedRoutes = data.routes.map((r: any) => ({
+          distance: r.distance,
+          duration: r.duration,
+          coordinates: Array.isArray(r.geometry?.coordinates)
+            ? r.geometry.coordinates.map((c: any) => ({
+                latitude: c[1],
+                longitude: c[0],
+              }))
+            : [],
+        }));
+
         setRoutes(mappedRoutes);
       } else {
         console.warn("OSRM Proxy error:", data.code);
       }
     } catch (err: any) {
-      console.warn("OSRM Routing Proxy error:", err.message);
+      console.warn("OSRM Routing Proxy error:", err?.message || err);
     }
   };
 
   const fetchStatus = async () => {
-    const invoiceId = route.params?.invoiceId;
     if (!invoiceId || invoiceId === "undefined") {
       console.error("Invalid invoiceId provided to OrderMapScreen");
       setLoading(false);
@@ -125,24 +289,28 @@ const OrderMapScreen: React.FC = () => {
 
     try {
       const result = await staffApi.getOrderDetails(invoiceId);
-      const data = result.data || result;
+      const data = result?.data || result;
 
-      // Ưu tiên trạng thái của Assignment (phân công cá nhân) để các nút bấm hoạt động đúng
-      const currentStatus = data.assignmentStatus || data.status || "PENDING";
-      setStatus(currentStatus.toUpperCase());
+      const currentStatus = data?.assignmentStatus || data?.status || "PENDING";
+      setStatus(String(currentStatus).toUpperCase());
       setOrderData(data);
+      setPickupNote(
+        typeof data?.completionEvidence?.beforeNote === "string"
+          ? data.completionEvidence.beforeNote
+          : "",
+      );
+      setDropoffNote(
+        typeof data?.completionEvidence?.afterNote === "string"
+          ? data.completionEvidence.afterNote
+          : "",
+      );
 
-      const p = normalizeLatLng(data.pickup?.coordinates);
-      const d = normalizeLatLng(data.delivery?.coordinates);
+      const p = normalizeLatLng(data?.pickup?.coordinates);
+      const d = normalizeLatLng(data?.delivery?.coordinates);
 
       if (p && d) {
         setMapCoords({ pickup: p, delivery: d });
-
-        // Always fetch journey routes from OSRM
-        fetchRoutes(p, d);
-
-        // If backend provided pre-defined restrictions or a custom polyline
-        // (We don't setRoutes here because we want the dynamic OSRM route as the main one)
+        await fetchRoutes(p, d);
       }
     } catch (error) {
       console.error("Lỗi khi lấy thông tin đơn hàng:", error);
@@ -151,57 +319,224 @@ const OrderMapScreen: React.FC = () => {
     }
   };
 
+  // Initial load
   useEffect(() => {
     fetchStatus();
   }, []);
 
-  // WebView handles auto-fitting internally
-
+  // Map actions
   const openExternalMap = () => {
-    if (!orderData?.delivery?.coordinates) return;
-    const { lat, lng } = orderData.delivery.coordinates;
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
-    Linking.openURL(url).catch(() => Alert.alert("Lỗi", "Không thể mở ứng dụng bản đồ"));
+    const destination = normalizeLatLng(orderData?.delivery?.coordinates);
+    if (!destination) return;
+
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${destination.latitude},${destination.longitude}&travelmode=driving`;
+    Linking.openURL(url).catch(() =>
+      Alert.alert("Lỗi", "Không thể mở ứng dụng bản đồ"),
+    );
   };
 
-  const handleStatusUpdate = async (action: 'ACCEPT' | 'START' | 'COMPLETE') => {
+  // Evidence selection helpers
+  const pickImages = async (target: "pickup" | "dropoff") => {
+    try {
+      const permission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (permission.status !== "granted") {
+        Alert.alert(
+          "Cần quyền truy cập",
+          "Vui lòng cho phép truy cập thư viện ảnh để tải bằng chứng.",
+        );
+        return;
+      }
+
+      const mediaImages = (ImagePicker as any).MediaType?.Images;
+      const options: any = {
+        allowsMultipleSelection: true,
+        selectionLimit: 10,
+        quality: 0.7,
+      };
+
+      if (mediaImages) {
+        options.mediaTypes = [mediaImages];
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync(options);
+      if (result.canceled) return;
+
+      const selected = (result.assets || [])
+        .map((asset) => asset.uri)
+        .filter(Boolean);
+      if (!selected.length) return;
+
+      if (target === "pickup") {
+        setPickupImages((prev) =>
+          Array.from(new Set([...prev, ...selected])).slice(0, 10),
+        );
+      } else {
+        setDropoffImages((prev) =>
+          Array.from(new Set([...prev, ...selected])).slice(0, 10),
+        );
+      }
+    } catch (error) {
+      console.error("Pick images failed:", error);
+      Alert.alert("Lỗi", "Không thể chọn ảnh lúc này");
+    }
+  };
+
+  const removeImage = (target: "pickup" | "dropoff", uri: string) => {
+    if (target === "pickup") {
+      setPickupImages((prev) => prev.filter((img) => img !== uri));
+      return;
+    }
+
+    setDropoffImages((prev) => prev.filter((img) => img !== uri));
+  };
+
+  // Evidence upload payload builder
+  const buildEvidenceFormData = (
+    images: string[],
+    type: "pickup" | "dropoff",
+    noteText: string,
+  ) => {
+    const formData = new FormData();
+
+    images.forEach((uri, idx) => {
+      formData.append("images", {
+        uri,
+        type: getMimeType(uri),
+        name: getFileName(uri, type, idx),
+      } as any);
+    });
+
+    if (noteText.trim()) {
+      formData.append("note", noteText.trim());
+    }
+
+    return formData;
+  };
+
+  // API actions
+  const updateAssignmentStatus = async (
+    newStatus: "ACCEPTED" | "IN_PROGRESS" | "COMPLETED",
+  ) => {
+    if (!assignmentId) {
+      throw new Error("Không tìm thấy ID phân công công việc.");
+    }
+
+    await staffApi.updateAssignmentStatus(assignmentId, newStatus);
+  };
+
+  const uploadPickupEvidence = async () => {
+    if (!invoiceId) {
+      throw new Error("Không tìm thấy mã đơn hàng.");
+    }
+
+    const formData = buildEvidenceFormData(pickupImages, "pickup", pickupNote);
+    await staffApi.submitPickup(invoiceId, formData);
+  };
+
+  const uploadDropoffEvidence = async () => {
+    if (!invoiceId) {
+      throw new Error("Không tìm thấy mã đơn hàng.");
+    }
+
+    const formData = buildEvidenceFormData(
+      dropoffImages,
+      "dropoff",
+      dropoffNote,
+    );
+    await staffApi.submitDropoff(invoiceId, formData);
+  };
+
+  // Assignment status transitions
+  const handleAccept = async () => {
     setActionLoading(true);
     try {
-      if (!assignmentId) {
-        throw new Error("Không tìm thấy ID phân công công việc.");
-      }
-
-      let newStatus = '';
-      if (action === 'ACCEPT') newStatus = 'ACCEPTED';
-      else if (action === 'START') newStatus = 'IN_PROGRESS';
-      else if (action === 'COMPLETE') newStatus = 'COMPLETED';
-
-      const result = await staffApi.updateAssignmentStatus(assignmentId, newStatus);
-
-      if (result) {
-        Alert.alert("Thành công", "Đã cập nhật trạng thái đơn hàng");
-        fetchStatus(); // Refresh data
-        if (action === 'COMPLETE') navigation.navigate("OrderList");
-      }
+      await updateAssignmentStatus("ACCEPTED");
+      Alert.alert("Thành công", "Đã cập nhật trạng thái đơn hàng");
+      await fetchStatus();
     } catch (error: any) {
-      Alert.alert("Lỗi", error.message || "Không thể cập nhật trạng thái");
+      Alert.alert("Lỗi", error?.message || "Không thể cập nhật trạng thái");
     } finally {
       setActionLoading(false);
     }
   };
 
+  const handleStart = async () => {
+    if (pickupImages.length === 0 && existingBeforeImages.length === 0) {
+      Alert.alert(
+        "Thiếu bằng chứng",
+        "Bạn cần chụp ảnh đồ đạc trước khi di chuyển",
+      );
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      if (pickupImages.length > 0) {
+        await uploadPickupEvidence();
+      }
+
+      await updateAssignmentStatus("IN_PROGRESS");
+      Alert.alert("Thành công", "Đã cập nhật trạng thái đơn hàng");
+
+      setPickupImages([]);
+      setPickupNote("");
+      await fetchStatus();
+    } catch (error: any) {
+      Alert.alert("Lỗi", error?.message || "Không thể bắt đầu di chuyển");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleComplete = async () => {
+    if (dropoffImages.length === 0 && existingAfterImages.length === 0) {
+      Alert.alert("Thiếu bằng chứng", "Bạn cần cung cấp ảnh sau khi giao hàng");
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      if (dropoffImages.length > 0) {
+        await uploadDropoffEvidence();
+      }
+
+      await updateAssignmentStatus("COMPLETED");
+      Alert.alert("Thành công", "Đã cập nhật trạng thái đơn hàng");
+
+      setDropoffImages([]);
+      setDropoffNote("");
+      await fetchStatus();
+      navigation.navigate("OrderList");
+    } catch (error: any) {
+      Alert.alert("Lỗi", error?.message || "Không thể hoàn tất giao hàng");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Deviation reporting
   const submitDeviation = async () => {
+    if (!assignmentId) {
+      Alert.alert("Lỗi", "Không tìm thấy thông tin phân công");
+      return;
+    }
+
     if (!deviationReason.trim()) {
       Alert.alert("Lỗi", "Vui lòng nhập lý do");
       return;
     }
+
     try {
-      // For deviation, we can still use apiRequest or specific staffApi if added
-      const result = await apiRequest(endpoints.staff.updateAssignmentRoute(assignmentId), {
-        method: 'PATCH',
-        body: JSON.stringify({ reason: deviationReason })
-      });
-      if (result.success) {
+      const result = await apiRequest(
+        endpoints.staff.updateAssignmentRoute(assignmentId),
+        {
+          method: "PATCH",
+          body: JSON.stringify({ reason: deviationReason }),
+        },
+      );
+
+      if (result?.success) {
         Alert.alert("Thành công", "Đã báo cáo chuyển hướng về hệ thống");
         setIsModalVisible(false);
         setDeviationReason("");
@@ -211,74 +546,184 @@ const OrderMapScreen: React.FC = () => {
     }
   };
 
-  const renderActionButton = () => {
-    if (actionLoading) return <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 10 }} />;
-
-    switch (status) {
-      case "PENDING":
-      case "ASSIGNED":
-        return (
-          <TouchableOpacity style={styles.actionBtn} onPress={() => handleStatusUpdate('ACCEPT')}>
-            <Text style={styles.actionBtnText}>NHẬN ĐƠN HÀNG</Text>
-          </TouchableOpacity>
-        );
-      case "ACCEPTED":
-      case "CONFIRMED":
-        return (
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#F59E0B" }]} onPress={() => handleStatusUpdate('START')}>
-            <Text style={styles.actionBtnText}>BẮT ĐẦU DI CHUYỂN</Text>
-          </TouchableOpacity>
-        );
-      case "IN_PROGRESS":
-        return (
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#22C55E" }]} onPress={() => handleStatusUpdate('COMPLETE')}>
-            <Text style={styles.actionBtnText}>HOÀN TẤT GIAO HÀNG</Text>
-          </TouchableOpacity>
-        );
-      default: {
-        const displayStatus =
-          status === "COMPLETED" ? "ĐÃ HOÀN TẤT" :
-            status === "IN_PROGRESS" ? "ĐANG THỰC HIỆN" :
-              status === "ACCEPTED" ? "ĐÃ NHẬN ĐƠN" : status;
-        return (
-          <View style={{ alignItems: 'center', padding: 10 }}>
-            <Text style={{ color: colors.muted, fontStyle: 'italic' }}>Trạng thái: {displayStatus}</Text>
-          </View>
-        );
-      }
+  // UI render helpers
+  const renderSelectedImageList = (
+    target: "pickup" | "dropoff",
+    images: string[],
+    disabled = false,
+  ) => {
+    if (!images.length) {
+      return <Text style={styles.emptyEvidenceText}>Chưa chọn ảnh mới</Text>;
     }
+
+    return (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.imageList}
+      >
+        {images.map((uri) => (
+          <View key={`${target}-${uri}`} style={styles.imagePreviewWrap}>
+            <Image source={{ uri }} style={styles.imagePreview} />
+            <TouchableOpacity
+              style={styles.imageRemoveBtn}
+              onPress={() => removeImage(target, uri)}
+              disabled={actionLoading || disabled}
+            >
+              <Ionicons name="close" size={14} color="#FFF" />
+            </TouchableOpacity>
+          </View>
+        ))}
+      </ScrollView>
+    );
   };
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
+  const renderServerEvidenceList = (images: string[]) => {
+    if (!images.length) {
+      return (
+        <Text style={styles.emptyEvidenceText}>Chưa có ảnh đã tải lên</Text>
+      );
+    }
 
+    return (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.imageList}
+      >
+        {images.map((uri, idx) => (
+          <Image
+            key={`${uri}-${idx}`}
+            source={{ uri }}
+            style={styles.imagePreview}
+          />
+        ))}
+      </ScrollView>
+    );
+  };
+
+  const getActionConfig = () => {
+    if (status === "PENDING" || status === "ASSIGNED") {
+      return {
+        title: "NHẬN ĐƠN HÀNG",
+        color: colors.primary,
+        onPress: handleAccept,
+      };
+    }
+
+    if (status === "ACCEPTED" || status === "CONFIRMED") {
+      return {
+        title: "BẮT ĐẦU DI CHUYỂN",
+        color: "#F59E0B",
+        onPress: handleStart,
+      };
+    }
+
+    if (status === "IN_PROGRESS") {
+      return {
+        title: "HOÀN TẤT GIAO HÀNG",
+        color: "#22C55E",
+        onPress: handleComplete,
+      };
+    }
+
+    return null;
+  };
+
+  const renderActionButton = () => {
+    const action = getActionConfig();
+
+    if (!action) {
+      const displayStatus =
+        status === "COMPLETED"
+          ? "ĐÃ HOÀN TẤT"
+          : status === "IN_PROGRESS"
+            ? "ĐANG THỰC HIỆN"
+            : status === "ACCEPTED"
+              ? "ĐÃ NHẬN ĐƠN"
+              : status;
+
+      return (
+        <View style={{ alignItems: "center", padding: 10 }}>
+          <Text style={{ color: colors.muted, fontStyle: "italic" }}>
+            Trạng thái: {displayStatus}
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <TouchableOpacity
+        style={[
+          styles.actionBtn,
+          { backgroundColor: action.color },
+          actionLoading && styles.actionBtnDisabled,
+        ]}
+        onPress={action.onPress}
+        disabled={actionLoading}
+      >
+        {actionLoading ? (
+          <ActivityIndicator size="small" color="#FFF" />
+        ) : (
+          <Text style={styles.actionBtnText}>{action.title}</Text>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  // Map html generation
   const generateMapHtml = () => {
     const defaultCenter = [16.047079, 108.20623];
-    const pickup = mapCoords?.pickup ? [mapCoords.pickup.latitude, mapCoords.pickup.longitude] : null;
-    const delivery = mapCoords?.delivery ? [mapCoords.delivery.latitude, mapCoords.delivery.longitude] : null;
+    const pickup = mapCoords?.pickup
+      ? [mapCoords.pickup.latitude, mapCoords.pickup.longitude]
+      : null;
+    const delivery = mapCoords?.delivery
+      ? [mapCoords.delivery.latitude, mapCoords.delivery.longitude]
+      : null;
 
-    const activeRouteCoordinates = routes[selectedRouteIdx]?.coordinates?.map((c: any) => [c.latitude, c.longitude]) || [];
+    const activeRouteCoordinates =
+      routes[selectedRouteIdx]?.coordinates?.map((c: any) => [
+        c.latitude,
+        c.longitude,
+      ]) || [];
 
     let backupPolyline: number[][] = [];
-    if (routes.length === 0 && orderData?.polyline?.length > 0) {
-      backupPolyline = orderData.polyline.map((p: any) => {
-        const normalized = normalizeLatLng(p);
-        return normalized ? [normalized.latitude, normalized.longitude] : [0, 0];
-      });
+    if (routes.length === 0) {
+      const encodedPolyline =
+        typeof orderData?.polyline === "string"
+          ? orderData.polyline
+          : typeof orderData?.polyline?.points === "string"
+            ? orderData.polyline.points
+            : "";
+
+      if (encodedPolyline) {
+        backupPolyline = decodePolyline(encodedPolyline).map((p) => [
+          p.latitude,
+          p.longitude,
+        ]);
+      } else if (
+        Array.isArray(orderData?.polyline) &&
+        orderData.polyline.length > 0
+      ) {
+        backupPolyline = orderData.polyline.map((p: any) => {
+          const normalized = normalizeLatLng(p);
+          return normalized
+            ? [normalized.latitude, normalized.longitude]
+            : [0, 0];
+        });
+      }
     }
 
     const restrictedPaths: number[][][] = [];
     if (orderData?.restrictions?.length > 0) {
-      // Restrictions from the assigned Route
-      restrictedPaths.push(orderData.restrictions.map((p: any) => {
-        const normalized = normalizeLatLng(p);
-        return normalized ? [normalized.latitude, normalized.longitude] : [0, 0];
-      }));
+      restrictedPaths.push(
+        orderData.restrictions.map((p: any) => {
+          const normalized = normalizeLatLng(p);
+          return normalized
+            ? [normalized.latitude, normalized.longitude]
+            : [0, 0];
+        }),
+      );
     }
 
     return `
@@ -300,7 +745,7 @@ const OrderMapScreen: React.FC = () => {
     <script>
         var center = ${pickup ? JSON.stringify(pickup) : JSON.stringify(defaultCenter)};
         var map = L.map('map', { zoomControl: false, attributionControl: false }).setView(center, 13);
-        
+
         L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
             maxZoom: 20
         }).addTo(map);
@@ -350,11 +795,23 @@ const OrderMapScreen: React.FC = () => {
     `;
   };
 
+  // Render constants
+  const deliveryAddress = orderData?.delivery?.address || "";
+  const pickupAddress = orderData?.pickup?.address || "";
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.mapContainer}>
         <WebView
-          originWhitelist={['*']}
+          originWhitelist={["*"]}
           source={{ html: generateMapHtml() }}
           style={{ flex: 1 }}
           scrollEnabled={false}
@@ -363,73 +820,250 @@ const OrderMapScreen: React.FC = () => {
       </View>
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+        >
           <Text style={styles.backIcon}>{"<"}</Text>
         </TouchableOpacity>
         <View style={styles.headerInfo}>
           <Text style={styles.headerTitle}>Lộ Trình Vận Chuyển</Text>
-          <Text style={styles.headerSubtitle}>Đơn: {orderData?.orderCode || assignmentId.substring(0, 8)}</Text>
+          <Text style={styles.headerSubtitle}>
+            Đơn:{" "}
+            {orderData?.orderCode ||
+              (assignmentId ? assignmentId.substring(0, 8) : "N/A")}
+          </Text>
         </View>
       </View>
 
       {routes.length > 0 && (
         <View style={styles.routeSelector}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 15 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 15 }}
+          >
             {routes.map((r, idx) => (
               <TouchableOpacity
                 key={idx}
                 onPress={() => setSelectedRouteIdx(idx)}
-                style={[styles.routeTab, selectedRouteIdx === idx && styles.activeRouteTab]}
+                style={[
+                  styles.routeTab,
+                  selectedRouteIdx === idx && styles.activeRouteTab,
+                ]}
               >
-                <Text style={[styles.routeTabText, selectedRouteIdx === idx && styles.activeRouteTabText]}>Tuyến {idx + 1}</Text>
-                <Text style={[styles.routeTabSub, selectedRouteIdx === idx && styles.activeRouteTabSub]}>{(r.distance / 1000).toFixed(1)}km</Text>
+                <Text
+                  style={[
+                    styles.routeTabText,
+                    selectedRouteIdx === idx && styles.activeRouteTabText,
+                  ]}
+                >
+                  Tuyến {idx + 1}
+                </Text>
+                <Text
+                  style={[
+                    styles.routeTabSub,
+                    selectedRouteIdx === idx && styles.activeRouteTabSub,
+                  ]}
+                >
+                  {(r.distance / 1000).toFixed(1)}km
+                </Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
       )}
 
-      <View style={styles.bottomSheet}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+      <Animated.View
+        style={[
+          styles.bottomSheet,
+          {
+            height: sheetMaxHeight,
+            transform: [{ translateY: sheetTranslateY }],
+          },
+        ]}
+      >
+        <View style={styles.sheetGrabArea} {...sheetPanResponder.panHandlers}>
           <View style={styles.sheetHandle} />
+        </View>
+
+        <ScrollView
+          scrollEnabled={!isSheetCollapsed}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 20 }}
+        >
           <View style={styles.infoRow}>
             <View style={styles.infoBlock}>
               <Text style={styles.infoLabel}>THỜI GIAN</Text>
-              <Text style={styles.infoValue}>{routes.length > 0 ? Math.round(routes[selectedRouteIdx].duration / 60) : 25} phút</Text>
+              <Text style={styles.infoValue}>
+                {routes.length > 0
+                  ? Math.round(routes[selectedRouteIdx].duration / 60)
+                  : 25}{" "}
+                phút
+              </Text>
             </View>
             <View style={styles.vDivider} />
             <View style={styles.infoBlock}>
               <Text style={styles.infoLabel}>KHOẢNG CÁCH</Text>
-              <Text style={styles.infoValue}>{routes.length > 0 ? (routes[selectedRouteIdx].distance / 1000).toFixed(1) : 5.0} km</Text>
+              <Text style={styles.infoValue}>
+                {routes.length > 0
+                  ? (routes[selectedRouteIdx].distance / 1000).toFixed(1)
+                  : 5.0}{" "}
+                km
+              </Text>
             </View>
           </View>
+
           <View style={styles.addressSection}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: 4,
+              }}
+            >
               <Ionicons name="location" size={16} color="#EF4444" />
-              <Text style={[styles.addrHeading, { marginLeft: 6 }]}>Giao: {orderData?.delivery?.address.split(',')[0]}</Text>
+              <Text style={[styles.addrHeading, { marginLeft: 6 }]}>
+                Giao: {deliveryAddress.split(",")[0] || "Chưa có"}
+              </Text>
             </View>
-            <Text style={styles.addrSub}>Từ: {orderData?.pickup?.address.split(',')[0]}</Text>
+            <Text style={styles.addrSub}>
+              Từ: {pickupAddress.split(",")[0] || "Chưa có"}
+            </Text>
           </View>
-          <TouchableOpacity style={styles.googleMapsBtn} onPress={openExternalMap}>
+
+          <TouchableOpacity
+            style={styles.googleMapsBtn}
+            onPress={openExternalMap}
+            disabled={actionLoading}
+          >
             <Ionicons name="navigate" size={18} color="#FFF" />
             <Text style={styles.googleMapsBtnText}>Mở bằng Google Maps</Text>
           </TouchableOpacity>
+
           {orderData?.routeValidation?.violations?.length > 0 && (
             <View style={styles.violationContainer}>
               <Text style={styles.violationTitle}>⚠️ Cảnh báo cấm đường:</Text>
-              {orderData.routeValidation.violations.map((v: string, idx: number) => (
-                <Text key={idx} style={styles.violationText}>• {v}</Text>
-              ))}
+              {orderData.routeValidation.violations.map(
+                (v: string, idx: number) => (
+                  <Text key={idx} style={styles.violationText}>
+                    • {v}
+                  </Text>
+                ),
+              )}
             </View>
           )}
-          <TouchableOpacity style={styles.deviateBtn} onPress={() => setIsModalVisible(true)}>
-            <Text style={styles.deviateBtnText}>⚠️ Báo Tắc Đường / Đổi Lộ Trình</Text>
+
+          <View style={styles.evidenceCard}>
+            <Text style={styles.evidenceTitle}>Bằng chứng hoàn thành</Text>
+
+            {!!evidenceStageMessage && (
+              <View style={styles.evidenceLockBadge}>
+                <Ionicons name="lock-closed" size={14} color="#64748B" />
+                <Text style={styles.evidenceLockText}>
+                  {evidenceStageMessage}
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.evidenceContentWrap}>
+              <View style={styles.evidenceGroup}>
+                <Text style={styles.evidenceGroupTitle}>
+                  Trước khi vận chuyển
+                </Text>
+                <TouchableOpacity
+                  style={[
+                    styles.pickBtn,
+                    (actionLoading || !canUploadPickupEvidence) &&
+                      styles.pickBtnDisabled,
+                  ]}
+                  onPress={() => pickImages("pickup")}
+                  disabled={actionLoading || !canUploadPickupEvidence}
+                >
+                  <Ionicons
+                    name="images-outline"
+                    size={16}
+                    color={colors.primary}
+                  />
+                  <Text style={styles.pickBtnText}>
+                    Chọn ảnh trước khi vận chuyển
+                  </Text>
+                </TouchableOpacity>
+                {renderSelectedImageList(
+                  "pickup",
+                  pickupImages,
+                  !canUploadPickupEvidence,
+                )}
+                <TextInput
+                  style={[
+                    styles.noteInput,
+                    !canEditPickupNote && styles.noteInputDisabled,
+                  ]}
+                  placeholder="Ghi chú ảnh trước khi vận chuyển"
+                  value={pickupNote}
+                  onChangeText={setPickupNote}
+                  editable={!actionLoading && canEditPickupNote}
+                  multiline
+                />
+                <Text style={styles.uploadedTitle}>Ảnh đã tải lên</Text>
+                {renderServerEvidenceList(existingBeforeImages)}
+              </View>
+
+              <View style={styles.evidenceGroup}>
+                <Text style={styles.evidenceGroupTitle}>Sau khi giao</Text>
+                <TouchableOpacity
+                  style={[
+                    styles.pickBtn,
+                    (actionLoading || !canUploadDropoffEvidence) &&
+                      styles.pickBtnDisabled,
+                  ]}
+                  onPress={() => pickImages("dropoff")}
+                  disabled={actionLoading || !canUploadDropoffEvidence}
+                >
+                  <Ionicons
+                    name="images-outline"
+                    size={16}
+                    color={colors.primary}
+                  />
+                  <Text style={styles.pickBtnText}>Chọn ảnh sau khi giao</Text>
+                </TouchableOpacity>
+                {renderSelectedImageList(
+                  "dropoff",
+                  dropoffImages,
+                  !canUploadDropoffEvidence,
+                )}
+                <TextInput
+                  style={[
+                    styles.noteInput,
+                    !canEditDropoffNote && styles.noteInputDisabled,
+                  ]}
+                  placeholder="Ghi chú ảnh sau khi giao"
+                  value={dropoffNote}
+                  onChangeText={setDropoffNote}
+                  editable={!actionLoading && canEditDropoffNote}
+                  multiline
+                />
+                <Text style={styles.uploadedTitle}>Ảnh đã tải lên</Text>
+                {renderServerEvidenceList(existingAfterImages)}
+              </View>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.deviateBtn, actionLoading && styles.pickBtnDisabled]}
+            onPress={() => setIsModalVisible(true)}
+            disabled={actionLoading}
+          >
+            <Text style={styles.deviateBtnText}>
+              ⚠️ Báo Tắc Đường / Đổi Lộ Trình
+            </Text>
           </TouchableOpacity>
+
           {renderActionButton()}
         </ScrollView>
-      </View>
+      </Animated.View>
 
-      <Modal visible={isModalVisible} transparent={true} animationType="slide">
+      <Modal visible={isModalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Báo Cáo Sự Cố</Text>
@@ -441,10 +1075,16 @@ const OrderMapScreen: React.FC = () => {
               multiline
             />
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setIsModalVisible(false)}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setIsModalVisible(false)}
+              >
                 <Text style={styles.modalCancelText}>Hủy</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.modalSubmitBtn} onPress={submitDeviation}>
+              <TouchableOpacity
+                style={styles.modalSubmitBtn}
+                onPress={submitDeviation}
+              >
                 <Text style={styles.modalSubmitText}>Gửi</Text>
               </TouchableOpacity>
             </View>
@@ -461,9 +1101,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0F0F0",
   },
   mapContainer: {
-    flex: 1,
-  },
-  map: {
     flex: 1,
   },
   center: {
@@ -488,26 +1125,26 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   routeSelector: {
-    position: 'absolute',
+    position: "absolute",
     top: 135,
     left: 0,
     right: 0,
     zIndex: 1000,
   },
   routeTab: {
-    backgroundColor: '#FFF',
+    backgroundColor: "#FFF",
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
     marginRight: 10,
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 5,
-    alignItems: 'center',
+    alignItems: "center",
     minWidth: 90,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: "#F3F4F6",
   },
   activeRouteTab: {
     backgroundColor: colors.primary,
@@ -515,11 +1152,11 @@ const styles = StyleSheet.create({
   },
   routeTabText: {
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: "800",
     color: colors.text,
   },
   activeRouteTabText: {
-    color: '#FFF',
+    color: "#FFF",
   },
   routeTabSub: {
     fontSize: 11,
@@ -527,7 +1164,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   activeRouteTabSub: {
-    color: 'rgba(255,255,255,0.8)',
+    color: "rgba(255,255,255,0.8)",
   },
   backBtn: {
     width: 40,
@@ -544,6 +1181,7 @@ const styles = StyleSheet.create({
   },
   headerInfo: {
     marginLeft: 15,
+    flex: 1,
   },
   headerTitle: {
     fontSize: 18,
@@ -555,19 +1193,24 @@ const styles = StyleSheet.create({
     color: colors.muted,
   },
   bottomSheet: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
-    width: '100%',
-    maxHeight: '60%',
+    width: "100%",
     backgroundColor: "#FFF",
+    overflow: "hidden",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     paddingHorizontal: spacing.xl,
-    paddingTop: 12,
+    paddingTop: 8,
     elevation: 10,
     shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowRadius: 20,
+  },
+  sheetGrabArea: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
   },
   sheetHandle: {
     width: 40,
@@ -575,7 +1218,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
     borderRadius: 3,
     alignSelf: "center",
-    marginBottom: 20,
+    marginBottom: 0,
   },
   infoRow: {
     flexDirection: "row",
@@ -614,15 +1257,139 @@ const styles = StyleSheet.create({
     color: colors.muted,
     marginTop: 2,
   },
+  evidenceCard: {
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: radius.lg,
+    padding: 12,
+    marginBottom: 15,
+    backgroundColor: "#FAFAFA",
+    gap: 10,
+  },
+  evidenceTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: colors.text,
+  },
+  evidenceGroup: {
+    gap: 8,
+  },
+  evidenceContentWrap: {
+    gap: 10,
+  },
+  evidenceContentWrapLocked: {
+    opacity: 0.55,
+  },
+  evidenceLockBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    alignSelf: "flex-start",
+  },
+  evidenceLockText: {
+    color: "#64748B",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  evidenceGroupTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#334155",
+  },
+  pickBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    borderRadius: radius.md,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  pickBtnText: {
+    color: colors.primary,
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  pickBtnDisabled: {
+    opacity: 0.6,
+  },
+  uploadedTitle: {
+    fontSize: 12,
+    color: colors.muted,
+    fontWeight: "700",
+  },
+  imageList: {
+    gap: 10,
+    paddingRight: 8,
+  },
+  imagePreviewWrap: {
+    width: 84,
+    height: 84,
+    borderRadius: 10,
+    overflow: "hidden",
+    backgroundColor: "#E2E8F0",
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+  },
+  imagePreview: {
+    width: 84,
+    height: 84,
+    borderRadius: 10,
+    marginRight: 10,
+    backgroundColor: "#E2E8F0",
+  },
+  imageRemoveBtn: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "rgba(15,23,42,0.7)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyEvidenceText: {
+    fontSize: 12,
+    color: colors.muted,
+    fontStyle: "italic",
+  },
+  noteInput: {
+    backgroundColor: "#FFF",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: radius.md,
+    minHeight: 68,
+    textAlignVertical: "top",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: colors.text,
+  },
+  noteInputDisabled: {
+    opacity: 0.6,
+    backgroundColor: "#F8FAFC",
+  },
   actionBtn: {
     backgroundColor: colors.primary,
     paddingVertical: 18,
     borderRadius: radius.lg,
     alignItems: "center",
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowRadius: 10,
+  },
+  actionBtnDisabled: {
+    opacity: 0.7,
   },
   actionBtnText: {
     color: "#FFF",
@@ -631,17 +1398,17 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   googleMapsBtn: {
-    flexDirection: 'row',
-    backgroundColor: '#4285F4',
+    flexDirection: "row",
+    backgroundColor: "#4285F4",
     paddingVertical: 14,
     borderRadius: radius.md,
     alignItems: "center",
-    justifyContent: 'center',
+    justifyContent: "center",
     marginBottom: 15,
     gap: 10,
   },
   googleMapsBtnText: {
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 16,
     fontWeight: "800",
   },
@@ -660,19 +1427,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
   },
   modalContent: {
     backgroundColor: "#FFF",
     padding: 24,
     borderRadius: radius.lg,
-    width: "85%"
+    width: "85%",
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: "800",
     marginBottom: 16,
-    color: colors.text
+    color: colors.text,
   },
   modalInput: {
     backgroundColor: "#F3F4F6",
@@ -680,32 +1447,32 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     minHeight: 100,
     textAlignVertical: "top",
-    marginBottom: 20
+    marginBottom: 20,
   },
   modalActions: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    gap: 12
+    gap: 12,
   },
   modalCancelBtn: {
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
-    backgroundColor: "#F3F4F6"
+    backgroundColor: "#F3F4F6",
   },
   modalCancelText: {
     fontWeight: "700",
-    color: colors.text
+    color: colors.text,
   },
   modalSubmitBtn: {
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
-    backgroundColor: "#EF4444"
+    backgroundColor: "#EF4444",
   },
   modalSubmitText: {
     fontWeight: "700",
-    color: "#FFF"
+    color: "#FFF",
   },
   violationContainer: {
     backgroundColor: "#FEF2F2",
@@ -713,30 +1480,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 15,
     borderLeftWidth: 4,
-    borderLeftColor: "#EF4444"
+    borderLeftColor: "#EF4444",
   },
   violationTitle: {
     color: "#991B1B",
     fontWeight: "800",
     fontSize: 14,
-    marginBottom: 4
+    marginBottom: 4,
   },
   violationText: {
     color: "#B91C1C",
     fontSize: 13,
-    fontWeight: "600"
+    fontWeight: "600",
   },
-  warningTitle: {
-    color: "#1E40AF",
-    fontWeight: "800",
-    fontSize: 14,
-    marginBottom: 4
-  },
-  warningText: {
-    color: "#1D4ED8",
-    fontSize: 13,
-    fontWeight: "600"
-  }
 });
 
 export default OrderMapScreen;

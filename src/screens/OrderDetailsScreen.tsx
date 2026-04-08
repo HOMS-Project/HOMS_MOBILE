@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Linking,
   Pressable,
   ScrollView,
@@ -36,6 +37,12 @@ type OrderDetail = {
     name?: string;
     phone?: string;
     email?: string;
+  };
+  completionEvidence?: {
+    beforeImages?: string[];
+    afterImages?: string[];
+    beforeNote?: string;
+    afterNote?: string;
   };
 };
 
@@ -92,6 +99,24 @@ const OrderDetailsScreen: React.FC = () => {
         setOrder({
           ...payload,
           items: Array.isArray(payload.items) ? payload.items : [],
+          completionEvidence: {
+            beforeImages: Array.isArray(
+              payload?.completionEvidence?.beforeImages,
+            )
+              ? payload.completionEvidence.beforeImages
+              : [],
+            afterImages: Array.isArray(payload?.completionEvidence?.afterImages)
+              ? payload.completionEvidence.afterImages
+              : [],
+            beforeNote:
+              typeof payload?.completionEvidence?.beforeNote === "string"
+                ? payload.completionEvidence.beforeNote
+                : "",
+            afterNote:
+              typeof payload?.completionEvidence?.afterNote === "string"
+                ? payload.completionEvidence.afterNote
+                : "",
+          },
         });
       }
     } catch (error) {
@@ -125,6 +150,42 @@ const OrderDetailsScreen: React.FC = () => {
 
   const customerName = order.customer?.name || "Khách hàng";
   const customerPhone = order.customer?.phone || "";
+  const items = Array.isArray(order.items) ? order.items : [];
+  const beforeImages = Array.isArray(order.completionEvidence?.beforeImages)
+    ? order.completionEvidence?.beforeImages
+    : [];
+  const afterImages = Array.isArray(order.completionEvidence?.afterImages)
+    ? order.completionEvidence?.afterImages
+    : [];
+  const beforeNote = (order.completionEvidence?.beforeNote || "").trim();
+  const afterNote = (order.completionEvidence?.afterNote || "").trim();
+
+  const renderEvidenceList = (images: string[]) => {
+    if (!images.length) {
+      return (
+        <View className="rounded-2xl bg-slate-50 px-4 py-3">
+          <Text className="text-sm italic text-slate-500">Chưa có ảnh</Text>
+        </View>
+      );
+    }
+
+    return (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingRight: 6 }}
+      >
+        {images.map((uri, index) => (
+          <Image
+            key={`${uri}-${index}`}
+            source={{ uri }}
+            className="mr-3 h-28 w-28 rounded-2xl bg-slate-200"
+            resizeMode="cover"
+          />
+        ))}
+      </ScrollView>
+    );
+  };
 
   const handleContact = () => {
     if (customerPhone) {
@@ -275,16 +336,16 @@ const OrderDetailsScreen: React.FC = () => {
             </Text>
             <View className="rounded-full bg-emerald-100 px-4 py-1">
               <Text className="text-base font-bold text-emerald-700">
-                {order.items.length} món
+                {items.length} món
               </Text>
             </View>
           </View>
 
           <View className="mt-4">
-            {order.items.map((item, index) => (
+            {items.map((item, index) => (
               <View
                 key={index}
-                className={`flex-row items-start justify-between py-4 ${index !== order.items.length - 1 ? "border-b border-slate-100" : ""}`}
+                className={`flex-row items-start justify-between py-4 ${index !== items.length - 1 ? "border-b border-slate-100" : ""}`}
               >
                 <View className="mr-3 flex-1">
                   <Text className="text-lg font-semibold text-slate-800">
@@ -301,6 +362,34 @@ const OrderDetailsScreen: React.FC = () => {
                 </Text>
               </View>
             ))}
+          </View>
+
+          <View className="mt-5 h-px bg-slate-100" />
+
+          <View className="mt-5 gap-4">
+            <Text className="text-xl font-extrabold text-slate-900">
+              Bằng chứng hoàn thành
+            </Text>
+
+            <View>
+              <Text className="mb-2 text-base font-bold text-slate-700">
+                Trước khi vận chuyển:
+              </Text>
+              {renderEvidenceList(beforeImages)}
+              <Text className="mt-2 text-sm text-slate-600">
+                Ghi chú: {beforeNote || "Chưa có ghi chú"}
+              </Text>
+            </View>
+
+            <View>
+              <Text className="mb-2 text-base font-bold text-slate-700">
+                Sau khi giao:
+              </Text>
+              {renderEvidenceList(afterImages)}
+              <Text className="mt-2 text-sm text-slate-600">
+                Ghi chú: {afterNote || "Chưa có ghi chú"}
+              </Text>
+            </View>
           </View>
         </Card>
       </ScrollView>
