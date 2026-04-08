@@ -104,6 +104,7 @@ const OrderListScreen: React.FC = () => {
   const normalized = orders.map((o) => ({
     ...o,
     status: (o.status || "").toUpperCase(),
+    items: Array.isArray((o as any)?.items) ? (o as any).items : [],
   }));
 
   const applyTimeFilter = (o: Order) => {
@@ -136,77 +137,72 @@ const OrderListScreen: React.FC = () => {
     (o) => !["IN_PROGRESS", "ACCEPTED"].includes(o.status),
   );
 
-  const renderOrderCard = (order: Order) => (
-    <Pressable
-      key={order.invoiceId}
-      className="mb-3"
-      onPress={() => {
-        const id = order.invoiceId || (order as any).id || (order as any)._id;
-        if (id) {
-          navigation.navigate("OrderDetails", { invoiceId: id });
-        }
-      }}
-    >
-      <Card className="gap-4 rounded-[24px] p-6">
-        <View className="flex-row items-start justify-between">
-          <View className="mr-3 flex-1">
-            <View className="flex-row items-center gap-2">
-              <Text className="text-2xl">📦</Text>
-              <Text className="text-lg font-bold text-slate-900">
-                {order.orderCode}
+  const renderOrderCard = (order: Order) => {
+    return (
+      <Pressable
+        key={order.invoiceId}
+        className="mb-3"
+        onPress={() => {
+          const id = order.invoiceId || (order as any).id || (order as any)._id;
+          if (id) {
+            navigation.navigate("OrderDetails", { invoiceId: id });
+          }
+        }}
+      >
+        <Card className="gap-4 rounded-[24px] p-6">
+          <View className="flex-row items-start justify-between">
+            <View className="mr-3 flex-1">
+              <View className="flex-row items-center gap-2">
+                <Text className="text-2xl">📦</Text>
+                <Text className="text-lg font-bold text-slate-900">
+                  {order.orderCode}
+                </Text>
+              </View>
+              <Text className="mt-1 text-base text-slate-500">
+                {new Date(order.scheduledTime).toLocaleDateString()} ·{" "}
+                {new Date(order.scheduledTime).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </Text>
             </View>
-            <Text className="mt-1 text-base text-slate-500">
-              {new Date(order.scheduledTime).toLocaleDateString()} ·{" "}
-              {new Date(order.scheduledTime).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </Text>
-          </View>
 
-          <View
-            className={`rounded-full px-4 py-2 ${statusClass(order.status)}`}
-          >
-            <Text className="text-sm font-bold">
-              {statusLabel(order.status)}
-            </Text>
-          </View>
-        </View>
-
-        <View className="gap-3 rounded-2xl bg-slate-50 p-4">
-          <View className="flex-row items-start gap-2">
-            <Ionicons name="ellipse" size={11} color="#2563eb" />
-            <Text
-              className="flex-1 text-base font-medium text-slate-700"
-              numberOfLines={1}
+            <View
+              className={`rounded-full px-4 py-2 ${statusClass(order.status)}`}
             >
-              {order.pickup.address}
-            </Text>
+              <Text className="text-sm font-bold">
+                {statusLabel(order.status)}
+              </Text>
+            </View>
           </View>
 
-          <View className="ml-1 h-4 w-px bg-slate-300" />
+          <View className="gap-3 rounded-2xl bg-slate-50 p-4">
+            <View className="flex-row items-start gap-2">
+              <Ionicons name="ellipse" size={11} color="#2563eb" />
+              <Text
+                className="flex-1 text-base font-medium text-slate-700"
+                numberOfLines={1}
+              >
+                {order.pickup.address}
+              </Text>
+            </View>
 
-          <View className="flex-row items-start gap-2">
-            <Ionicons name="ellipse" size={11} color="#ef4444" />
-            <Text
-              className="flex-1 text-base font-medium text-slate-700"
-              numberOfLines={1}
-            >
-              {order.delivery.address}
-            </Text>
+            <View className="ml-1 h-4 w-px bg-slate-300" />
+
+            <View className="flex-row items-start gap-2">
+              <Ionicons name="ellipse" size={11} color="#ef4444" />
+              <Text
+                className="flex-1 text-base font-medium text-slate-700"
+                numberOfLines={1}
+              >
+                {order.delivery.address}
+              </Text>
+            </View>
           </View>
-        </View>
-
-        <View className="flex-row items-center justify-between border-t border-slate-100 pt-2">
-          <Text className="text-base font-medium text-slate-500">
-            {order.items.length} món đồ
-          </Text>
-          <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
-        </View>
-      </Card>
-    </Pressable>
-  );
+        </Card>
+      </Pressable>
+    );
+  };
 
   const renderChip = (
     value: StatusFilter | TimeFilter,

@@ -2,7 +2,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
 
 // Dưới đây là IP của Anh Bùi, ai code thì vô cmd gõ ipconfig sau đó cop ip của mình vào đây
-const BASE_URL = 'http://10.63.47.129:5000/api';
+const BASE_URL = 'http://192.168.2.8:5000/api';
 
 // In a real app, you would store this in AsyncStorage/ureStore
 let authToken: string | null = null;
