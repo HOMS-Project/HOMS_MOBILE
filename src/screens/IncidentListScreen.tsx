@@ -2,6 +2,7 @@ import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Modal,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -53,6 +54,7 @@ const IncidentListScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [incidents, setIncidents] = useState<StaffIncident[]>([]);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const fetchIncidents = useCallback(async () => {
     try {
@@ -77,6 +79,8 @@ const IncidentListScreen: React.FC = () => {
     setRefreshing(true);
     fetchIncidents();
   };
+
+  const closePreview = () => setPreviewImage(null);
 
   if (loading) {
     return (
@@ -110,11 +114,12 @@ const IncidentListScreen: React.FC = () => {
           </Text>
         </View>
 
-        <Card className="mt-5 rounded-[24px] p-5">
+        <Card className="mt-5 self-center rounded-[24px] px-3 py-2">
           <Button
             title="Tạo báo cáo"
             onPress={() => navigation.navigate("CreateIncident")}
-            className="h-12"
+            className="h-10 px-6"
+            textClassName="text-base"
           />
         </Card>
 
@@ -123,52 +128,75 @@ const IncidentListScreen: React.FC = () => {
             const reportTime = incident.createdAt
               ? new Date(incident.createdAt).toLocaleString("vi-VN")
               : "Không rõ";
-            const firstMedia = incident.images?.[0] || "";
+            const mediaList = Array.isArray(incident.images)
+              ? incident.images.filter((item) => Boolean(item))
+              : [];
 
             return (
               <Card key={incident.id} className="rounded-[24px] p-5">
                 <View className="flex-row items-start justify-between">
                   <View className="mr-3 flex-1">
-                    <Text className="text-base font-bold text-slate-900">
+                    <Text className="text-xl font-bold text-slate-900">
                       {incident.invoiceCode || "Chưa có mã đơn"}
                     </Text>
-                    <Text className="mt-1 text-sm text-slate-500">
+                    <Text className="mt-1 text-lg text-slate-500">
                       {reportTime}
                     </Text>
                   </View>
                   <View
-                    className={`rounded-full px-3 py-1 ${statusClass(incident.status)}`}
+                    className={`rounded-full px-4 py-1.5 ${statusClass(incident.status)}`}
                   >
-                    <Text className="text-xs font-bold">
+                    <Text className="text-base font-bold">
                       {statusLabel(incident.status)}
                     </Text>
                   </View>
                 </View>
 
                 <View className="mt-3 flex-row items-center gap-2">
-                  <View className="rounded-full bg-slate-100 px-3 py-1">
-                    <Text className="text-xs font-bold text-slate-700">
+                  <View className="rounded-full bg-slate-100 px-4 py-1.5">
+                    <Text className="text-base font-bold text-slate-700">
                       {typeLabel(incident.type)}
                     </Text>
                   </View>
                 </View>
 
                 <View className="mt-4 rounded-2xl bg-slate-50 p-3">
-                  {firstMedia ? (
-                    isVideo(firstMedia) ? (
-                      <View className="h-28 items-center justify-center rounded-xl bg-slate-200">
-                        <Ionicons name="videocam" size={28} color="#334155" />
-                        <Text className="mt-2 text-xs font-medium text-slate-600">
-                          Video minh chứng
-                        </Text>
-                      </View>
-                    ) : (
-                      <Image
-                        source={{ uri: firstMedia }}
-                        className="h-28 w-full rounded-xl bg-slate-200"
-                        resizeMode="cover"
-                      />
-                    )
+                  {mediaList.length > 0 ? (
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={{ gap: 12, paddingRight: 2 }}
+                    >
+                      {mediaList.map((mediaUrl, index) =>
+                        isVideo(mediaUrl) ? (
+                          <View
+                            key={`${incident.id}-media-${index}`}
+                            className="h-32 w-32 items-center justify-center rounded-xl bg-slate-200"
+                          >
+                            <Ionicons
+                              name="videocam"
+                              size={34}
+                              color="#334155"
+                            />
+                            <Text className="mt-1 text-sm font-medium text-slate-600">
+                              Video
+                            </Text>
+                          </View>
+                        ) : (
+                          <Pressable
+                            key={`${incident.id}-media-${index}`}
+                            className="h-32 w-32 overflow-hidden rounded-xl bg-slate-200 p-1"
+                            onPress={() => setPreviewImage(mediaUrl)}
+                          >
+                            <Image
+                              source={{ uri: mediaUrl }}
+                              className="h-full w-full rounded-lg"
+                              resizeMode="contain"
+                            />
+                          </Pressable>
+                        ),
+                      )}
+                    </ScrollView>
                   ) : (
                     <View className="h-20 items-center justify-center rounded-xl bg-slate-200">
                       <Text className="text-xs font-medium text-slate-500">
@@ -178,8 +206,8 @@ const IncidentListScreen: React.FC = () => {
                   )}
 
                   <Text
-                    className="mt-3 text-sm leading-5 text-slate-600"
-                    numberOfLines={2}
+                    className="mt-3 text-lg leading-7 text-slate-600"
+                    numberOfLines={3}
                   >
                     {incident.description || "Chưa có ghi chú"}
                   </Text>
@@ -197,6 +225,25 @@ const IncidentListScreen: React.FC = () => {
           ) : null}
         </View>
       </ScrollView>
+
+      <Modal
+        visible={Boolean(previewImage)}
+        transparent
+        animationType="fade"
+        onRequestClose={closePreview}
+      >
+        <View className="flex-1 items-center justify-center bg-black/85 px-4">
+          <Pressable className="absolute inset-0" onPress={closePreview} />
+
+          {previewImage ? (
+            <Image
+              source={{ uri: previewImage }}
+              resizeMode="contain"
+              style={{ width: "100%", height: 460 }}
+            />
+          ) : null}
+        </View>
+      </Modal>
     </View>
   );
 };
