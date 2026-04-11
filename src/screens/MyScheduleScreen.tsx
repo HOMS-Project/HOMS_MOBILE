@@ -23,6 +23,7 @@ type Job = {
   id: string;
   invoiceId: string;
   assignmentId?: string;
+  scheduledTime?: string;
   date: string;
   invoice: string;
   status: string;
@@ -34,12 +35,16 @@ const getStatusStyle = (status: string) => {
   switch (status) {
     case "COMPLETED":
       return "bg-emerald-100 text-emerald-700";
+    case "ACCEPTED":
+      return "bg-cyan-100 text-cyan-700";
     case "IN_PROGRESS":
       return "bg-sky-100 text-sky-700";
     case "PENDING":
       return "bg-amber-100 text-amber-700";
     case "ASSIGNED":
       return "bg-violet-100 text-violet-700";
+    case "CANCELLED":
+      return "bg-rose-100 text-rose-700";
     default:
       return "bg-slate-100 text-slate-600";
   }
@@ -49,12 +54,16 @@ const getStatusLabel = (status: string) => {
   switch (status) {
     case "COMPLETED":
       return "Đã hoàn tất";
+    case "ACCEPTED":
+      return "Đã nhận";
     case "IN_PROGRESS":
       return "Đang thực hiện";
     case "PENDING":
       return "Chờ xử lý";
     case "ASSIGNED":
       return "Đã phân công";
+    case "CANCELLED":
+      return "Đã hủy";
     default:
       return status;
   }
@@ -72,26 +81,25 @@ const MyScheduleScreen: React.FC = () => {
       const result = await staffApi.getOrders();
       const payload = (result as any)?.data ?? result;
 
-      const formattedJobs = (payload || [])
-        .filter((o: any) => (o.status || "").toUpperCase() === "ASSIGNED")
-        .map((o: any) => ({
-          id: o.invoiceId,
-          invoiceId: o.invoiceId,
-          assignmentId: o.assignmentId,
-          date: o.scheduledTime
-            ? new Date(o.scheduledTime).toLocaleDateString()
-            : "",
-          invoice: o.orderCode,
-          status: (o.status || "").toUpperCase(),
-          pickup: {
-            title: o.pickup?.address?.split(",")[0] || "Điểm lấy",
-            address: o.pickup?.address || "",
-          },
-          dropoff: {
-            title: o.delivery?.address?.split(",")[0] || "Điểm giao",
-            address: o.delivery?.address || "",
-          },
-        }));
+      const formattedJobs = (payload || []).map((o: any) => ({
+        id: o.invoiceId || o._id,
+        invoiceId: o.invoiceId || o._id,
+        assignmentId: o.assignmentId,
+        scheduledTime: o.scheduledTime || "",
+        date: o.scheduledTime
+          ? new Date(o.scheduledTime).toLocaleDateString("vi-VN")
+          : "",
+        invoice: o.orderCode,
+        status: (o.status || "").toUpperCase(),
+        pickup: {
+          title: o.pickup?.address?.split(",")[0] || "Điểm lấy",
+          address: o.pickup?.address || "",
+        },
+        dropoff: {
+          title: o.delivery?.address?.split(",")[0] || "Điểm giao",
+          address: o.delivery?.address || "",
+        },
+      }));
 
       setJobs(formattedJobs);
     } catch (error: any) {
@@ -132,8 +140,41 @@ const MyScheduleScreen: React.FC = () => {
     fetchJobs();
   };
 
-  const upcoming = jobs.filter((j) => j.status !== "COMPLETED");
-  const completed = jobs.filter((j) => j.status === "COMPLETED");
+  const now = new Date();
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
+  const endOfToday = new Date(now);
+  endOfToday.setHours(23, 59, 59, 999);
+
+  const todayJobs = jobs
+    .filter((j) => {
+      const ts = new Date(j.scheduledTime || "").getTime();
+      return (
+        !Number.isNaN(ts) &&
+        ts >= startOfToday.getTime() &&
+        ts <= endOfToday.getTime()
+      );
+    })
+    .sort(
+      (a, b) =>
+        new Date(a.scheduledTime || "").getTime() -
+        new Date(b.scheduledTime || "").getTime(),
+    );
+
+  const upcoming = jobs
+    .filter((j) => {
+      const ts = new Date(j.scheduledTime || "").getTime();
+      if (Number.isNaN(ts)) return false;
+      return (
+        ts >= startOfToday.getTime() &&
+        !["COMPLETED", "CANCELLED"].includes(j.status)
+      );
+    })
+    .sort(
+      (a, b) =>
+        new Date(a.scheduledTime || "").getTime() -
+        new Date(b.scheduledTime || "").getTime(),
+    );
 
   if (loading) {
     return (
@@ -174,12 +215,101 @@ const MyScheduleScreen: React.FC = () => {
             Công việc hôm nay
           </Text>
           <Text className="mt-1 text-3xl font-extrabold text-slate-900">
-            {upcoming.length}
+            {todayJobs.length}
           </Text>
           <Text className="mt-1 text-sm text-slate-500">
-            đơn hàng đang chờ bạn xác nhận
+            đơn hàng có lịch trong hôm nay
           </Text>
         </Card>
+
+        <Section title="Công việc hôm nay" />
+
+        {todayJobs.length > 0 ? (
+          todayJobs.map((item) => (
+            <Pressable
+              key={`today-${item.id}`}
+              className="mb-3"
+              onPress={() =>
+                navigation.navigate("OrderDetails", {
+                  invoiceId: item.invoiceId,
+                })
+              }
+            >
+              <Card className="gap-4 rounded-[26px] p-5">
+                <View className="flex-row items-start justify-between">
+                  <View className="mr-3 flex-1">
+                    <View className="flex-row items-center gap-2">
+                      <Text className="text-xl">📦</Text>
+                      <Text className="text-base font-bold text-slate-800">
+                        {item.invoice}
+                      </Text>
+                    </View>
+                    <Text className="mt-1 text-sm text-slate-500">
+                      {item.date}
+                    </Text>
+                  </View>
+                  <View
+                    className={`rounded-full px-3 py-1 ${getStatusStyle(item.status)}`}
+                  >
+                    <Text className="text-xs font-bold">
+                      {getStatusLabel(item.status)}
+                    </Text>
+                  </View>
+                </View>
+
+                <View className="gap-3 rounded-2xl bg-slate-50 p-3">
+                  <View className="flex-row items-start gap-2">
+                    <Ionicons name="ellipse" size={10} color="#2563eb" />
+                    <View className="flex-1">
+                      <Text className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                        {item.pickup.title}
+                      </Text>
+                      <Text
+                        className="text-sm font-medium text-slate-700"
+                        numberOfLines={1}
+                      >
+                        {item.pickup.address}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View className="ml-1 h-4 w-px bg-slate-300" />
+
+                  <View className="flex-row items-start gap-2">
+                    <Ionicons name="ellipse" size={10} color="#ef4444" />
+                    <View className="flex-1">
+                      <Text className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                        {item.dropoff.title}
+                      </Text>
+                      <Text
+                        className="text-sm font-medium text-slate-700"
+                        numberOfLines={1}
+                      >
+                        {item.dropoff.address}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                {item.status === "ASSIGNED" ? (
+                  <Button
+                    title="Nhận đơn"
+                    onPress={() => handleAccept(item)}
+                    loading={acceptingId === item.id}
+                    disabled={acceptingId === item.id}
+                    className="h-12"
+                  />
+                ) : null}
+              </Card>
+            </Pressable>
+          ))
+        ) : (
+          <Card className="items-center py-10">
+            <Text className="text-sm font-medium text-slate-500">
+              Không có công việc trong hôm nay
+            </Text>
+          </Card>
+        )}
 
         <Section title="Sắp tới" />
 
@@ -269,34 +399,6 @@ const MyScheduleScreen: React.FC = () => {
             </Text>
           </Card>
         )}
-
-        {completed.length > 0 ? (
-          <>
-            <Section title="Đơn hoàn tất gần đây" />
-            {completed.map((item) => (
-              <Pressable
-                key={item.id}
-                className="mb-3"
-                onPress={() =>
-                  navigation.navigate("OrderDetails", {
-                    invoiceId: item.invoiceId,
-                  })
-                }
-              >
-                <Card className="rounded-[24px] p-5">
-                  <View className="flex-row items-center justify-between">
-                    <Text className="text-base font-bold text-slate-800">
-                      {item.invoice}
-                    </Text>
-                    <Text className="text-xs font-semibold text-emerald-700">
-                      Hoàn tất
-                    </Text>
-                  </View>
-                </Card>
-              </Pressable>
-            ))}
-          </>
-        ) : null}
       </ScrollView>
     </View>
   );

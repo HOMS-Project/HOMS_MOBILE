@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -7,7 +7,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { useIsFocused, useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import type { RootStackParamList } from "../../App";
@@ -64,15 +64,8 @@ const options: Array<{
 
 const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
-  const isFocused = useIsFocused();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    if (isFocused) {
-      fetchProfile();
-    }
-  }, [isFocused]);
 
   const fetchProfile = async () => {
     try {
@@ -86,6 +79,12 @@ const SettingsScreen: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfile();
+    }, []),
+  );
 
   const handlePress = (route?: SettingsRoute) => {
     if (!route) return;
@@ -108,10 +107,13 @@ const SettingsScreen: React.FC = () => {
             <Text className="text-5xl font-extrabold text-slate-900">
               Cài đặt
             </Text>
-            <Pressable className="h-14 w-14 items-center justify-center rounded-3xl bg-white shadow-sm">
+            <Pressable
+              className="h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm"
+              onPress={() => navigation.navigate("Notifications")}
+            >
               <Ionicons
                 name="notifications-outline"
-                size={28}
+                size={24}
                 color="#0f172a"
               />
             </Pressable>

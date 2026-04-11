@@ -31,6 +31,23 @@ type DashboardOrder = {
 const fallbackAvatar =
   "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80";
 
+const getRoleLabel = (role?: string) => {
+  switch ((role || "").toLowerCase()) {
+    case "driver":
+      return "Tài xế";
+    case "staff":
+      return "Nhân viên";
+    case "dispatcher":
+      return "Điều phối viên";
+    case "admin":
+      return "Quản trị viên";
+    case "customer":
+      return "Khách hàng";
+    default:
+      return "Nhân viên";
+  }
+};
+
 const getStatusLabel = (status: string) => {
   switch (status) {
     case "PENDING":
@@ -115,7 +132,7 @@ const StaffHomeScreen: React.FC = () => {
       if (o.status !== "COMPLETED") return false;
       const ts = new Date(o.scheduledTime || "").getTime();
       if (Number.isNaN(ts)) return false;
-      const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
       return ts >= cutoff;
     })
     .sort(
@@ -216,11 +233,11 @@ const StaffHomeScreen: React.FC = () => {
                 {user?.fullName || user?.username || "Tài xế"}
               </Text>
               <Text className="mt-1 text-lg font-semibold text-white/75">
-                {(user?.role || "Nhân viên").toString().toUpperCase()}
+                {getRoleLabel(user?.role)}
               </Text>
             </View>
 
-            <Pressable 
+            <Pressable
               className="h-12 w-12 items-center justify-center rounded-2xl bg-white/15"
               onPress={() => navigation.navigate("Notifications")}
             >
@@ -268,7 +285,7 @@ const StaffHomeScreen: React.FC = () => {
         <View className="px-5">
           <View className="mb-3 mt-6 flex-row items-center justify-between">
             <Text className="text-3xl font-extrabold text-slate-900">
-              Current Order
+              Đơn đang hoạt động
             </Text>
             <Pressable onPress={() => navigation.navigate("OrderList")}>
               <Text className="text-xl font-bold text-emerald-600">
@@ -349,14 +366,14 @@ const StaffHomeScreen: React.FC = () => {
           ) : (
             <Card className="items-center py-10">
               <Text className="text-xl font-medium text-slate-500">
-                Chưa có đơn hàng được phân công
+                Chưa có đơn hàng nào đang hoạt động.
               </Text>
             </Card>
           )}
 
           <View className="mb-3 mt-6 flex-row items-center justify-between">
             <Text className="text-3xl font-extrabold text-slate-900">
-              Recent Orders
+              Các đơn gần đây
             </Text>
             <Pressable onPress={() => navigation.navigate("OrderList")}>
               <Text className="text-xl font-bold text-emerald-600">
@@ -370,7 +387,7 @@ const StaffHomeScreen: React.FC = () => {
           ) : (
             <Card className="items-center py-8">
               <Text className="text-lg font-medium text-slate-500">
-                Không có đơn đã hoàn tất trong 7 ngày qua
+                Không có đơn đã hoàn tất trong 1 tháng qua
               </Text>
             </Card>
           )}

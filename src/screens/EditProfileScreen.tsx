@@ -33,7 +33,6 @@ const EditProfileScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -115,8 +114,7 @@ const EditProfileScreen: React.FC = () => {
         if (result.success) {
           const u = result.data;
           setName(u.fullName || u.username || "");
-          setEmail(u.email || "");
-          setPhone(u.phoneNumber || (u as any).phone || "");
+          setPhone((u as any).phone || u.phoneNumber || "");
           setAvatar(u.avatar || null);
         }
       } catch (error) {
@@ -131,14 +129,16 @@ const EditProfileScreen: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
+      const formData = new FormData();
+      formData.append("fullName", name);
+      formData.append("phone", phone);
+
       const result = await apiRequest(endpoints.user.updateProfile, {
         method: "PUT",
-        body: JSON.stringify({
-          fullName: name,
-          email,
-          phoneNumber: phone,
-          avatar,
-        }),
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        body: formData as any,
       });
       if (result.success) {
         Alert.alert("Thành công", "Cập nhật hồ sơ thành công");
@@ -220,16 +220,6 @@ const EditProfileScreen: React.FC = () => {
                   placeholder="Tên của bạn"
                   value={name}
                   onChangeText={setName}
-                />
-
-                <Input
-                  label="Email"
-                  placeholder="Email"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
                 />
 
                 <Input

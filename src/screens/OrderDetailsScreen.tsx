@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Linking,
   Pressable,
@@ -36,6 +37,7 @@ type OrderDetail = {
   customer?: {
     name?: string;
     phone?: string;
+    phoneNumber?: string;
     email?: string;
   };
   completionEvidence?: {
@@ -149,7 +151,8 @@ const OrderDetailsScreen: React.FC = () => {
   }
 
   const customerName = order.customer?.name || "Khách hàng";
-  const customerPhone = order.customer?.phone || "";
+  const customerPhone =
+    order.customer?.phone || order.customer?.phoneNumber || "";
   const items = Array.isArray(order.items) ? order.items : [];
   const beforeImages = Array.isArray(order.completionEvidence?.beforeImages)
     ? order.completionEvidence?.beforeImages
@@ -188,9 +191,47 @@ const OrderDetailsScreen: React.FC = () => {
   };
 
   const handleContact = () => {
-    if (customerPhone) {
-      Linking.openURL(`tel:${customerPhone}`);
+    if (!customerPhone) {
+      Alert.alert(
+        "Không có số điện thoại",
+        "Khách hàng chưa cập nhật số điện thoại.",
+      );
+      return;
     }
+
+    Alert.alert(
+      "Yêu cầu gọi điện",
+      `Bạn có muốn mở ứng dụng gọi điện với số ${customerPhone} không?`,
+      [
+        {
+          text: "Hủy",
+          style: "cancel",
+        },
+        {
+          text: "Gọi",
+          onPress: async () => {
+            try {
+              const normalizedPhone = customerPhone.replace(/[^\d+]/g, "");
+              const telUrl = `tel:${normalizedPhone}`;
+              const canOpen = await Linking.canOpenURL(telUrl);
+
+              if (!canOpen) {
+                Alert.alert(
+                  "Không thể gọi",
+                  "Thiết bị không hỗ trợ mở ứng dụng gọi điện.",
+                );
+                return;
+              }
+
+              await Linking.openURL(telUrl);
+            } catch (error) {
+              console.error("Open dialer failed:", error);
+              Alert.alert("Lỗi", "Không thể mở ứng dụng gọi điện.");
+            }
+          },
+        },
+      ],
+    );
   };
 
   return (

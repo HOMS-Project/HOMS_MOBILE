@@ -60,8 +60,7 @@ const ChangePasswordScreen: React.FC<Props> = ({ onSubmit }) => {
         Alert.alert("Thành công", "Đổi mật khẩu thành công", [
           {
             text: "OK",
-            onPress: () =>
-              navigation.navigate("MainTabs", { screen: "Settings" } as any),
+            onPress: () => navigation.goBack(),
           },
         ]);
         setCurrentPassword("");

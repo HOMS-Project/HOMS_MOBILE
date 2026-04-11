@@ -62,17 +62,17 @@ const tabMeta: Record<
   }
 > = {
   Home: {
-    label: "Home",
+    label: "Trang chủ",
     activeIcon: "home",
     inactiveIcon: "home-outline",
   },
   TeamList: {
-    label: "Team List",
+    label: "Quản lý đội",
     activeIcon: "people",
     inactiveIcon: "people-outline",
   },
   Settings: {
-    label: "Setting",
+    label: "Cài đặt",
     activeIcon: "person",
     inactiveIcon: "person-outline",
   },
