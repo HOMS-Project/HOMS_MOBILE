@@ -127,6 +127,9 @@ export const endpoints = {
     getOrderDetails: (invoiceId: string) => `/staff/orders/${invoiceId}`,
     updateAssignmentStatus: (assignmentId: string) => `/staff/assignments/${assignmentId}/status`,
     updateAssignmentRoute: (assignmentId: string) => `/staff/assignments/${assignmentId}/route`,
+    getIncidentTypes: '/staff/incidents/meta/types',
+    getMyIncidents: '/staff/incidents',
+    createIncident: '/staff/incidents',
     getSchedule: '/staff/schedule',
     pickup: (orderId: string) => `/staff/orders/${orderId}/pickup`,
     dropoff: (orderId: string) => `/staff/orders/${orderId}/dropoff`,
@@ -141,6 +144,14 @@ export const staffApi = {
   getOrders: () => axiosClient.get(endpoints.staff.getOrders).then((res) => res.data),
   getOrderDetails: (invoiceId: string) =>
     axiosClient.get(endpoints.staff.getOrderDetails(invoiceId)).then((res) => res.data),
+  getIncidentTypes: () => axiosClient.get(endpoints.staff.getIncidentTypes).then((res) => res.data),
+  getMyIncidents: () => axiosClient.get(endpoints.staff.getMyIncidents).then((res) => res.data),
+  createIncident: (formData: FormData) =>
+    axiosClient
+      .post(endpoints.staff.createIncident, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((res) => res.data),
   updateAssignmentStatus: (assignmentId: string, status: string) =>
     axiosClient.patch(endpoints.staff.updateAssignmentStatus(assignmentId), { status }).then((res) => res.data),
   submitPickup: (orderId: string, formData: FormData) =>

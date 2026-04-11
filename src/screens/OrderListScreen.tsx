@@ -154,11 +154,11 @@ const OrderListScreen: React.FC = () => {
             <View className="mr-3 flex-1">
               <View className="flex-row items-center gap-2">
                 <Text className="text-2xl">📦</Text>
-                <Text className="text-lg font-bold text-slate-900">
+                <Text className="text-xl font-bold text-slate-900">
                   {order.orderCode}
                 </Text>
               </View>
-              <Text className="mt-1 text-base text-slate-500">
+              <Text className="mt-1 text-lg text-slate-500">
                 {new Date(order.scheduledTime).toLocaleDateString()} ·{" "}
                 {new Date(order.scheduledTime).toLocaleTimeString([], {
                   hour: "2-digit",
@@ -170,7 +170,7 @@ const OrderListScreen: React.FC = () => {
             <View
               className={`rounded-full px-4 py-2 ${statusClass(order.status)}`}
             >
-              <Text className="text-sm font-bold">
+              <Text className="text-base font-bold">
                 {statusLabel(order.status)}
               </Text>
             </View>
@@ -180,7 +180,7 @@ const OrderListScreen: React.FC = () => {
             <View className="flex-row items-start gap-2">
               <Ionicons name="ellipse" size={11} color="#2563eb" />
               <Text
-                className="flex-1 text-base font-medium text-slate-700"
+                className="flex-1 text-lg font-medium text-slate-700"
                 numberOfLines={1}
               >
                 {order.pickup.address}
@@ -192,7 +192,7 @@ const OrderListScreen: React.FC = () => {
             <View className="flex-row items-start gap-2">
               <Ionicons name="ellipse" size={11} color="#ef4444" />
               <Text
-                className="flex-1 text-base font-medium text-slate-700"
+                className="flex-1 text-lg font-medium text-slate-700"
                 numberOfLines={1}
               >
                 {order.delivery.address}
@@ -241,7 +241,7 @@ const OrderListScreen: React.FC = () => {
           >
             <Ionicons name="chevron-back" size={24} color="#0f172a" />
           </Pressable>
-          <Text className="ml-3 flex-1 text-2xl font-extrabold text-slate-900">
+          <Text className="ml-3 flex-1 text-3xl font-extrabold text-slate-900">
             Đơn hàng đã phân công
           </Text>
           <Pressable
@@ -288,7 +288,7 @@ const OrderListScreen: React.FC = () => {
 
         {inProgress.length > 0 ? (
           <>
-            <Text className="mb-3 mt-6 text-xl font-extrabold text-slate-900">
+            <Text className="mb-3 mt-6 text-2xl font-extrabold text-slate-900">
               Đang thực hiện
             </Text>
             {inProgress.map(renderOrderCard)}
@@ -297,7 +297,7 @@ const OrderListScreen: React.FC = () => {
 
         {accepted.length > 0 ? (
           <>
-            <Text className="mb-3 mt-5 text-xl font-extrabold text-slate-900">
+            <Text className="mb-3 mt-5 text-2xl font-extrabold text-slate-900">
               Đã nhận
             </Text>
             {accepted.map(renderOrderCard)}
@@ -306,7 +306,7 @@ const OrderListScreen: React.FC = () => {
 
         {others.length > 0 ? (
           <>
-            <Text className="mb-3 mt-5 text-xl font-extrabold text-slate-900">
+            <Text className="mb-3 mt-5 text-2xl font-extrabold text-slate-900">
               Khác
             </Text>
             {others.map(renderOrderCard)}
@@ -315,7 +315,7 @@ const OrderListScreen: React.FC = () => {
 
         {filtered.length === 0 ? (
           <Card className="mt-6 items-center py-10">
-            <Text className="text-base font-medium text-slate-500">
+            <Text className="text-lg font-medium text-slate-500">
               Không có đơn hàng phù hợp với bộ lọc
             </Text>
           </Card>

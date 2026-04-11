@@ -982,7 +982,7 @@ const OrderMapScreen: React.FC = () => {
                 >
                   <Ionicons
                     name="images-outline"
-                    size={16}
+                    size={20}
                     color={colors.primary}
                   />
                   <Text style={styles.pickBtnText}>
@@ -1022,7 +1022,7 @@ const OrderMapScreen: React.FC = () => {
                 >
                   <Ionicons
                     name="images-outline"
-                    size={16}
+                    size={20}
                     color={colors.primary}
                   />
                   <Text style={styles.pickBtnText}>Chọn ảnh sau khi giao</Text>
@@ -1267,7 +1267,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   evidenceTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "800",
     color: colors.text,
   },
@@ -1298,7 +1298,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   evidenceGroupTitle: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: "700",
     color: "#334155",
   },
@@ -1310,19 +1310,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#BFDBFE",
     borderRadius: radius.md,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
   },
   pickBtnText: {
     color: colors.primary,
     fontWeight: "700",
-    fontSize: 13,
+    fontSize: 17,
   },
   pickBtnDisabled: {
     opacity: 0.6,
   },
   uploadedTitle: {
-    fontSize: 12,
+    fontSize: 16,
     color: colors.muted,
     fontWeight: "700",
   },
@@ -1358,7 +1358,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   emptyEvidenceText: {
-    fontSize: 12,
+    fontSize: 16,
     color: colors.muted,
     fontStyle: "italic",
   },
@@ -1367,11 +1367,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E2E8F0",
     borderRadius: radius.md,
-    minHeight: 68,
+    minHeight: 84,
     textAlignVertical: "top",
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
+    paddingVertical: 12,
+    fontSize: 17,
     color: colors.text,
   },
   noteInputDisabled: {
