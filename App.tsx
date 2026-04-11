@@ -20,11 +20,14 @@ import StaffHomeScreen from "./src/screens/StaffHomeScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import EditProfileScreen from "./src/screens/EditProfileScreen";
 import MyScheduleScreen from "./src/screens/MyScheduleScreen";
-import MapPlaceholderScreen from "./src/screens/MapPlaceholderScreen";
 import OrderListScreen from "./src/screens/OrderListScreen";
 import OrderDetailsScreen from "./src/screens/OrderDetailsScreen";
 import OrderMapScreen from "./src/screens/OrderMapScreen";
 import NotificationScreen from "./src/screens/NotificationScreen";
+import TeamListScreen from "./src/screens/TeamListScreen";
+import TeamDetailScreen from "./src/screens/TeamDetailScreen";
+import IncidentListScreen from "./src/screens/IncidentListScreen";
+import CreateIncidentScreen from "./src/screens/CreateIncidentScreen";
 
 export type RootStackParamList = {
   Login: undefined;
@@ -34,16 +37,19 @@ export type RootStackParamList = {
   ResetPassword: { email?: string } | undefined;
   MainTabs: undefined;
   EditProfile: undefined;
-  MySchedule: undefined;
+  TeamList: undefined;
   OrderList: undefined;
   OrderDetails: { invoiceId: string };
   OrderMap: { assignmentId: string; invoiceId: string };
+  TeamDetail: { invoiceId: string };
+  IncidentList: undefined;
+  CreateIncident: undefined;
   Notifications: undefined;
 };
 
 export type MainTabParamList = {
   Home: undefined;
-  TeamList: undefined;
+  MySchedule: undefined;
   Settings: undefined;
 };
 
@@ -66,10 +72,10 @@ const tabMeta: Record<
     activeIcon: "home",
     inactiveIcon: "home-outline",
   },
-  TeamList: {
-    label: "Quản lý đội",
-    activeIcon: "people",
-    inactiveIcon: "people-outline",
+  MySchedule: {
+    label: "Lịch của tôi",
+    activeIcon: "calendar",
+    inactiveIcon: "calendar-outline",
   },
   Settings: {
     label: "Cài đặt",
@@ -141,7 +147,7 @@ const MainTabs = () => (
     tabBar={(props) => <CustomTabBar {...props} />}
   >
     <Tab.Screen name="Home" component={StaffHomeScreen} />
-    <Tab.Screen name="TeamList" component={MapPlaceholderScreen} />
+    <Tab.Screen name="MySchedule" component={MyScheduleScreen} />
     <Tab.Screen name="Settings" component={SettingsScreen} />
   </Tab.Navigator>
 );
@@ -165,10 +171,13 @@ export default function App() {
         <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
         <Stack.Screen name="MainTabs" component={MainTabs} />
         <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-        <Stack.Screen name="MySchedule" component={MyScheduleScreen} />
+        <Stack.Screen name="TeamList" component={TeamListScreen} />
         <Stack.Screen name="OrderList" component={OrderListScreen} />
         <Stack.Screen name="OrderDetails" component={OrderDetailsScreen} />
         <Stack.Screen name="OrderMap" component={OrderMapScreen} />
+        <Stack.Screen name="TeamDetail" component={TeamDetailScreen} />
+        <Stack.Screen name="IncidentList" component={IncidentListScreen} />
+        <Stack.Screen name="CreateIncident" component={CreateIncidentScreen} />
         <Stack.Screen name="Notifications" component={NotificationScreen} />
       </Stack.Navigator>
     </NavigationContainer>

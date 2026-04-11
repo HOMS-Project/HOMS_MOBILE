@@ -39,6 +39,7 @@ type OrderDetail = {
     phone?: string;
     phoneNumber?: string;
     email?: string;
+    avatar?: string;
   };
   completionEvidence?: {
     beforeImages?: string[];
@@ -153,6 +154,7 @@ const OrderDetailsScreen: React.FC = () => {
   const customerName = order.customer?.name || "Khách hàng";
   const customerPhone =
     order.customer?.phone || order.customer?.phoneNumber || "";
+  const customerAvatar = order.customer?.avatar || "";
   const items = Array.isArray(order.items) ? order.items : [];
   const beforeImages = Array.isArray(order.completionEvidence?.beforeImages)
     ? order.completionEvidence?.beforeImages
@@ -251,7 +253,7 @@ const OrderDetailsScreen: React.FC = () => {
           >
             <Ionicons name="chevron-back" size={28} color="#0f172a" />
           </Pressable>
-          <Text className="ml-3 text-3xl font-extrabold text-slate-900">
+          <Text className="ml-3 text-[34px] font-extrabold text-slate-900">
             Chi tiết đơn hàng
           </Text>
         </View>
@@ -264,7 +266,7 @@ const OrderDetailsScreen: React.FC = () => {
               {statusLabel(order.status)}
             </Text>
           </View>
-          <Text className="mt-3 text-5xl font-extrabold tracking-wide text-slate-900">
+          <Text className="mt-3 text-4xl font-extrabold tracking-wide text-slate-900">
             {order.orderCode}
           </Text>
         </Card>
@@ -338,21 +340,29 @@ const OrderDetailsScreen: React.FC = () => {
         </Card>
 
         <Card className="mt-5 rounded-[24px] p-6">
-          <Text className="text-2xl font-extrabold text-slate-900">
+          <Text className="text-[30px] font-extrabold text-slate-900">
             Thông tin khách hàng
           </Text>
 
           <View className="mt-4 flex-row items-center gap-3">
-            <View className="h-14 w-14 items-center justify-center rounded-full bg-emerald-500">
-              <Text className="text-xl font-extrabold text-white">
-                {(customerName[0] || "K").toUpperCase()}
-              </Text>
-            </View>
+            {customerAvatar ? (
+              <Image
+                source={{ uri: customerAvatar }}
+                className="h-14 w-14 rounded-full bg-slate-200"
+                resizeMode="cover"
+              />
+            ) : (
+              <View className="h-14 w-14 items-center justify-center rounded-full bg-emerald-500">
+                <Text className="text-xl font-extrabold text-white">
+                  {(customerName[0] || "K").toUpperCase()}
+                </Text>
+              </View>
+            )}
             <View className="flex-1">
-              <Text className="text-xl font-bold text-slate-900">
+              <Text className="text-[22px] font-bold text-slate-900">
                 {customerName}
               </Text>
-              <Text className="text-lg text-slate-500">
+              <Text className="text-[18px] text-slate-500">
                 {customerPhone || "Chưa có số điện thoại"}
               </Text>
             </View>

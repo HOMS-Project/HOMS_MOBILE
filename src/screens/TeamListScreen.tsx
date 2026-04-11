@@ -1,0 +1,265 @@
+import React, { useCallback, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../../App";
+import Card from "../components/ui/Card";
+import { showToast } from "../utils/toast";
+import {
+  fetchAssignedInvoices,
+  type TeamOrderSummary,
+} from "../services/staffFeatureService";
+
+type Nav = NativeStackNavigationProp<RootStackParamList>;
+type StatusFilter =
+  | "ALL"
+  | "PENDING"
+  | "CONFIRMED"
+  | "ASSIGNED"
+  | "ACCEPTED"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "CANCELLED";
+
+const STATUS_LABEL: Record<StatusFilter, string> = {
+  ALL: "Tất cả",
+  PENDING: "Chờ xử lý",
+  CONFIRMED: "Đã xác nhận",
+  ASSIGNED: "Đã phân công",
+  ACCEPTED: "Đã nhận",
+  IN_PROGRESS: "Đang thực hiện",
+  COMPLETED: "Đã hoàn tất",
+  CANCELLED: "Đã hủy",
+};
+
+const statusClass = (status: string) => {
+  if (status === "IN_PROGRESS") return "bg-sky-100 text-sky-700";
+  if (status === "ACCEPTED") return "bg-amber-100 text-amber-700";
+  if (status === "COMPLETED") return "bg-emerald-100 text-emerald-700";
+  if (status === "CANCELLED") return "bg-rose-100 text-rose-700";
+  if (status === "PENDING") return "bg-slate-100 text-slate-700";
+  return "bg-violet-100 text-violet-700";
+};
+
+const TeamListScreen: React.FC = () => {
+  const navigation = useNavigation<Nav>();
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+  const [orders, setOrders] = useState<TeamOrderSummary[]>([]);
+
+  const fetchTeamOrders = useCallback(async () => {
+    try {
+      const data = await fetchAssignedInvoices();
+      setOrders(data);
+    } catch (error: any) {
+      console.error("Fetch team orders failed:", error);
+      showToast(error?.message || "Không thể tải danh sách quản lý đội");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchTeamOrders();
+    }, [fetchTeamOrders]),
+  );
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchTeamOrders();
+  };
+
+  const handleGoBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.navigate("MainTabs");
+  };
+
+  const filteredOrders = useMemo(() => {
+    if (statusFilter === "ALL") return orders;
+    return orders.filter((order) => order.status === statusFilter);
+  }, [orders, statusFilter]);
+
+  const availableFilters: StatusFilter[] = useMemo(() => {
+    const allStatus = new Set<StatusFilter>(["ALL"]);
+    orders.forEach((order) => {
+      const raw = String(order.status || "").toUpperCase();
+      if (raw in STATUS_LABEL) {
+        allStatus.add(raw as StatusFilter);
+      }
+    });
+    return Array.from(allStatus);
+  }, [orders]);
+
+  if (loading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-slate-100">
+        <ActivityIndicator size="large" color="#10b981" />
+      </View>
+    );
+  }
+
+  return (
+    <View className="flex-1 bg-slate-100">
+      <View className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-300/35" />
+      <View className="absolute -left-16 bottom-14 h-56 w-56 rounded-full bg-sky-200/40" />
+
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ padding: 20, paddingBottom: 36 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        <View className="flex-row items-center">
+          <Pressable
+            className="mr-3 h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm"
+            onPress={handleGoBack}
+          >
+            <Ionicons name="chevron-back" size={24} color="#0f172a" />
+          </Pressable>
+
+          <Text className="flex-1 text-3xl font-extrabold text-slate-900">
+            Quản lý đội
+          </Text>
+          <Pressable
+            className="h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm"
+            onPress={() => setShowFilters((prev) => !prev)}
+          >
+            <Ionicons
+              name={showFilters ? "close" : "options-outline"}
+              size={22}
+              color="#0f172a"
+            />
+          </Pressable>
+        </View>
+
+        <Text className="mt-2 text-base text-slate-500">
+          Danh sách đơn có đội được phân công cho bạn
+        </Text>
+
+        {showFilters ? (
+          <Card className="mt-5 rounded-[24px] p-5">
+            <Text className="text-sm font-bold uppercase tracking-wide text-slate-500">
+              Lọc theo trạng thái
+            </Text>
+            <View className="mt-2 flex-row flex-wrap">
+              {availableFilters.map((value) => {
+                const selected = statusFilter === value;
+                return (
+                  <Pressable
+                    key={value}
+                    className={`mb-2 mr-2 rounded-full border px-4 py-2.5 ${selected ? "border-emerald-500 bg-emerald-50" : "border-slate-200 bg-white"}`}
+                    onPress={() => setStatusFilter(value)}
+                  >
+                    <Text
+                      className={`text-base font-bold ${selected ? "text-emerald-700" : "text-slate-600"}`}
+                    >
+                      {STATUS_LABEL[value]}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </Card>
+        ) : null}
+
+        <View className="mt-5 gap-3">
+          {filteredOrders.map((order) => {
+            const ts = new Date(order.scheduledTime || "").getTime();
+            const dateText = Number.isNaN(ts)
+              ? "Chưa có lịch"
+              : `${new Date(ts).toLocaleDateString("vi-VN")} · ${new Date(
+                  ts,
+                ).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}`;
+
+            return (
+              <Pressable
+                key={order.invoiceId}
+                onPress={() =>
+                  navigation.navigate("TeamDetail", {
+                    invoiceId: order.invoiceId,
+                  })
+                }
+              >
+                <Card className="gap-4 rounded-[24px] p-6">
+                  <View className="flex-row items-start justify-between">
+                    <View className="mr-3 flex-1">
+                      <Text className="text-xl font-bold text-slate-900">
+                        {order.orderCode}
+                      </Text>
+                      <Text className="mt-1 text-lg text-slate-500">
+                        {dateText}
+                      </Text>
+                    </View>
+                    <View
+                      className={`rounded-full px-4 py-2 ${statusClass(order.status)}`}
+                    >
+                      <Text className="text-base font-bold">
+                        {STATUS_LABEL[
+                          (order.status as StatusFilter) || "ALL"
+                        ] || order.status}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View className="gap-3 rounded-2xl bg-slate-50 p-4">
+                    <View className="flex-row items-start gap-2">
+                      <Ionicons name="ellipse" size={11} color="#2563eb" />
+                      <Text
+                        className="flex-1 text-lg font-medium text-slate-700"
+                        numberOfLines={1}
+                      >
+                        {order.pickupAddress || "Chưa có địa điểm nhận"}
+                      </Text>
+                    </View>
+
+                    <View className="ml-1 h-4 w-px bg-slate-300" />
+
+                    <View className="flex-row items-start gap-2">
+                      <Ionicons name="ellipse" size={11} color="#ef4444" />
+                      <Text
+                        className="flex-1 text-lg font-medium text-slate-700"
+                        numberOfLines={1}
+                      >
+                        {order.deliveryAddress || "Chưa có địa điểm giao"}
+                      </Text>
+                    </View>
+                  </View>
+                </Card>
+              </Pressable>
+            );
+          })}
+
+          {filteredOrders.length === 0 ? (
+            <Card className="items-center py-10">
+              <Text className="text-lg font-medium text-slate-500">
+                Không có đơn hàng phù hợp
+              </Text>
+            </Card>
+          ) : null}
+        </View>
+      </ScrollView>
+    </View>
+  );
+};
+
+export default TeamListScreen;

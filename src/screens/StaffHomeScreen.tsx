@@ -142,19 +142,6 @@ const StaffHomeScreen: React.FC = () => {
     )
     .slice(0, 4);
 
-  const goToOrderMap = () => {
-    const invoiceId =
-      currentOrder?.invoiceId || currentOrder?.id || currentOrder?._id;
-    if (invoiceId && currentOrder?.assignmentId) {
-      navigation.navigate("OrderMap", {
-        assignmentId: currentOrder.assignmentId,
-        invoiceId,
-      });
-      return;
-    }
-    navigation.navigate("OrderList");
-  };
-
   const renderOrderCard = (order: DashboardOrder) => {
     const invoiceId = order.invoiceId || order.id || order._id;
     if (!invoiceId) return null;
@@ -206,6 +193,10 @@ const StaffHomeScreen: React.FC = () => {
     );
   };
 
+  const goToTeamList = () => {
+    navigation.navigate("TeamList");
+  };
+
   return (
     <View className="flex-1 bg-slate-100">
       <ScrollView
@@ -252,16 +243,6 @@ const StaffHomeScreen: React.FC = () => {
           <View className="mt-7 flex-row gap-3">
             <Pressable
               className="flex-1 items-center rounded-2xl bg-white/90 px-3 py-5"
-              onPress={() => navigation.navigate("MySchedule")}
-            >
-              <Ionicons name="calendar-outline" size={28} color="#0f172a" />
-              <Text className="mt-2 text-center text-base font-extrabold text-slate-900">
-                Lịch của tôi
-              </Text>
-            </Pressable>
-
-            <Pressable
-              className="flex-1 items-center rounded-2xl bg-white/90 px-3 py-5"
               onPress={() => navigation.navigate("OrderList")}
             >
               <Ionicons name="receipt-outline" size={28} color="#0f172a" />
@@ -272,11 +253,21 @@ const StaffHomeScreen: React.FC = () => {
 
             <Pressable
               className="flex-1 items-center rounded-2xl bg-white/90 px-3 py-5"
-              onPress={goToOrderMap}
+              onPress={goToTeamList}
             >
-              <Ionicons name="map-outline" size={28} color="#0f172a" />
+              <Ionicons name="people-outline" size={28} color="#0f172a" />
               <Text className="mt-2 text-center text-base font-extrabold text-slate-900">
-                Bản đồ
+                Quản lý đội
+              </Text>
+            </Pressable>
+
+            <Pressable
+              className="flex-1 items-center rounded-2xl bg-white/90 px-3 py-5"
+              onPress={() => navigation.navigate("IncidentList")}
+            >
+              <Ionicons name="warning-outline" size={28} color="#0f172a" />
+              <Text className="mt-2 text-center text-base font-extrabold text-slate-900">
+                Báo cáo sự cố
               </Text>
             </Pressable>
           </View>
