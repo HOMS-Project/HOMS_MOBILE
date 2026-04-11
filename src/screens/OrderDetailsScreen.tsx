@@ -4,6 +4,7 @@ import {
   Alert,
   Image,
   Linking,
+  Modal,
   Pressable,
   ScrollView,
   Text,
@@ -84,6 +85,7 @@ const OrderDetailsScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const [loading, setLoading] = useState(true);
   const [order, setOrder] = useState<OrderDetail | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const fetchOrderDetails = async () => {
     const invoiceId = route.params?.invoiceId;
@@ -164,6 +166,7 @@ const OrderDetailsScreen: React.FC = () => {
     : [];
   const beforeNote = (order.completionEvidence?.beforeNote || "").trim();
   const afterNote = (order.completionEvidence?.afterNote || "").trim();
+  const closePreview = () => setPreviewImage(null);
 
   const renderEvidenceList = (images: string[]) => {
     if (!images.length) {
@@ -181,12 +184,17 @@ const OrderDetailsScreen: React.FC = () => {
         contentContainerStyle={{ paddingRight: 6 }}
       >
         {images.map((uri, index) => (
-          <Image
+          <Pressable
             key={`${uri}-${index}`}
-            source={{ uri }}
-            className="mr-3 h-28 w-28 rounded-2xl bg-slate-200"
-            resizeMode="cover"
-          />
+            className="mr-3 h-28 w-28 overflow-hidden rounded-2xl bg-slate-200"
+            onPress={() => setPreviewImage(uri)}
+          >
+            <Image
+              source={{ uri }}
+              className="h-full w-full"
+              resizeMode="cover"
+            />
+          </Pressable>
         ))}
       </ScrollView>
     );
@@ -457,6 +465,24 @@ const OrderDetailsScreen: React.FC = () => {
           }
         />
       </View>
+
+      <Modal
+        visible={Boolean(previewImage)}
+        transparent
+        animationType="fade"
+        onRequestClose={closePreview}
+      >
+        <View className="flex-1 items-center justify-center bg-black/85 px-4">
+          <Pressable className="absolute inset-0" onPress={closePreview} />
+          {previewImage ? (
+            <Image
+              source={{ uri: previewImage }}
+              resizeMode="contain"
+              style={{ width: "100%", height: 460 }}
+            />
+          ) : null}
+        </View>
+      </Modal>
     </View>
   );
 };
