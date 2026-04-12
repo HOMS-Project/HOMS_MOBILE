@@ -189,7 +189,7 @@ const CreateIncidentScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-slate-100">
+      <View className="flex-1 items-center justify-center bg-[#edf4ef]">
         <ActivityIndicator size="large" color="#10b981" />
       </View>
     );
@@ -209,7 +209,7 @@ const CreateIncidentScreen: React.FC = () => {
         }));
 
   return (
-    <View className="flex-1 bg-slate-100">
+    <View className="flex-1 bg-[#edf4ef]">
       <View className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-300/35" />
       <View className="absolute -left-16 bottom-14 h-56 w-56 rounded-full bg-sky-200/40" />
 
@@ -223,10 +223,10 @@ const CreateIncidentScreen: React.FC = () => {
       >
         <View className="flex-row items-center gap-3">
           <Pressable
-            className="h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm"
+            className="h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="chevron-back" size={24} color="#0f172a" />
+            <Ionicons name="arrow-back" size={24} color="#0f172a" />
           </Pressable>
           <Text className="flex-1 text-2xl font-extrabold text-slate-900">
             Tạo báo cáo sự cố
@@ -240,7 +240,7 @@ const CreateIncidentScreen: React.FC = () => {
                 Đơn hàng
               </Text>
               <Pressable
-                className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+                className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3"
                 onPress={() => setPickerKind("invoice")}
               >
                 <Text
@@ -261,7 +261,7 @@ const CreateIncidentScreen: React.FC = () => {
                 Loại sự cố
               </Text>
               <Pressable
-                className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+                className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3"
                 onPress={() => setPickerKind("type")}
               >
                 <Text
@@ -390,7 +390,7 @@ const CreateIncidentScreen: React.FC = () => {
               {pickerItems.map((item) => (
                 <Pressable
                   key={item.value}
-                  className="mb-2 rounded-2xl border border-slate-100 bg-slate-50 p-4"
+                  className="mb-2 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4"
                   onPress={() => {
                     if (pickerKind === "invoice") {
                       setInvoiceId(item.value);

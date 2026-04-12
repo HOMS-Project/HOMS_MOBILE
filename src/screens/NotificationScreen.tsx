@@ -1,5 +1,11 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { View, Text, FlatList, ActivityIndicator, Pressable } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  ActivityIndicator,
+  Pressable,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { staffApi } from "../api";
@@ -35,14 +41,14 @@ const NotificationScreen: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       fetchNotifications();
-    }, [fetchNotifications])
+    }, [fetchNotifications]),
   );
 
   const handleMarkAsRead = async (item: NotificationItem) => {
     if (item.isRead) return;
     try {
       setNotifications((prev) =>
-        prev.map((n) => (n._id === item._id ? { ...n, isRead: true } : n))
+        prev.map((n) => (n._id === item._id ? { ...n, isRead: true } : n)),
       );
       await staffApi.markNotificationRead(item._id);
     } catch (error) {
@@ -59,7 +65,7 @@ const NotificationScreen: React.FC = () => {
       >
         <View
           className={`h-12 w-12 rounded-full items-center justify-center ${
-            item.isRead ? "bg-slate-100" : "bg-blue-100"
+            item.isRead ? "bg-emerald-100/70" : "bg-blue-100"
           }`}
         >
           <Ionicons
@@ -67,8 +73,8 @@ const NotificationScreen: React.FC = () => {
               item.type === "Payment"
                 ? "card"
                 : item.type === "Assignment"
-                ? "car"
-                : "notifications"
+                  ? "car"
+                  : "notifications"
             }
             size={24}
             color={item.isRead ? "#94a3b8" : "#2563eb"}
@@ -77,25 +83,27 @@ const NotificationScreen: React.FC = () => {
         <View className="flex-1">
           <Text
             className={`text-base flex-wrap ${
-              item.isRead ? "font-semibold text-slate-800" : "font-extrabold text-blue-900"
+              item.isRead
+                ? "font-semibold text-slate-800"
+                : "font-extrabold text-blue-900"
             }`}
           >
             {item.title}
           </Text>
-          <Text className="text-sm text-slate-500 mt-1 flex-wrap">{item.message}</Text>
+          <Text className="text-sm text-slate-500 mt-1 flex-wrap">
+            {item.message}
+          </Text>
           <Text className="text-xs text-slate-400 mt-2">
             {new Date(item.createdAt).toLocaleString()}
           </Text>
         </View>
-        {!item.isRead && (
-          <View className="h-3 w-3 rounded-full bg-blue-500" />
-        )}
+        {!item.isRead && <View className="h-3 w-3 rounded-full bg-blue-500" />}
       </Card>
     </Pressable>
   );
 
   return (
-    <View className="flex-1 bg-slate-50 pt-12">
+    <View className="flex-1 bg-[#edf4ef] pt-12">
       <View className="flex-row items-center px-4 pb-4">
         <Pressable
           onPress={() => navigation.goBack()}
@@ -103,7 +111,9 @@ const NotificationScreen: React.FC = () => {
         >
           <Ionicons name="arrow-back" size={24} color="#0f172a" />
         </Pressable>
-        <Text className="ml-4 text-2xl font-extrabold text-slate-900">Thông Báo</Text>
+        <Text className="ml-4 text-2xl font-extrabold text-slate-900">
+          Thông Báo
+        </Text>
       </View>
 
       {loading ? (
@@ -112,7 +122,11 @@ const NotificationScreen: React.FC = () => {
         </View>
       ) : notifications.length === 0 ? (
         <View className="flex-1 items-center py-20 px-4">
-          <Ionicons name="notifications-off-outline" size={60} color="#cbd5e1" />
+          <Ionicons
+            name="notifications-off-outline"
+            size={60}
+            color="#cbd5e1"
+          />
           <Text className="text-lg text-slate-500 mt-4 text-center">
             Bạn chưa có thông báo nào.
           </Text>

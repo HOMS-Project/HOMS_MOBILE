@@ -1,8 +1,8 @@
 import React from "react";
 import { View, StyleSheet, Image } from "react-native";
-import { colors, spacing } from "../theme";
+import { spacing } from "../theme";
 
-const logo = require("../../assets/HOMSlogo.png");
+const logo = require("../../assets/HOMSlogoTr.png");
 
 interface Props {
   size?: number;
@@ -23,8 +23,8 @@ const AuthHeader: React.FC<Props> = ({ size = 140 }) => {
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",
-    paddingVertical: spacing.lg,
-    backgroundColor: colors.background,
+    paddingVertical: spacing.sm,
+    backgroundColor: "transparent",
   },
   logo: {
     width: 130,

@@ -96,7 +96,7 @@ const SettingsScreen: React.FC = () => {
   };
 
   return (
-    <View className="flex-1 bg-slate-100">
+    <View className="flex-1 bg-[#edf4ef]">
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 32 }}
@@ -170,7 +170,7 @@ const SettingsScreen: React.FC = () => {
                 onPress={() => handlePress(item.route)}
               >
                 <View className="flex-row items-center">
-                  <View className="h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
+                  <View className="h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100/70">
                     <Ionicons name={item.icon} size={26} color="#0f766e" />
                   </View>
                   <View className="ml-4 flex-1">

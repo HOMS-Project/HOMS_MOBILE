@@ -1,7 +1,7 @@
 import "react-native-reanimated";
 import "./global.css";
-import React from "react";
-import { Text, View, Pressable } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Text, View, Pressable, Animated, Easing } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -38,7 +38,7 @@ export type RootStackParamList = {
   MainTabs: undefined;
   EditProfile: undefined;
   TeamList: undefined;
-  OrderList: undefined;
+  OrderList: { fromTeamDetail?: boolean } | undefined;
   OrderDetails: { invoiceId: string };
   OrderMap: { assignmentId: string; invoiceId: string };
   TeamDetail: { invoiceId: string };
@@ -85,21 +85,95 @@ const tabMeta: Record<
 };
 
 const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
+  const [barWidth, setBarWidth] = useState(0);
+  const indicatorTranslateX = useRef(new Animated.Value(0)).current;
+  const iconScaleAnims = useRef(
+    state.routes.map(
+      (_, index) => new Animated.Value(state.index === index ? 1.1 : 1),
+    ),
+  ).current;
+  const iconLiftAnims = useRef(
+    state.routes.map(
+      (_, index) => new Animated.Value(state.index === index ? -3 : 0),
+    ),
+  ).current;
+
+  useEffect(() => {
+    if (!barWidth) return;
+
+    const tabWidth = barWidth / state.routes.length;
+    Animated.timing(indicatorTranslateX, {
+      toValue: tabWidth * state.index,
+      duration: 460,
+      easing: Easing.bezier(0.2, 0.9, 0.2, 1),
+      useNativeDriver: true,
+    }).start();
+  }, [barWidth, state.index, state.routes.length, indicatorTranslateX]);
+
+  useEffect(() => {
+    const animations = state.routes.flatMap((_, index) => {
+      const focused = state.index === index;
+      return [
+        Animated.spring(iconScaleAnims[index], {
+          toValue: focused ? 1.12 : 1,
+          friction: 7,
+          tension: 95,
+          useNativeDriver: true,
+        }),
+        Animated.spring(iconLiftAnims[index], {
+          toValue: focused ? -4 : 0,
+          friction: 8,
+          tension: 90,
+          useNativeDriver: true,
+        }),
+      ];
+    });
+
+    Animated.parallel(animations).start();
+  }, [state.index, state.routes, iconScaleAnims, iconLiftAnims]);
+
   return (
     <View
-      className="absolute bottom-0 left-0 right-0 px-[22px] pb-[14px]"
+      className="absolute bottom-0 left-0 right-0 items-center pb-[14px]"
       pointerEvents="box-none"
     >
       <View
-        className="h-[86px] flex-row items-center justify-between rounded-full bg-[#F2F7F2] px-[10px] py-[7px]"
+        className="h-[86px] w-[94%] flex-row items-center justify-between rounded-full bg-[#F2F7F2] px-[10px] py-[7px]"
+        onLayout={(event) => {
+          setBarWidth(event.nativeEvent.layout.width - 20);
+        }}
         style={{
+          maxWidth: 500,
           elevation: 12,
           shadowColor: "#0F172A",
           shadowOpacity: 0.14,
           shadowRadius: 14,
           shadowOffset: { width: 0, height: 7 },
+          position: "relative",
         }}
       >
+        {barWidth > 0 && (
+          <Animated.View
+            pointerEvents="none"
+            style={{
+              position: "absolute",
+              left: 10,
+              top: 7,
+              width: barWidth / state.routes.length,
+              height: 64,
+              borderRadius: 32,
+              backgroundColor: tabActive,
+              transform: [{ translateX: indicatorTranslateX }],
+              shadowColor: "#166534",
+              shadowOpacity: 0.22,
+              shadowRadius: 10,
+              shadowOffset: { width: 0, height: 6 },
+              elevation: 0,
+              zIndex: 0,
+            }}
+          />
+        )}
+
         {state.routes.map((route, index) => {
           const focused = state.index === index;
           const routeName = route.name as keyof MainTabParamList;
@@ -121,13 +195,26 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
             <Pressable
               key={route.key}
               onPress={onPress}
-              className={`mx-1 h-16 flex-1 items-center justify-center rounded-[32px] ${focused ? "bg-[#1F7A3D]" : ""}`}
+              className="mx-1 h-16 flex-1 items-center justify-center rounded-[32px]"
+              style={{
+                position: "relative",
+                zIndex: 2,
+              }}
             >
-              <Ionicons
-                name={focused ? activeIcon : inactiveIcon}
-                size={34}
-                color={focused ? "#FFFFFF" : tabInactive}
-              />
+              <Animated.View
+                style={{
+                  transform: [
+                    { translateY: iconLiftAnims[index] },
+                    { scale: iconScaleAnims[index] },
+                  ],
+                }}
+              >
+                <Ionicons
+                  name={focused ? activeIcon : inactiveIcon}
+                  size={34}
+                  color={focused ? "#FFFFFF" : tabInactive}
+                />
+              </Animated.View>
               <Text
                 className={`mt-[2px] text-[11px] font-bold leading-[13px] ${focused ? "text-white" : "text-[#8A8A8A]"}`}
               >
@@ -172,7 +259,15 @@ export default function App() {
         <Stack.Screen name="MainTabs" component={MainTabs} />
         <Stack.Screen name="EditProfile" component={EditProfileScreen} />
         <Stack.Screen name="TeamList" component={TeamListScreen} />
-        <Stack.Screen name="OrderList" component={OrderListScreen} />
+        <Stack.Screen
+          name="OrderList"
+          component={OrderListScreen}
+          options={({ route }) => ({
+            animation: route.params?.fromTeamDetail
+              ? "slide_from_bottom"
+              : "slide_from_right",
+          })}
+        />
         <Stack.Screen name="OrderDetails" component={OrderDetailsScreen} />
         <Stack.Screen name="OrderMap" component={OrderMapScreen} />
         <Stack.Screen name="TeamDetail" component={TeamDetailScreen} />

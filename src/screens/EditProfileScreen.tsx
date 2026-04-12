@@ -1,22 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
   Alert,
+  Easing,
   Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import Card from "../components/ui/Card";
-import Input from "../components/ui/Input";
-import Button from "../components/ui/Button";
 import type { RootStackParamList } from "../../App";
 import { apiRequest, endpoints } from "../api";
 
@@ -28,6 +30,41 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 const fallbackAvatar =
   "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80";
 
+type ProfileFieldProps = {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  icon: keyof typeof Ionicons.glyphMap;
+  keyboardType?: React.ComponentProps<typeof TextInput>["keyboardType"];
+};
+
+const ProfileField: React.FC<ProfileFieldProps> = ({
+  label,
+  placeholder,
+  value,
+  onChangeText,
+  icon,
+  keyboardType,
+}) => {
+  return (
+    <View className="gap-2.5">
+      <Text className="text-base font-bold text-slate-700">{label}</Text>
+      <View className="h-[68px] flex-row items-center rounded-xl border border-emerald-100 bg-white/95 px-5">
+        <Ionicons name={icon} size={22} color="#4b5563" />
+        <TextInput
+          className="ml-3.5 flex-1 text-lg text-slate-900"
+          placeholder={placeholder}
+          placeholderTextColor="#94a3b8"
+          value={value}
+          onChangeText={onChangeText}
+          keyboardType={keyboardType}
+        />
+      </View>
+    </View>
+  );
+};
+
 const EditProfileScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const [loading, setLoading] = useState(true);
@@ -36,6 +73,27 @@ const EditProfileScreen: React.FC = () => {
   const [phone, setPhone] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const screenOpacity = useRef(new Animated.Value(0)).current;
+  const cardScale = useRef(new Animated.Value(0.96)).current;
+  const buttonScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(screenOpacity, {
+        toValue: 1,
+        duration: 500,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.spring(cardScale, {
+        toValue: 1,
+        useNativeDriver: true,
+        speed: 12,
+        bounciness: 4,
+      }),
+    ]).start();
+  }, [cardScale, screenOpacity]);
 
   const pickAvatar = async () => {
     if (!CLOUD_NAME || !UPLOAD_PRESET) {
@@ -152,10 +210,26 @@ const EditProfileScreen: React.FC = () => {
     }
   };
 
+  const animateButton = (toValue: number) => {
+    Animated.spring(buttonScale, {
+      toValue,
+      useNativeDriver: true,
+      speed: 20,
+      bounciness: 4,
+    }).start();
+  };
+
   return (
-    <View className="flex-1 bg-slate-100">
-      <View className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-300/35" />
-      <View className="absolute -left-16 bottom-14 h-56 w-56 rounded-full bg-sky-200/40" />
+    <View className="flex-1 bg-[#edf4ef]">
+      <LinearGradient
+        colors={["#e7f4ea", "#f5faf6", "#ffffff"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        className="absolute inset-0"
+      />
+      <View className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-emerald-300/30" />
+      <View className="absolute left-[-80px] top-[36%] h-64 w-64 rounded-full bg-cyan-100/35" />
+      <View className="absolute -bottom-24 -left-14 h-72 w-72 rounded-full bg-emerald-100/45" />
 
       <KeyboardAvoidingView
         className="flex-1"
@@ -167,21 +241,24 @@ const EditProfileScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View className="px-6 pb-8 pt-12">
+          <Animated.View
+            className="px-5 pb-8 pt-10"
+            style={{ opacity: screenOpacity }}
+          >
             <View className="flex-row items-center justify-between">
               <Pressable
-                className="h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm"
+                className="h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
                 onPress={() => navigation.goBack()}
               >
-                <Ionicons name="chevron-back" size={22} color="#0f172a" />
+                <Ionicons name="arrow-back" size={24} color="#0f172a" />
               </Pressable>
               <Text className="text-2xl font-extrabold text-slate-900">
                 Chỉnh sửa hồ sơ
               </Text>
-              <View className="h-11 w-11" />
+              <View className="h-10 w-10" />
             </View>
 
-            <View className="mt-7 items-center">
+            <View className="mt-6 items-center">
               <View className="relative">
                 <Image
                   source={{ uri: avatar || fallbackAvatar }}
@@ -206,45 +283,70 @@ const EditProfileScreen: React.FC = () => {
               </Text>
             </View>
 
-            <Card className="mt-7 rounded-[30px] p-6">
-              <Text className="text-xl font-extrabold text-slate-900">
-                Thông tin cá nhân
-              </Text>
-              <Text className="mt-1 text-sm text-slate-500">
-                Luôn cập nhật thông tin để được hỗ trợ tốt hơn.
-              </Text>
+            <Animated.View
+              className="mt-7 overflow-hidden rounded-[34px] border border-white/70 bg-white/30 shadow-xl"
+              style={{ transform: [{ scale: cardScale }] }}
+            >
+              <BlurView
+                intensity={26}
+                tint="light"
+                className="absolute inset-0"
+              />
+              <View className="p-6">
+                <Text className="text-[32px] font-black tracking-tight text-slate-900">
+                  Thông tin cá nhân
+                </Text>
+                <Text className="mt-1 text-sm leading-6 text-slate-500">
+                  Luôn cập nhật thông tin để được hỗ trợ tốt hơn.
+                </Text>
 
-              <View className="mt-5 gap-4">
-                <Input
-                  label="Họ và tên"
-                  placeholder="Tên của bạn"
-                  value={name}
-                  onChangeText={setName}
-                />
+                <View className="mt-6 gap-5">
+                  <ProfileField
+                    label="Họ và tên"
+                    placeholder="Tên của bạn"
+                    value={name}
+                    onChangeText={setName}
+                    icon="person-outline"
+                  />
 
-                <Input
-                  label="Số điện thoại"
-                  placeholder="Số điện thoại"
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                />
+                  <ProfileField
+                    label="Số điện thoại"
+                    placeholder="Số điện thoại"
+                    value={phone}
+                    onChangeText={setPhone}
+                    keyboardType="phone-pad"
+                    icon="call-outline"
+                  />
 
-                <Button
-                  title={saving ? "Đang lưu..." : "Lưu thay đổi"}
-                  onPress={handleSave}
-                  loading={saving}
-                  disabled={saving || uploadingAvatar}
-                  className="mt-2 h-14"
-                />
+                  <Animated.View
+                    className="mt-2"
+                    style={{ transform: [{ scale: buttonScale }] }}
+                  >
+                    <Pressable
+                      className={`h-[68px] items-center justify-center rounded-2xl bg-emerald-600 shadow-lg ${saving || uploadingAvatar ? "opacity-70" : ""}`}
+                      onPress={handleSave}
+                      disabled={saving || uploadingAvatar}
+                      onPressIn={() => animateButton(0.97)}
+                      onPressOut={() => animateButton(1)}
+                    >
+                      {saving ? (
+                        <ActivityIndicator color="#ffffff" />
+                      ) : (
+                        <Text className="text-xl font-bold text-white">
+                          Lưu thay đổi
+                        </Text>
+                      )}
+                    </Pressable>
+                  </Animated.View>
+                </View>
               </View>
-            </Card>
-          </View>
+            </Animated.View>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
 
       {loading ? (
-        <View className="absolute inset-0 items-center justify-center bg-white/70">
+        <View className="absolute inset-0 items-center justify-center bg-white/60">
           <ActivityIndicator size="large" color="#10b981" />
         </View>
       ) : null}

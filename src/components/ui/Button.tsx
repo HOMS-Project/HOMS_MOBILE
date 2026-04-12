@@ -22,7 +22,7 @@ const Button: React.FC<ButtonProps> = ({
 
   return (
     <Pressable
-      className={`h-12 items-center justify-center rounded-full bg-emerald-500 shadow-md ${isDisabled ? "opacity-60" : ""} ${className}`}
+      className={`h-[68px] items-center justify-center rounded-2xl bg-emerald-600 shadow-lg ${isDisabled ? "opacity-60" : ""} ${className}`}
       disabled={isDisabled}
       onPress={onPress}
     >

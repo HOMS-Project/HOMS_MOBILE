@@ -14,12 +14,12 @@ const Input: React.FC<InputProps> = ({
   ...props
 }) => {
   return (
-    <View className="gap-2">
+    <View className="gap-2.5">
       {label ? (
-        <Text className="text-sm font-semibold text-slate-700">{label}</Text>
+        <Text className="text-base font-bold text-slate-700">{label}</Text>
       ) : null}
       <TextInput
-        className={`rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 ${className}`}
+        className={`h-[68px] rounded-xl border border-emerald-100 bg-white px-5 text-lg text-slate-900 ${className}`}
         placeholderTextColor="#94a3b8"
         {...props}
       />

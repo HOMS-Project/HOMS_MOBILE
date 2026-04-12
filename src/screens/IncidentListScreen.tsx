@@ -44,7 +44,7 @@ const statusClass = (status: string) => {
   if (status === "Investigating") return "bg-sky-100 text-sky-700";
   if (status === "Resolved") return "bg-emerald-100 text-emerald-700";
   if (status === "Dismissed") return "bg-slate-200 text-slate-700";
-  return "bg-slate-100 text-slate-600";
+  return "bg-emerald-100 text-emerald-700";
 };
 
 const isVideo = (url: string) => /\.(mp4|mov|m4v|webm)(\?|$)/i.test(url);
@@ -84,14 +84,14 @@ const IncidentListScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-slate-100">
+      <View className="flex-1 items-center justify-center bg-[#edf4ef]">
         <ActivityIndicator size="large" color="#10b981" />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-slate-100">
+    <View className="flex-1 bg-[#edf4ef]">
       <View className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-300/35" />
       <View className="absolute -left-16 bottom-14 h-56 w-56 rounded-full bg-sky-200/40" />
 
@@ -104,10 +104,10 @@ const IncidentListScreen: React.FC = () => {
       >
         <View className="flex-row items-center gap-3">
           <Pressable
-            className="h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm"
+            className="h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="chevron-back" size={24} color="#0f172a" />
+            <Ionicons name="arrow-back" size={24} color="#0f172a" />
           </Pressable>
           <Text className="flex-1 text-2xl font-extrabold text-slate-900">
             Báo cáo sự cố
@@ -153,14 +153,14 @@ const IncidentListScreen: React.FC = () => {
                 </View>
 
                 <View className="mt-3 flex-row items-center gap-2">
-                  <View className="rounded-full bg-slate-100 px-4 py-1.5">
+                  <View className="rounded-full bg-emerald-100/80 px-4 py-1.5">
                     <Text className="text-base font-bold text-slate-700">
                       {typeLabel(incident.type)}
                     </Text>
                   </View>
                 </View>
 
-                <View className="mt-4 rounded-2xl bg-slate-50 p-3">
+                <View className="mt-4 rounded-2xl bg-emerald-50/50 p-3">
                   {mediaList.length > 0 ? (
                     <ScrollView
                       horizontal

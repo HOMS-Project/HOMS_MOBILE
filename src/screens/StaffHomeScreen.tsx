@@ -10,6 +10,7 @@ import {
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import type { RootStackParamList } from "../../App";
 import Card from "../components/ui/Card";
 import { apiRequest, endpoints } from "../api";
@@ -68,11 +69,12 @@ const getStatusLabel = (status: string) => {
 };
 
 const getStatusStyle = (status: string) => {
-  if (status === "IN_PROGRESS") return "bg-sky-100 text-sky-700";
-  if (status === "ACCEPTED") return "bg-emerald-100 text-emerald-700";
-  if (status === "ASSIGNED") return "bg-amber-100 text-amber-700";
-  if (status === "COMPLETED") return "bg-slate-200 text-slate-700";
-  return "bg-slate-100 text-slate-600";
+  if (status === "IN_PROGRESS") return "bg-emerald-100 text-emerald-800";
+  if (status === "ACCEPTED") return "bg-green-100 text-green-800";
+  if (status === "ASSIGNED") return "bg-lime-100 text-lime-800";
+  if (status === "COMPLETED")
+    return "border border-emerald-200 bg-emerald-50 text-emerald-800";
+  return "bg-emerald-100 text-emerald-700";
 };
 
 const StaffHomeScreen: React.FC = () => {
@@ -152,7 +154,7 @@ const StaffHomeScreen: React.FC = () => {
         className="mb-3"
         onPress={() => navigation.navigate("OrderDetails", { invoiceId })}
       >
-        <Card className="gap-4 p-6">
+        <Card className="gap-4 rounded-[24px] border-emerald-100 bg-white p-6 shadow-sm">
           <View className="flex-row items-start justify-between">
             <View className="mr-3 flex-1">
               <Text className="text-2xl font-extrabold text-slate-900">
@@ -160,7 +162,7 @@ const StaffHomeScreen: React.FC = () => {
               </Text>
               <Text className="mt-1 text-base text-slate-500">
                 {order.scheduledTime
-                  ? new Date(order.scheduledTime).toLocaleString()
+                  ? new Date(order.scheduledTime).toLocaleString("vi-VN")
                   : "Chưa có lịch"}
               </Text>
             </View>
@@ -198,15 +200,20 @@ const StaffHomeScreen: React.FC = () => {
   };
 
   return (
-    <View className="flex-1 bg-slate-100">
+    <View className="flex-1 bg-[#edf4ef]">
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 36 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="rounded-b-[34px] bg-slate-900 px-6 pb-8 pt-14">
+        <LinearGradient
+          colors={["#0f3f2a", "#156f45", "#1d8a55"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          className="rounded-b-[34px] px-6 pb-8 pt-14"
+        >
           <View className="flex-row items-center">
-            <View className="h-24 w-24 overflow-hidden rounded-full border-2 border-white/40 bg-slate-700">
+            <View className="h-24 w-24 overflow-hidden rounded-full border-2 border-white/50 bg-emerald-950/50">
               {loading ? (
                 <View className="flex-1 items-center justify-center">
                   <ActivityIndicator color="#ffffff" />
@@ -223,13 +230,13 @@ const StaffHomeScreen: React.FC = () => {
               <Text className="text-4xl font-extrabold text-white">
                 {user?.fullName || user?.username || "Tài xế"}
               </Text>
-              <Text className="mt-1 text-lg font-semibold text-white/75">
+              <Text className="mt-1 text-lg font-semibold text-emerald-100/90">
                 {getRoleLabel(user?.role)}
               </Text>
             </View>
 
             <Pressable
-              className="h-12 w-12 items-center justify-center rounded-2xl bg-white/15"
+              className="h-12 w-12 items-center justify-center rounded-2xl bg-white/20"
               onPress={() => navigation.navigate("Notifications")}
             >
               <Ionicons
@@ -242,36 +249,36 @@ const StaffHomeScreen: React.FC = () => {
 
           <View className="mt-7 flex-row gap-3">
             <Pressable
-              className="flex-1 items-center rounded-2xl bg-white/90 px-3 py-5"
+              className="flex-1 items-center rounded-2xl border border-emerald-100 bg-[#f4fbf6] px-3 py-5"
               onPress={() => navigation.navigate("OrderList")}
             >
-              <Ionicons name="receipt-outline" size={28} color="#0f172a" />
-              <Text className="mt-2 text-center text-base font-extrabold text-slate-900">
+              <Ionicons name="receipt-outline" size={28} color="#166534" />
+              <Text className="mt-2 text-center text-base font-extrabold text-slate-800">
                 Danh sách đơn
               </Text>
             </Pressable>
 
             <Pressable
-              className="flex-1 items-center rounded-2xl bg-white/90 px-3 py-5"
+              className="flex-1 items-center rounded-2xl border border-emerald-100 bg-[#f4fbf6] px-3 py-5"
               onPress={goToTeamList}
             >
-              <Ionicons name="people-outline" size={28} color="#0f172a" />
-              <Text className="mt-2 text-center text-base font-extrabold text-slate-900">
+              <Ionicons name="people-outline" size={28} color="#166534" />
+              <Text className="mt-2 text-center text-base font-extrabold text-slate-800">
                 Quản lý đội
               </Text>
             </Pressable>
 
             <Pressable
-              className="flex-1 items-center rounded-2xl bg-white/90 px-3 py-5"
+              className="flex-1 items-center rounded-2xl border border-emerald-100 bg-[#f4fbf6] px-3 py-5"
               onPress={() => navigation.navigate("IncidentList")}
             >
-              <Ionicons name="warning-outline" size={28} color="#0f172a" />
-              <Text className="mt-2 text-center text-base font-extrabold text-slate-900">
+              <Ionicons name="warning-outline" size={28} color="#166534" />
+              <Text className="mt-2 text-center text-base font-extrabold text-slate-800">
                 Báo cáo sự cố
               </Text>
             </Pressable>
           </View>
-        </View>
+        </LinearGradient>
 
         <View className="px-5">
           <View className="mb-3 mt-6 flex-row items-center justify-between">
@@ -279,7 +286,7 @@ const StaffHomeScreen: React.FC = () => {
               Đơn đang hoạt động
             </Text>
             <Pressable onPress={() => navigation.navigate("OrderList")}>
-              <Text className="text-xl font-bold text-emerald-600">
+              <Text className="text-xl font-bold text-emerald-700">
                 Xem tất cả
               </Text>
             </Pressable>
@@ -287,7 +294,7 @@ const StaffHomeScreen: React.FC = () => {
 
           {loading ? (
             <View className="mt-2 items-center">
-              <ActivityIndicator color="#0f766e" />
+              <ActivityIndicator color="#15803d" />
             </View>
           ) : currentOrder ? (
             <Pressable
@@ -299,7 +306,7 @@ const StaffHomeScreen: React.FC = () => {
                 }
               }}
             >
-              <Card className="gap-4 border-emerald-200 bg-emerald-50/70 p-5">
+              <Card className="gap-4 border-emerald-200 bg-[#ecf8ef] p-5">
                 <View className="flex-row items-start justify-between">
                   <View className="mr-3 flex-1">
                     <Text className="text-xl font-extrabold text-slate-900">
@@ -325,13 +332,9 @@ const StaffHomeScreen: React.FC = () => {
                   </View>
                 </View>
 
-                <View className="rounded-2xl bg-white/80 p-3">
+                <View className="gap-3">
                   <View className="flex-row items-start gap-2">
-                    <Ionicons
-                      name="navigate-circle"
-                      size={20}
-                      color="#2563eb"
-                    />
+                    <Ionicons name="ellipse" size={12} color="#2563eb" />
                     <Text
                       className="flex-1 text-base font-medium text-slate-700"
                       numberOfLines={1}
@@ -340,9 +343,9 @@ const StaffHomeScreen: React.FC = () => {
                         "Chưa có địa chỉ lấy hàng"}
                     </Text>
                   </View>
-                  <View className="my-2 h-px bg-slate-200" />
+                  <View className="ml-1 h-5 w-px bg-slate-300" />
                   <View className="flex-row items-start gap-2">
-                    <Ionicons name="flag" size={20} color="#ef4444" />
+                    <Ionicons name="ellipse" size={12} color="#ef4444" />
                     <Text
                       className="flex-1 text-base font-medium text-slate-700"
                       numberOfLines={1}
@@ -355,7 +358,7 @@ const StaffHomeScreen: React.FC = () => {
               </Card>
             </Pressable>
           ) : (
-            <Card className="items-center py-10">
+            <Card className="items-center border-emerald-100 bg-white py-10">
               <Text className="text-xl font-medium text-slate-500">
                 Chưa có đơn hàng nào đang hoạt động.
               </Text>
@@ -367,7 +370,7 @@ const StaffHomeScreen: React.FC = () => {
               Các đơn gần đây
             </Text>
             <Pressable onPress={() => navigation.navigate("OrderList")}>
-              <Text className="text-xl font-bold text-emerald-600">
+              <Text className="text-xl font-bold text-emerald-700">
                 Xem tất cả
               </Text>
             </Pressable>
@@ -376,7 +379,7 @@ const StaffHomeScreen: React.FC = () => {
           {recentOrders.length > 0 ? (
             recentOrders.map((item) => renderOrderCard(item))
           ) : (
-            <Card className="items-center py-8">
+            <Card className="items-center border-emerald-100 bg-white py-8">
               <Text className="text-lg font-medium text-slate-500">
                 Không có đơn đã hoàn tất trong 1 tháng qua
               </Text>

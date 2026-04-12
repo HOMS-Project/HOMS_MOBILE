@@ -46,7 +46,7 @@ const getStatusStyle = (status: string) => {
     case "CANCELLED":
       return "bg-rose-100 text-rose-700";
     default:
-      return "bg-slate-100 text-slate-600";
+      return "bg-emerald-100 text-emerald-700";
   }
 };
 
@@ -178,14 +178,14 @@ const MyScheduleScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-slate-100">
+      <View className="flex-1 items-center justify-center bg-[#edf4ef]">
         <ActivityIndicator size="large" color="#10b981" />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-slate-100">
+    <View className="flex-1 bg-[#edf4ef]">
       <View className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-300/35" />
       <View className="absolute -left-16 bottom-14 h-56 w-56 rounded-full bg-sky-200/40" />
 
@@ -199,25 +199,25 @@ const MyScheduleScreen: React.FC = () => {
       >
         <View className="flex-row items-center justify-between">
           <Pressable
-            className="h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm"
+            className="h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
             onPress={() => navigation.navigate("MainTabs")}
           >
-            <Ionicons name="chevron-back" size={22} color="#0f172a" />
+            <Ionicons name="arrow-back" size={24} color="#0f172a" />
           </Pressable>
-          <Text className="text-2xl font-extrabold text-slate-900">
+          <Text className="text-[34px] font-extrabold text-slate-900">
             Lịch của tôi
           </Text>
-          <View className="h-11 w-11" />
+          <View className="h-10 w-10" />
         </View>
 
-        <Card className="mt-6 rounded-[28px] border-emerald-100 bg-emerald-50/80 p-5">
-          <Text className="text-sm font-semibold text-emerald-700">
+        <Card className="mt-6 rounded-[28px] border-emerald-100 bg-emerald-50/80 p-6">
+          <Text className="text-lg font-semibold text-emerald-700">
             Công việc hôm nay
           </Text>
-          <Text className="mt-1 text-3xl font-extrabold text-slate-900">
+          <Text className="mt-1 text-5xl font-extrabold text-slate-900">
             {todayJobs.length}
           </Text>
-          <Text className="mt-1 text-sm text-slate-500">
+          <Text className="mt-1 text-lg text-slate-500">
             đơn hàng có lịch trong hôm nay
           </Text>
         </Card>
@@ -239,33 +239,33 @@ const MyScheduleScreen: React.FC = () => {
                 <View className="flex-row items-start justify-between">
                   <View className="mr-3 flex-1">
                     <View className="flex-row items-center gap-2">
-                      <Text className="text-xl">📦</Text>
-                      <Text className="text-base font-bold text-slate-800">
+                      <Text className="text-2xl">📦</Text>
+                      <Text className="text-xl font-bold text-slate-800">
                         {item.invoice}
                       </Text>
                     </View>
-                    <Text className="mt-1 text-sm text-slate-500">
+                    <Text className="mt-1 text-base text-slate-500">
                       {item.date}
                     </Text>
                   </View>
                   <View
-                    className={`rounded-full px-3 py-1 ${getStatusStyle(item.status)}`}
+                    className={`rounded-full px-4 py-2 ${getStatusStyle(item.status)}`}
                   >
-                    <Text className="text-xs font-bold">
+                    <Text className="text-sm font-bold">
                       {getStatusLabel(item.status)}
                     </Text>
                   </View>
                 </View>
 
-                <View className="gap-3 rounded-2xl bg-slate-50 p-3">
+                <View className="gap-3 rounded-2xl border border-slate-100 bg-white p-3">
                   <View className="flex-row items-start gap-2">
                     <Ionicons name="ellipse" size={10} color="#2563eb" />
                     <View className="flex-1">
-                      <Text className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                      <Text className="text-sm font-bold uppercase tracking-wide text-slate-500">
                         {item.pickup.title}
                       </Text>
                       <Text
-                        className="text-sm font-medium text-slate-700"
+                        className="text-base font-medium text-slate-700"
                         numberOfLines={1}
                       >
                         {item.pickup.address}
@@ -278,11 +278,11 @@ const MyScheduleScreen: React.FC = () => {
                   <View className="flex-row items-start gap-2">
                     <Ionicons name="ellipse" size={10} color="#ef4444" />
                     <View className="flex-1">
-                      <Text className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                      <Text className="text-sm font-bold uppercase tracking-wide text-slate-500">
                         {item.dropoff.title}
                       </Text>
                       <Text
-                        className="text-sm font-medium text-slate-700"
+                        className="text-base font-medium text-slate-700"
                         numberOfLines={1}
                       >
                         {item.dropoff.address}
@@ -297,7 +297,7 @@ const MyScheduleScreen: React.FC = () => {
                     onPress={() => handleAccept(item)}
                     loading={acceptingId === item.id}
                     disabled={acceptingId === item.id}
-                    className="h-12"
+                    className="h-14"
                   />
                 ) : null}
               </Card>
@@ -305,7 +305,7 @@ const MyScheduleScreen: React.FC = () => {
           ))
         ) : (
           <Card className="items-center py-10">
-            <Text className="text-sm font-medium text-slate-500">
+            <Text className="text-lg font-medium text-slate-500">
               Không có công việc sắp tới
             </Text>
           </Card>

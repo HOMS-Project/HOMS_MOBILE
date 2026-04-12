@@ -66,18 +66,30 @@ const formatDate = (dateString?: string) => {
     .padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
 };
 
+const normalizeStatus = (status?: string) => (status || "").toUpperCase();
+
 const statusLabel = (status: string) => {
-  if (status === "IN_PROGRESS") return "Đang thực hiện";
-  if (status === "ACCEPTED") return "Đã nhận đơn";
-  if (status === "COMPLETED") return "Đã hoàn tất";
-  return status;
+  const s = normalizeStatus(status);
+  if (s === "IN_PROGRESS") return "Đang thực hiện";
+  if (s === "ACCEPTED") return "Đã nhận đơn";
+  if (s === "COMPLETED") return "Đã hoàn tất";
+  if (s === "ASSIGNED") return "Đã phân công";
+  if (s === "CONFIRMED") return "Đã xác nhận";
+  if (s === "PENDING") return "Chờ xử lý";
+  if (s === "CANCELLED") return "Đã hủy";
+  return "Khác";
 };
 
 const statusClass = (status: string) => {
-  if (status === "IN_PROGRESS") return "bg-sky-100 text-sky-700";
-  if (status === "ACCEPTED") return "bg-amber-100 text-amber-700";
-  if (status === "COMPLETED") return "bg-emerald-100 text-emerald-700";
-  return "bg-slate-100 text-slate-600";
+  const s = normalizeStatus(status);
+  if (s === "IN_PROGRESS") return "bg-sky-100 text-sky-700";
+  if (s === "ACCEPTED") return "bg-amber-100 text-amber-700";
+  if (s === "COMPLETED") return "bg-emerald-100 text-emerald-700";
+  if (s === "ASSIGNED") return "bg-violet-100 text-violet-700";
+  if (s === "CONFIRMED") return "bg-cyan-100 text-cyan-700";
+  if (s === "PENDING") return "bg-orange-100 text-orange-700";
+  if (s === "CANCELLED") return "bg-rose-100 text-rose-700";
+  return "bg-slate-100 text-slate-700";
 };
 
 const OrderDetailsScreen: React.FC = () => {
@@ -137,7 +149,7 @@ const OrderDetailsScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-slate-100">
+      <View className="flex-1 items-center justify-center bg-[#edf4ef]">
         <ActivityIndicator size="large" color="#10b981" />
       </View>
     );
@@ -145,7 +157,7 @@ const OrderDetailsScreen: React.FC = () => {
 
   if (!order) {
     return (
-      <View className="flex-1 items-center justify-center bg-slate-100 px-6">
+      <View className="flex-1 items-center justify-center bg-emerald-100/70 px-6">
         <Text className="text-center text-base font-medium text-slate-500">
           Không thể tải thông tin đơn hàng
         </Text>
@@ -171,7 +183,7 @@ const OrderDetailsScreen: React.FC = () => {
   const renderEvidenceList = (images: string[]) => {
     if (!images.length) {
       return (
-        <View className="rounded-2xl bg-slate-50 px-4 py-3">
+        <View className="rounded-2xl bg-emerald-50/50 px-4 py-3">
           <Text className="text-sm italic text-slate-500">Chưa có ảnh</Text>
         </View>
       );
@@ -245,7 +257,7 @@ const OrderDetailsScreen: React.FC = () => {
   };
 
   return (
-    <View className="flex-1 bg-slate-100">
+    <View className="flex-1 bg-[#edf4ef]">
       <View className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-300/35" />
       <View className="absolute -left-16 bottom-14 h-56 w-56 rounded-full bg-sky-200/40" />
 
@@ -256,10 +268,10 @@ const OrderDetailsScreen: React.FC = () => {
       >
         <View className="flex-row items-center">
           <Pressable
-            className="h-14 w-14 items-center justify-center rounded-3xl bg-white shadow-sm"
+            className="h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="chevron-back" size={28} color="#0f172a" />
+            <Ionicons name="arrow-back" size={24} color="#0f172a" />
           </Pressable>
           <Text className="ml-3 text-[34px] font-extrabold text-slate-900">
             Chi tiết đơn hàng
@@ -292,7 +304,7 @@ const OrderDetailsScreen: React.FC = () => {
             </View>
           </View>
 
-          <View className="h-px bg-slate-100" />
+          <View className="h-px bg-emerald-100/70" />
 
           <View className="flex-row items-start gap-3">
             <Ionicons name="time-outline" size={22} color="#d97706" />
@@ -312,7 +324,7 @@ const OrderDetailsScreen: React.FC = () => {
             Lộ trình di chuyển
           </Text>
 
-          <View className="gap-3 rounded-2xl bg-slate-50 p-4">
+          <View className="gap-3 rounded-2xl border border-slate-100 bg-white p-4">
             <View className="flex-row items-start gap-2">
               <Ionicons name="ellipse" size={11} color="#2563eb" />
               <View className="flex-1">
@@ -423,7 +435,7 @@ const OrderDetailsScreen: React.FC = () => {
             ))}
           </View>
 
-          <View className="mt-5 h-px bg-slate-100" />
+          <View className="mt-5 h-px bg-emerald-100/70" />
 
           <View className="mt-5 gap-4">
             <Text className="text-xl font-extrabold text-slate-900">
