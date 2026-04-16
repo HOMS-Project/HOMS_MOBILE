@@ -14,6 +14,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import type { RootStackParamList } from "../../App";
 import Card from "../components/ui/Card";
 import { apiRequest, endpoints } from "../api";
+import LocationTrackingService from "../services/locationTrackingService";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -108,6 +109,17 @@ const StaffHomeScreen: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    if (user && (user.id || user._id)) {
+      const uid = user.id || user._id;
+      const role = user.role || 'driver';
+      LocationTrackingService.startTracking(uid, role);
+    }
+    return () => {
+      LocationTrackingService.stopTracking();
+    };
+  }, [user]);
 
   useFocusEffect(
     useCallback(() => {
@@ -233,6 +245,13 @@ const StaffHomeScreen: React.FC = () => {
               <Text className="mt-1 text-lg font-semibold text-emerald-100/90">
                 {getRoleLabel(user?.role)}
               </Text>
+              
+              {user && (
+                <View className="mt-2 flex-row items-center self-start rounded-full border border-emerald-400/30 bg-emerald-800/40 px-3 py-1">
+                  <View className="mr-2 h-2.5 w-2.5 rounded-full bg-green-400" style={{ shadowColor: '#4ade80', shadowOpacity: 0.8, shadowRadius: 4 }} />
+                  <Text className="text-xs font-semibold text-emerald-50">GPS Đang phát tín hiệu</Text>
+                </View>
+              )}
             </View>
 
             <Pressable
@@ -315,11 +334,11 @@ const StaffHomeScreen: React.FC = () => {
                     <Text className="mt-1 text-base text-slate-500">
                       {currentOrder.scheduledTime
                         ? new Date(
-                            currentOrder.scheduledTime,
-                          ).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
+                          currentOrder.scheduledTime,
+                        ).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
                         : "Chưa có lịch"}
                     </Text>
                   </View>
