@@ -19,6 +19,7 @@ import {
 } from "react-native";
 import { WebView } from "react-native-webview";
 import * as ImagePicker from "expo-image-picker";
+import * as Location from "expo-location";
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
@@ -141,6 +142,9 @@ const OrderMapScreen: React.FC = () => {
     pickup: any;
     delivery: any;
   } | null>(null);
+
+  const [currentLocation, setCurrentLocation] = useState<{ latitude: number, longitude: number } | null>(null);
+  const [liveRoute, setLiveRoute] = useState<{ coordinates: number[][]; distance: number; duration: number } | null>(null);
 
   const [pickupImages, setPickupImages] = useState<string[]>([]);
   const [dropoffImages, setDropoffImages] = useState<string[]>([]);
@@ -265,9 +269,9 @@ const OrderMapScreen: React.FC = () => {
           duration: r.duration,
           coordinates: Array.isArray(r.geometry?.coordinates)
             ? r.geometry.coordinates.map((c: any) => ({
-                latitude: c[1],
-                longitude: c[0],
-              }))
+              latitude: c[1],
+              longitude: c[0],
+            }))
             : [],
         }));
 
@@ -323,6 +327,53 @@ const OrderMapScreen: React.FC = () => {
   useEffect(() => {
     fetchStatus();
   }, []);
+
+  // Fetch Live Tracking Route
+  useEffect(() => {
+    if (!mapCoords?.pickup || !mapCoords?.delivery) return;
+
+    let isMounted = true;
+    const fetchLiveStats = async () => {
+      try {
+        const { status: permStatus } = await Location.requestForegroundPermissionsAsync();
+        if (permStatus !== "granted") return;
+
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+
+        if (!isMounted) return;
+
+        const pLng = loc.coords.longitude;
+        const pLat = loc.coords.latitude;
+        setCurrentLocation({ latitude: pLat, longitude: pLng });
+
+        const destination = status === "IN_PROGRESS" ? mapCoords.delivery : mapCoords.pickup;
+
+        if (!destination) return;
+        const data = await staffApi.getProxyRoute(
+          `${pLng},${pLat}`,
+          `${destination.longitude},${destination.latitude}`
+        );
+
+        if (data && data.code === "Ok" && data.routes?.length > 0) {
+          const bestRoute = data.routes[0];
+          if (isMounted) {
+            setLiveRoute({
+              distance: bestRoute.distance,
+              duration: bestRoute.duration,
+              coordinates: bestRoute.geometry.coordinates.map((c: any) => [c[1], c[0]])
+            });
+          }
+        }
+      } catch (err) {
+        console.log("Error fetching live route", err);
+      }
+    };
+
+    fetchLiveStats();
+    return () => { isMounted = false; };
+  }, [mapCoords, status]);
 
   // Map actions
   const openExternalMap = () => {
@@ -786,6 +837,19 @@ const OrderMapScreen: React.FC = () => {
             });
         }
 
+        var myLocation = ${JSON.stringify(currentLocation ? [currentLocation.latitude, currentLocation.longitude] : null)};
+        if (myLocation) {
+            var iconMe = L.divIcon({ className: 'pickup-icon', iconSize: [16, 16], iconAnchor: [8, 8], html: '<div style="background:#22C55E;width:100%;height:100%;border-radius:50%;border:2px solid white;box-shadow:0 0 8px rgba(34,197,94,0.8);"></div>' });
+            L.marker(myLocation, { icon: iconMe }).addTo(map).bindPopup("Bạn đang ở đây");
+            bounds.extend(myLocation);
+        }
+
+        var livePath = ${JSON.stringify(liveRoute?.coordinates || null)};
+        if (livePath && livePath.length > 0) {
+            L.polyline(livePath, {color: '#10B981', weight: 6, dashArray: '8, 8' }).addTo(map);
+            bounds.extend(L.polyline(livePath).getBounds());
+        }
+
         if (bounds.isValid()) {
             map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
         }
@@ -817,6 +881,23 @@ const OrderMapScreen: React.FC = () => {
           scrollEnabled={false}
           bounces={false}
         />
+
+        {liveRoute && status !== "COMPLETED" && status !== "CANCELLED" && (
+          <View className="absolute z-50 left-5 right-5 top-[140px] bg-slate-900/90 py-3.5 px-4 rounded-3xl flex-row items-center justify-between border border-emerald-500/40 shadow-2xl">
+            <View className="flex-row items-center">
+              <View className="w-11 h-11 rounded-full bg-emerald-500 items-center justify-center mr-3">
+                <Ionicons name="navigate" size={24} color="#FFF" />
+              </View>
+              <View>
+                <Text className="text-white/70 text-[11px] font-bold mb-1 uppercase tracking-widest">Tiếp theo: {status === 'IN_PROGRESS' ? 'ĐI ĐẾN ĐIỂM GIAO' : 'ĐI ĐẾN ĐIỂM LẤY'}</Text>
+                <Text className="text-white text-xl font-extrabold tracking-tight shadow-sm">
+                  {(liveRoute.distance / 1000).toFixed(1)} km <Text className="font-normal opacity-50">|</Text> {Math.round((liveRoute.distance / 1000) * 2.5 + 5)} phút
+                </Text>
+              </View>
+            </View>
+            <View className="bg-emerald-400 w-2 h-2 rounded-full absolute top-3 right-4 shadow-md" style={{ shadowColor: '#4ade80', shadowRadius: 6, shadowOpacity: 1 }} />
+          </View>
+        )}
       </View>
 
       <View style={styles.header}>
@@ -835,44 +916,6 @@ const OrderMapScreen: React.FC = () => {
           </Text>
         </View>
       </View>
-
-      {routes.length > 0 && (
-        <View style={styles.routeSelector}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 15 }}
-          >
-            {routes.map((r, idx) => (
-              <TouchableOpacity
-                key={idx}
-                onPress={() => setSelectedRouteIdx(idx)}
-                style={[
-                  styles.routeTab,
-                  selectedRouteIdx === idx && styles.activeRouteTab,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.routeTabText,
-                    selectedRouteIdx === idx && styles.activeRouteTabText,
-                  ]}
-                >
-                  Tuyến {idx + 1}
-                </Text>
-                <Text
-                  style={[
-                    styles.routeTabSub,
-                    selectedRouteIdx === idx && styles.activeRouteTabSub,
-                  ]}
-                >
-                  {(r.distance / 1000).toFixed(1)}km
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      )}
 
       <Animated.View
         style={[
@@ -897,7 +940,7 @@ const OrderMapScreen: React.FC = () => {
               <Text style={styles.infoLabel}>THỜI GIAN</Text>
               <Text style={styles.infoValue}>
                 {routes.length > 0
-                  ? Math.round(routes[selectedRouteIdx].duration / 60)
+                  ? Math.round((routes[selectedRouteIdx].distance / 1000) * 2.5 + 5)
                   : 25}{" "}
                 phút
               </Text>
@@ -975,7 +1018,7 @@ const OrderMapScreen: React.FC = () => {
                   style={[
                     styles.pickBtn,
                     (actionLoading || !canUploadPickupEvidence) &&
-                      styles.pickBtnDisabled,
+                    styles.pickBtnDisabled,
                   ]}
                   onPress={() => pickImages("pickup")}
                   disabled={actionLoading || !canUploadPickupEvidence}
@@ -1015,7 +1058,7 @@ const OrderMapScreen: React.FC = () => {
                   style={[
                     styles.pickBtn,
                     (actionLoading || !canUploadDropoffEvidence) &&
-                      styles.pickBtnDisabled,
+                    styles.pickBtnDisabled,
                   ]}
                   onPress={() => pickImages("dropoff")}
                   disabled={actionLoading || !canUploadDropoffEvidence}
