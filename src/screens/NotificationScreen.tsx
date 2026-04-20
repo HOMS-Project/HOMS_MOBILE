@@ -1,106 +1,85 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
   FlatList,
   ActivityIndicator,
   Pressable,
+  RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import { staffApi } from "../api";
-import Card from "../components/ui/Card";
-
-type NotificationItem = {
-  _id: string;
-  title: string;
-  message: string;
-  isRead: boolean;
-  type: string;
-  createdAt: string;
-};
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../../App";
+import NotificationItem from "../components/NotificationItem";
+import {
+  fetchStaffNotifications,
+  markNotificationAsRead,
+  type StaffNotification,
+} from "../services/notificationService";
+import { showToast } from "../utils/toast";
 
 const NotificationScreen: React.FC = () => {
-  const navigation = useNavigation();
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [notifications, setNotifications] = useState<StaffNotification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotifications = useCallback(async (isSilent = false) => {
+    if (isSilent) setRefreshing(true);
+    else setLoading(true);
+
     try {
-      const res = await staffApi.getNotifications();
-      if (res.success) {
-        setNotifications(res.data || []);
-      }
+      const data = await fetchStaffNotifications();
+      setNotifications(data);
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
+      if (!isSilent) {
+        showToast("Không thể tải danh sách thông báo");
+      }
     } finally {
-      setLoading(false);
+      if (isSilent) setRefreshing(false);
+      else setLoading(false);
     }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      fetchNotifications();
+      fetchNotifications(false);
     }, [fetchNotifications]),
   );
 
-  const handleMarkAsRead = async (item: NotificationItem) => {
-    if (item.isRead) return;
+  const handleNotificationPress = async (item: StaffNotification) => {
+    if (!item.id) return;
+
+    const previousIsRead = item.isRead;
+
     try {
       setNotifications((prev) =>
-        prev.map((n) => (n._id === item._id ? { ...n, isRead: true } : n)),
+        prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n)),
       );
-      await staffApi.markNotificationRead(item._id);
+
+      if (!previousIsRead) {
+        await markNotificationAsRead(item.id);
+      }
+
+      if (item.orderId) {
+        // Current app route expects invoiceId in OrderDetails params.
+        navigation.navigate("OrderDetails", { invoiceId: item.orderId });
+      } else {
+        showToast("Thông báo chưa có mã đơn để mở chi tiết");
+      }
     } catch (error) {
       console.error("Failed to mark as read:", error);
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === item.id ? { ...n, isRead: previousIsRead } : n,
+        ),
+      );
+      showToast("Không thể cập nhật trạng thái thông báo");
     }
   };
-
-  const renderItem = ({ item }: { item: NotificationItem }) => (
-    <Pressable onPress={() => handleMarkAsRead(item)} className="mb-3">
-      <Card
-        className={`p-4 flex-row gap-3 items-center ${
-          item.isRead ? "bg-white" : "bg-[#f0f5ff] border border-blue-200"
-        }`}
-      >
-        <View
-          className={`h-12 w-12 rounded-full items-center justify-center ${
-            item.isRead ? "bg-emerald-100/70" : "bg-blue-100"
-          }`}
-        >
-          <Ionicons
-            name={
-              item.type === "Payment"
-                ? "card"
-                : item.type === "Assignment"
-                  ? "car"
-                  : "notifications"
-            }
-            size={24}
-            color={item.isRead ? "#94a3b8" : "#2563eb"}
-          />
-        </View>
-        <View className="flex-1">
-          <Text
-            className={`text-base flex-wrap ${
-              item.isRead
-                ? "font-semibold text-slate-800"
-                : "font-extrabold text-blue-900"
-            }`}
-          >
-            {item.title}
-          </Text>
-          <Text className="text-sm text-slate-500 mt-1 flex-wrap">
-            {item.message}
-          </Text>
-          <Text className="text-xs text-slate-400 mt-2">
-            {new Date(item.createdAt).toLocaleString()}
-          </Text>
-        </View>
-        {!item.isRead && <View className="h-3 w-3 rounded-full bg-blue-500" />}
-      </Card>
-    </Pressable>
-  );
 
   return (
     <View className="flex-1 bg-[#edf4ef] pt-12">
@@ -134,10 +113,19 @@ const NotificationScreen: React.FC = () => {
       ) : (
         <FlatList
           data={notifications}
-          keyExtractor={(item) => item._id}
-          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <NotificationItem item={item} onPress={handleNotificationPress} />
+          )}
           contentContainerStyle={{ padding: 16 }}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => fetchNotifications(true)}
+              tintColor="#0f766e"
+            />
+          }
         />
       )}
     </View>

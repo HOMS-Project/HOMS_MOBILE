@@ -44,14 +44,21 @@ axiosClient.interceptors.request.use(async (config) => {
     }
   }
 
+  const isFormData = config.data instanceof FormData;
+
   config.headers = {
     Accept: 'application/json',
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     'X-Client': 'mobile-driver',
     ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
     ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
     ...(config.headers || {}),
   } as any;
+
+  // Let Axios set the boundary automatically for FormData
+  if (isFormData && config.headers['Content-Type']) {
+    delete config.headers['Content-Type'];
+  }
 
   config.withCredentials = true;
 
@@ -125,6 +132,8 @@ export const endpoints = {
   staff: {
     getOrders: '/staff/orders',
     getOrderDetails: (invoiceId: string) => `/staff/orders/${invoiceId}`,
+    startOrder: (invoiceId: string) => `/staff/orders/${invoiceId}/start`,
+    completeOrder: (invoiceId: string) => `/staff/orders/${invoiceId}/complete`,
     updateAssignmentStatus: (assignmentId: string) => `/staff/assignments/${assignmentId}/status`,
     updateAssignmentRoute: (assignmentId: string) => `/staff/assignments/${assignmentId}/route`,
     getIncidentTypes: '/staff/incidents/meta/types',
@@ -144,28 +153,120 @@ export const staffApi = {
   getOrders: () => axiosClient.get(endpoints.staff.getOrders).then((res) => res.data),
   getOrderDetails: (invoiceId: string) =>
     axiosClient.get(endpoints.staff.getOrderDetails(invoiceId)).then((res) => res.data),
+  startOrder: (invoiceId: string) =>
+    axiosClient.put(endpoints.staff.startOrder(invoiceId)).then((res) => res.data),
+  completeOrder: (invoiceId: string) =>
+    axiosClient.put(endpoints.staff.completeOrder(invoiceId)).then((res) => res.data),
   getIncidentTypes: () => axiosClient.get(endpoints.staff.getIncidentTypes).then((res) => res.data),
   getMyIncidents: () => axiosClient.get(endpoints.staff.getMyIncidents).then((res) => res.data),
-  createIncident: (formData: FormData) =>
-    axiosClient
-      .post(endpoints.staff.createIncident, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
-      .then((res) => res.data),
+  createIncident: async (formData: FormData) => {
+    let token = csrfToken;
+    if (!token) token = await fetchCsrfToken();
+
+    const doFetch = (currentToken: string) =>
+      fetch(`${BASE_URL}${endpoints.staff.createIncident}`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          Accept: 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          'X-CSRF-Token': currentToken,
+        },
+      });
+
+    let res;
+    try {
+      res = await doFetch(token);
+    } catch (err: any) {
+      // Possible connection drop due to immediate 403 from CSRF rejection
+      token = await fetchCsrfToken();
+      res = await doFetch(token);
+    }
+
+    if (!res.ok) {
+      if (res.status === 403) {
+        token = await fetchCsrfToken();
+        res = await doFetch(token);
+      }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Network Error during upload');
+      }
+    }
+    return res.json();
+  },
   updateAssignmentStatus: (assignmentId: string, status: string) =>
     axiosClient.patch(endpoints.staff.updateAssignmentStatus(assignmentId), { status }).then((res) => res.data),
-  submitPickup: (orderId: string, formData: FormData) =>
-    axiosClient
-      .post(endpoints.staff.pickup(orderId), formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
-      .then((res) => res.data),
-  submitDropoff: (orderId: string, formData: FormData) =>
-    axiosClient
-      .post(endpoints.staff.dropoff(orderId), formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
-      .then((res) => res.data),
+  submitPickup: async (orderId: string, formData: FormData) => {
+    let token = csrfToken;
+    if (!token) token = await fetchCsrfToken();
+
+    const doFetch = (currentToken: string) =>
+      fetch(`${BASE_URL}${endpoints.staff.pickup(orderId)}`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          Accept: 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          'X-CSRF-Token': currentToken,
+        },
+      });
+
+    let res;
+    try {
+      res = await doFetch(token);
+    } catch (err: any) {
+      token = await fetchCsrfToken();
+      res = await doFetch(token);
+    }
+
+    if (!res.ok) {
+      if (res.status === 403) {
+        token = await fetchCsrfToken();
+        res = await doFetch(token);
+      }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Network Error during upload');
+      }
+    }
+    return res.json();
+  },
+  submitDropoff: async (orderId: string, formData: FormData) => {
+    let token = csrfToken;
+    if (!token) token = await fetchCsrfToken();
+
+    const doFetch = (currentToken: string) =>
+      fetch(`${BASE_URL}${endpoints.staff.dropoff(orderId)}`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          Accept: 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          'X-CSRF-Token': currentToken,
+        },
+      });
+
+    let res;
+    try {
+      res = await doFetch(token);
+    } catch (err: any) {
+      token = await fetchCsrfToken();
+      res = await doFetch(token);
+    }
+
+    if (!res.ok) {
+      if (res.status === 403) {
+        token = await fetchCsrfToken();
+        res = await doFetch(token);
+      }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Network Error during upload');
+      }
+    }
+    return res.json();
+  },
   getProxyRoute: (p1: string, p2: string) =>
     axiosClient.get(endpoints.staff.getProxyRoute, { params: { p1, p2 } }).then((res) => res.data),
   getNotifications: () => axiosClient.get(endpoints.staff.getNotifications).then((res) => res.data),
