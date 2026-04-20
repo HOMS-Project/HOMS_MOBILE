@@ -263,7 +263,11 @@ const OrderDetailsScreen: React.FC = () => {
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
+        contentContainerStyle={{
+          padding: 20,
+          paddingTop: 42,
+          paddingBottom: 120,
+        }}
         showsVerticalScrollIndicator={false}
       >
         <View className="flex-row items-center">

@@ -215,7 +215,11 @@ const CreateIncidentScreen: React.FC = () => {
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 20, paddingBottom: 42 }}
+        contentContainerStyle={{
+          padding: 20,
+          paddingTop: 42,
+          paddingBottom: 42,
+        }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }

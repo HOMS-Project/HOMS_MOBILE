@@ -232,12 +232,16 @@ const OrderListScreen: React.FC = () => {
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 20, paddingBottom: 36 }}
+        contentContainerStyle={{
+          padding: 20,
+          paddingTop: 42,
+          paddingBottom: 36,
+        }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        <View className="flex-row items-center">
+        <View className="mt-1 flex-row items-center">
           <Pressable
             className="h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
             onPress={() => navigation.goBack()}

@@ -242,7 +242,7 @@ const EditProfileScreen: React.FC = () => {
           keyboardShouldPersistTaps="handled"
         >
           <Animated.View
-            className="px-5 pb-8 pt-10"
+            className="px-5 pb-8 pt-12"
             style={{ opacity: screenOpacity }}
           >
             <View className="flex-row items-center justify-between">

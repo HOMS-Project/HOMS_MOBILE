@@ -14,7 +14,6 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../App";
 import Card from "../components/ui/Card";
-import Button from "../components/ui/Button";
 import { showToast } from "../utils/toast";
 import {
   fetchMyIncidents,
@@ -97,7 +96,11 @@ const IncidentListScreen: React.FC = () => {
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 20, paddingBottom: 42 }}
+        contentContainerStyle={{
+          padding: 20,
+          paddingTop: 42,
+          paddingBottom: 42,
+        }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -112,16 +115,15 @@ const IncidentListScreen: React.FC = () => {
           <Text className="flex-1 text-2xl font-extrabold text-slate-900">
             Báo cáo sự cố
           </Text>
-        </View>
-
-        <Card className="mt-5 self-center rounded-[24px] px-3 py-2">
-          <Button
-            title="Tạo báo cáo"
+          <Pressable
+            className="rounded-full border border-emerald-700 bg-emerald-600 px-4 py-1.5 shadow-sm"
             onPress={() => navigation.navigate("CreateIncident")}
-            className="h-10 px-6"
-            textClassName="text-base"
-          />
-        </Card>
+          >
+            <Text className="text-base font-extrabold text-white">
+              Tạo báo cáo
+            </Text>
+          </Pressable>
+        </View>
 
         <View className="mt-5 gap-3">
           {incidents.map((incident) => {

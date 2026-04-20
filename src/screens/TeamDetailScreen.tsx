@@ -170,7 +170,11 @@ const TeamDetailScreen: React.FC = () => {
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 20, paddingBottom: 36 }}
+        contentContainerStyle={{
+          padding: 20,
+          paddingTop: 42,
+          paddingBottom: 36,
+        }}
         showsVerticalScrollIndicator={false}
       >
         <View className="flex-row items-center">
@@ -197,7 +201,9 @@ const TeamDetailScreen: React.FC = () => {
             <Pressable
               className="rounded-full bg-emerald-100 px-4 py-2"
               onPress={() =>
-                navigation.navigate("OrderList", { fromTeamDetail: true })
+                navigation.navigate("OrderDetails", {
+                  invoiceId: detail.invoiceId || invoiceId,
+                })
               }
             >
               <Text className="text-base font-bold text-emerald-700">

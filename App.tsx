@@ -134,7 +134,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
 
   return (
     <View
-      className="absolute bottom-0 left-0 right-0 items-center pb-[14px]"
+      className="absolute bottom-0 left-0 right-0 items-center pb-[30px]"
       pointerEvents="box-none"
     >
       <View
