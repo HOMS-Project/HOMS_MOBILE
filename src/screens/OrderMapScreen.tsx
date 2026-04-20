@@ -28,6 +28,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { colors, spacing, radius } from "../theme";
 import type { RootStackParamList } from "../../App";
 import { staffApi, endpoints, apiRequest } from "../api";
+import { showToast } from "../utils/toast";
 
 type OrderMapRouteProp = RouteProp<RootStackParamList, "OrderMap">;
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -467,13 +468,29 @@ const OrderMapScreen: React.FC = () => {
 
   // API actions
   const updateAssignmentStatus = async (
-    newStatus: "ACCEPTED" | "IN_PROGRESS" | "COMPLETED",
+    newStatus: "ACCEPTED",
   ) => {
     if (!assignmentId) {
       throw new Error("Không tìm thấy ID phân công công việc.");
     }
 
     await staffApi.updateAssignmentStatus(assignmentId, newStatus);
+  };
+
+  const startOrder = async () => {
+    if (!invoiceId) {
+      throw new Error("Không tìm thấy mã đơn hàng.");
+    }
+
+    await staffApi.startOrder(invoiceId);
+  };
+
+  const completeOrder = async () => {
+    if (!invoiceId) {
+      throw new Error("Không tìm thấy mã đơn hàng.");
+    }
+
+    await staffApi.completeOrder(invoiceId);
   };
 
   const uploadPickupEvidence = async () => {
@@ -527,14 +544,14 @@ const OrderMapScreen: React.FC = () => {
         await uploadPickupEvidence();
       }
 
-      await updateAssignmentStatus("IN_PROGRESS");
-      Alert.alert("Thành công", "Đã cập nhật trạng thái đơn hàng");
+      await startOrder();
+      showToast("Đã bắt đầu đơn hàng. Email đã được gửi tới khách hàng.");
 
       setPickupImages([]);
       setPickupNote("");
       await fetchStatus();
     } catch (error: any) {
-      Alert.alert("Lỗi", error?.message || "Không thể bắt đầu di chuyển");
+      showToast(error?.message || "Không thể bắt đầu di chuyển");
     } finally {
       setActionLoading(false);
     }
@@ -552,15 +569,15 @@ const OrderMapScreen: React.FC = () => {
         await uploadDropoffEvidence();
       }
 
-      await updateAssignmentStatus("COMPLETED");
-      Alert.alert("Thành công", "Đã cập nhật trạng thái đơn hàng");
+      await completeOrder();
+      showToast("Đã hoàn tất đơn hàng. Email đã được gửi tới khách hàng.");
 
       setDropoffImages([]);
       setDropoffNote("");
       await fetchStatus();
       navigation.navigate("OrderList");
     } catch (error: any) {
-      Alert.alert("Lỗi", error?.message || "Không thể hoàn tất giao hàng");
+      showToast(error?.message || "Không thể hoàn tất giao hàng");
     } finally {
       setActionLoading(false);
     }

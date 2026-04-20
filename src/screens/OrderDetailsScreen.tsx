@@ -472,7 +472,7 @@ const OrderDetailsScreen: React.FC = () => {
       <View className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 p-4">
         <Button
           title="Xem bản đồ và cập nhật"
-          className="h-20"
+          className="h-16"
           onPress={() =>
             navigation.navigate("OrderMap", {
               assignmentId: order.assignmentId,

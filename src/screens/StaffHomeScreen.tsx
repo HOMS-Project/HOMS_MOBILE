@@ -15,6 +15,7 @@ import type { RootStackParamList } from "../../App";
 import Card from "../components/ui/Card";
 import { apiRequest, endpoints } from "../api";
 import LocationTrackingService from "../services/locationTrackingService";
+import { fetchStaffNotifications } from "../services/notificationService";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -83,6 +84,7 @@ const StaffHomeScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<DashboardOrder[]>([]);
   const [user, setUser] = useState<any>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchData = useCallback(async () => {
     try {
@@ -98,7 +100,17 @@ const StaffHomeScreen: React.FC = () => {
         })
         .catch((err) => console.error("Profile fetch failed:", err));
 
-      await Promise.all([ordersPromise, profilePromise]);
+      const notificationsPromise = fetchStaffNotifications()
+        .then((items) => {
+          const unread = items.filter((n) => !n.isRead).length;
+          setUnreadCount(unread);
+        })
+        .catch((err) => {
+          console.error("Notifications fetch failed:", err);
+          setUnreadCount(0);
+        });
+
+      await Promise.all([ordersPromise, profilePromise, notificationsPromise]);
     } catch (error) {
       console.error("Fetch data general error:", error);
     } finally {
@@ -263,6 +275,14 @@ const StaffHomeScreen: React.FC = () => {
                 size={24}
                 color="#ffffff"
               />
+
+              {unreadCount > 0 ? (
+                <View className="absolute -right-1 -top-1 min-w-[18px] rounded-full bg-red-500 px-1.5 py-[1px] items-center justify-center">
+                  <Text className="text-[10px] font-extrabold text-white">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </Text>
+                </View>
+              ) : null}
             </Pressable>
           </View>
 
