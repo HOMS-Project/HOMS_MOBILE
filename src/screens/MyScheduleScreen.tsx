@@ -214,17 +214,97 @@ const MyScheduleScreen: React.FC = () => {
           <View className="h-10 w-10" />
         </View>
 
-        <Card className="mt-6 rounded-[28px] border-emerald-100 bg-emerald-50/80 p-6">
-          <Text className="text-lg font-semibold text-emerald-700">
-            Công việc hôm nay
-          </Text>
-          <Text className="mt-1 text-5xl font-extrabold text-slate-900">
-            {todayJobs.length}
-          </Text>
-          <Text className="mt-1 text-lg text-slate-500">
-            đơn hàng có lịch trong hôm nay
-          </Text>
-        </Card>
+        <View className="mt-6">
+          <Text className="mb-3 text-lg font-bold text-slate-900">Công việc hôm nay</Text>
+          {todayJobs.length > 0 ? (
+            todayJobs.map((item) => (
+              <Pressable
+                key={item.id}
+                className="mb-3"
+                onPress={() =>
+                  navigation.navigate("OrderDetails", {
+                    invoiceId: item.invoiceId,
+                  })
+                }
+              >
+                <Card className="gap-4 rounded-[26px] border-emerald-200 bg-emerald-50/80 p-5">
+                  <View className="flex-row items-start justify-between">
+                    <View className="mr-3 flex-1">
+                      <View className="flex-row items-center gap-2">
+                        <Text className="text-2xl">📋</Text>
+                        <Text className="text-xl font-bold text-slate-800">
+                          {item.invoice}
+                        </Text>
+                      </View>
+                      <Text className="mt-1 text-base text-slate-500">
+                        {item.date}
+                      </Text>
+                    </View>
+                    <View
+                      className={`rounded-full px-4 py-2 ${getStatusStyle(item.status)}`}
+                    >
+                      <Text className="text-sm font-bold">
+                        {getStatusLabel(item.status)}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View className="gap-3 rounded-2xl border border-emerald-100 bg-white p-3">
+                    <View className="flex-row items-start gap-2">
+                      <Ionicons name="ellipse" size={10} color="#2563eb" />
+                      <View className="flex-1">
+                        <Text className="text-sm font-bold uppercase tracking-wide text-slate-500">
+                          {item.pickup.title}
+                        </Text>
+                        <Text
+                          className="text-base font-medium text-slate-700"
+                          numberOfLines={1}
+                        >
+                          {item.pickup.address}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View className="ml-1 h-4 w-px bg-slate-300" />
+
+                    <View className="flex-row items-start gap-2">
+                      <Ionicons name="ellipse" size={10} color="#ef4444" />
+                      <View className="flex-1">
+                        <Text className="text-sm font-bold uppercase tracking-wide text-slate-500">
+                          {item.dropoff.title}
+                        </Text>
+                        <Text
+                          className="text-base font-medium text-slate-700"
+                          numberOfLines={1}
+                        >
+                          {item.dropoff.address}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  {item.status === "ASSIGNED" ? (
+                    <Button
+                      title="Nhận đơn"
+                      onPress={() => handleAccept(item)}
+                      loading={acceptingId === item.id}
+                      disabled={acceptingId === item.id}
+                      className="h-14"
+                    />
+                  ) : null}
+                </Card>
+              </Pressable>
+            ))
+          ) : (
+            <Card className="items-center rounded-[26px] border-emerald-100 bg-emerald-50/60 py-8">
+              <Ionicons name="calendar-outline" size={36} color="#a7f3d0" />
+              <Text className="mt-3 text-base font-medium text-slate-500">
+                Không có đơn nào trong hôm nay
+              </Text>
+            </Card>
+          )}
+        </View>
+
 
         <Section title="Sắp tới" />
 
