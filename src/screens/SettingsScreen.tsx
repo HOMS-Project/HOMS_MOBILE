@@ -11,7 +11,6 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import type { RootStackParamList } from "../../App";
-import Card from "../components/ui/Card";
 import { apiRequest, endpoints } from "../api";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -26,32 +25,33 @@ const options: Array<{
   desc: string;
   route?: SettingsRoute;
   icon: keyof typeof Ionicons.glyphMap;
+  danger?: boolean;
 }> = [
   {
     id: "edit",
     label: "Chỉnh sửa hồ sơ",
     desc: "Cập nhật thông tin cá nhân",
     route: "EditProfile",
-    icon: "person-circle-outline",
+    icon: "person-outline",
   },
   {
     id: "password",
     label: "Đổi mật khẩu",
     desc: "Tăng bảo mật tài khoản",
     route: "ChangePassword",
-    icon: "lock-closed-outline",
+    icon: "shield-checkmark-outline",
   },
   {
     id: "help",
     label: "Trợ giúp và hỗ trợ",
     desc: "Liên hệ bộ phận vận hành",
-    icon: "help-circle-outline",
+    icon: "chatbubble-ellipses-outline",
   },
   {
     id: "about",
     label: "Về ứng dụng",
     desc: "HOMS Driver v1",
-    icon: "information-circle-outline",
+    icon: "information-outline",
   },
   {
     id: "logout",
@@ -59,6 +59,7 @@ const options: Array<{
     desc: "Thoát khỏi tài khoản hiện tại",
     route: "Login",
     icon: "log-out-outline",
+    danger: true,
   },
 ];
 
@@ -99,97 +100,111 @@ const SettingsScreen: React.FC = () => {
     <View className="flex-1 bg-[#edf4ef]">
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="px-5 pb-5 pt-14">
-          <View className="flex-row items-center justify-between">
-            <Text className="text-5xl font-extrabold text-slate-900">
-              Cài đặt
-            </Text>
-            <Pressable
-              className="h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm"
-              onPress={() => navigation.navigate("Notifications")}
-            >
-              <Ionicons
-                name="notifications-outline"
-                size={24}
-                color="#0f172a"
+        {/* ── Header ── */}
+        <View className="flex-row items-center justify-between px-5 pb-4 pt-14">
+          <Text className="text-4xl font-extrabold text-slate-900">
+            Cài đặt
+          </Text>
+          <Pressable
+            className="h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white"
+            style={{
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.08,
+              shadowRadius: 4,
+              elevation: 2,
+            }}
+            onPress={() => navigation.navigate("Notifications")}
+          >
+            <Ionicons name="notifications-outline" size={22} color="#0f172a" />
+          </Pressable>
+        </View>
+
+        {/* ── Profile (no card) ── */}
+        <View className="mt-14 items-center">
+          <View
+            className="h-48 w-48 overflow-hidden rounded-full border-4 border-emerald-200 bg-slate-200"
+            style={{
+              shadowColor: "#16A34A",
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.25,
+              shadowRadius: 12,
+              elevation: 6,
+            }}
+          >
+            {loading ? (
+              <View className="flex-1 items-center justify-center">
+                <ActivityIndicator color="#16A34A" size="large" />
+              </View>
+            ) : (
+              <Image
+                source={{ uri: user?.avatar || fallbackAvatar }}
+                className="h-48 w-48"
+                resizeMode="cover"
               />
-            </Pressable>
+            )}
           </View>
 
-          <Card className="mt-6 rounded-[30px] p-8">
-            <View className="items-center">
-              <View className="h-32 w-32 overflow-hidden rounded-full border-4 border-emerald-100 bg-slate-200">
-                {loading ? (
-                  <View className="flex-1 items-center justify-center">
-                    <ActivityIndicator color="#0f766e" />
-                  </View>
-                ) : (
-                  <Image
-                    source={{ uri: user?.avatar || fallbackAvatar }}
-                    className="h-32 w-32"
-                  />
-                )}
+          <Text className="mt-6 text-[38px] font-extrabold text-slate-900">
+            {user?.fullName || user?.username || "Tài xế"}
+          </Text>
+          <Text className="mt-2.5 text-lg text-slate-500">
+            {user?.email || "Chưa có email"}
+          </Text>
+          <Text className="mt-1.5 text-lg text-slate-500">
+            {user?.phone || user?.phoneNumber || "Chưa có số điện thoại"}
+          </Text>
+        </View>
+
+        {/* ── Menu Items (no card, centred, smaller padding) ── */}
+        <View className="mt-10 items-center gap-7 px-20">
+          {options.map((item) => (
+            <Pressable
+              key={item.id}
+              className="w-full flex-row items-center py-1"
+              onPress={() => handlePress(item.route)}
+            >
+              {/* Circle icon — #16A34A green */}
+              <View
+                className="h-14 w-14 items-center justify-center rounded-full"
+                style={{
+                  backgroundColor: item.danger ? "#fee2e2" : "#16A34A",
+                  shadowColor: item.danger ? "#ef4444" : "#16A34A",
+                  shadowOffset: { width: 0, height: 3 },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 6,
+                  elevation: 4,
+                }}
+              >
+                <Ionicons
+                  name={item.icon}
+                  size={24}
+                  color={item.danger ? "#ef4444" : "#ffffff"}
+                />
               </View>
 
-              <Text className="mt-5 text-4xl font-extrabold text-slate-900">
-                {user?.fullName || user?.username || "Tài xế"}
-              </Text>
-              <Text className="mt-2 text-lg text-slate-500">
-                {user?.email || "Chưa có email"}
-              </Text>
-              <Text className="mt-1 text-lg text-slate-500">
-                {user?.phone || user?.phoneNumber || "Chưa có số điện thoại"}
-              </Text>
-
-              <Pressable
-                className="mt-5 rounded-full bg-emerald-500 px-7 py-3"
-                onPress={() => navigation.navigate("EditProfile")}
-              >
-                <Text className="text-lg font-bold text-white">
-                  Chỉnh sửa hồ sơ
+              {/* Label & desc */}
+              <View className="ml-4 flex-1">
+                <Text
+                  className="text-2xl font-bold"
+                  style={{ color: item.danger ? "#ef4444" : "#0f172a" }}
+                >
+                  {item.label}
                 </Text>
-              </Pressable>
-            </View>
-          </Card>
+                <Text className="text-lg text-slate-400">{item.desc}</Text>
+              </View>
 
-          <View className="mb-3 mt-6 flex-row items-center justify-between">
-            <Text className="text-3xl font-extrabold text-slate-900">
-              Tùy chọn
-            </Text>
-            <View />
-          </View>
-
-          <View className="gap-3">
-            {options.map((item) => (
-              <Pressable
-                key={item.id}
-                className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm"
-                onPress={() => handlePress(item.route)}
-              >
-                <View className="flex-row items-center">
-                  <View className="h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100/70">
-                    <Ionicons name={item.icon} size={26} color="#0f766e" />
-                  </View>
-                  <View className="ml-4 flex-1">
-                    <Text className="text-2xl font-bold text-slate-900">
-                      {item.label}
-                    </Text>
-                    <Text className="mt-1 text-base text-slate-500">
-                      {item.desc}
-                    </Text>
-                  </View>
-                  <Ionicons
-                    name="chevron-forward-outline"
-                    size={28}
-                    color="#94a3b8"
-                  />
-                </View>
-              </Pressable>
-            ))}
-          </View>
+              {/* Chevron */}
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={item.danger ? "#fca5a5" : "#94a3b8"}
+              />
+            </Pressable>
+          ))}
         </View>
       </ScrollView>
     </View>

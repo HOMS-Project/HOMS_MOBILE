@@ -4,6 +4,7 @@ export type TeamOrderSummary = {
   invoiceId: string;
   assignmentId?: string;
   orderCode: string;
+  invoiceCode?: string;
   status: string;
   scheduledTime?: string;
   pickupAddress: string;
@@ -106,6 +107,7 @@ export const fetchAssignedInvoices = async (): Promise<TeamOrderSummary[]> => {
     invoiceId: item.invoiceId || item.id || item._id,
     assignmentId: item.assignmentId,
     orderCode: item.orderCode || "Đơn hàng",
+    invoiceCode: item.invoiceCode,
     status: String(item.status || "").toUpperCase(),
     scheduledTime: item.scheduledTime,
     pickupAddress: item.pickup?.address || "",

@@ -141,7 +141,14 @@ const VerifyOTPScreen: React.FC<Props> = ({ onSubmit, digits = 4 }) => {
                   style={{ transform: [{ scale: buttonScale }] }}
                 >
                   <Pressable
-                    className={`h-[68px] items-center justify-center rounded-2xl bg-emerald-600 shadow-lg ${submitting ? "opacity-70" : ""}`}
+                    className={`h-[75px] items-center justify-center rounded-full bg-[#16A34A] ${submitting ? "opacity-70" : ""}`}
+                    style={{
+                      shadowColor: "#16A34A",
+                      shadowOffset: { width: 0, height: 6 },
+                      shadowOpacity: 0.35,
+                      shadowRadius: 8,
+                      elevation: 6,
+                    }}
                     disabled={submitting}
                     onPressIn={() => animateButton(0.97)}
                     onPressOut={() => animateButton(1)}

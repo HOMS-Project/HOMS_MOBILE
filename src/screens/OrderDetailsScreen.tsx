@@ -490,7 +490,7 @@ const OrderDetailsScreen: React.FC = () => {
 
       <View className="absolute bottom-0 left-0 right-0 border-t border-slate-100 bg-white/95 px-5 pb-10 pt-4">
         <Pressable
-          className="h-[58px] w-full flex-row items-center justify-center rounded-full bg-[#16A34A] active:opacity-85"
+          className="h-[64px] w-full flex-row items-center justify-center rounded-full bg-[#16A34A] active:opacity-85"
           style={{
             shadowColor: "#16A34A",
             shadowOffset: { width: 0, height: 6 },
@@ -505,7 +505,7 @@ const OrderDetailsScreen: React.FC = () => {
             })
           }
         >
-          <Text className="text-[17px] font-bold tracking-wide text-white">
+          <Text className="text-xl font-bold tracking-wide text-white">
             Xem bản đồ và cập nhật
           </Text>
         </Pressable>

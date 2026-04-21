@@ -89,7 +89,7 @@ const CreateIncidentScreen: React.FC = () => {
       (item) => item.invoiceId === invoiceId,
     );
     return selected
-      ? `${selected.orderCode} · ${selected.status}`
+      ? `${selected.invoiceCode || selected.orderCode} · ${selected.status}`
       : "Chọn đơn hàng";
   }, [invoiceId, invoiceOptions]);
 
@@ -199,13 +199,13 @@ const CreateIncidentScreen: React.FC = () => {
     pickerKind === "invoice"
       ? invoiceOptions.map((item) => ({
           value: item.invoiceId,
-          label: `${item.orderCode} · ${item.status}`,
+          label: `${item.invoiceCode || item.orderCode} · ${item.status}`,
           subLabel: `${item.pickupAddress} → ${item.deliveryAddress}`,
         }))
       : typeOptions.map((item) => ({
           value: item.value,
           label: item.label,
-          subLabel: item.value,
+          subLabel: undefined,
         }));
 
   return (
@@ -213,11 +213,24 @@ const CreateIncidentScreen: React.FC = () => {
       <View className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-300/35" />
       <View className="absolute -left-16 bottom-14 h-56 w-56 rounded-full bg-sky-200/40" />
 
+      {/* Fixed header */}
+      <View className="flex-row items-center gap-3 px-5 pb-4 pt-14">
+        <Pressable
+          className="h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#0f172a" />
+        </Pressable>
+        <Text className="flex-1 text-2xl font-extrabold text-slate-900">
+          Tạo báo cáo sự cố
+        </Text>
+      </View>
+
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
           padding: 20,
-          paddingTop: 42,
+          paddingTop: 80,
           paddingBottom: 42,
         }}
         refreshControl={
@@ -225,30 +238,18 @@ const CreateIncidentScreen: React.FC = () => {
         }
         showsVerticalScrollIndicator={false}
       >
-        <View className="flex-row items-center gap-3">
-          <Pressable
-            className="h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#0f172a" />
-          </Pressable>
-          <Text className="flex-1 text-2xl font-extrabold text-slate-900">
-            Tạo báo cáo sự cố
-          </Text>
-        </View>
-
-        <Card className="mt-5 rounded-[24px] p-5">
-          <View className="gap-4">
+        <Card className="mt-0 rounded-[24px] p-5">
+          <View className="gap-6">
             <View>
-              <Text className="mb-2 text-sm font-semibold text-slate-700">
+              <Text className="mb-2 text-base font-bold text-slate-700">
                 Đơn hàng
               </Text>
               <Pressable
-                className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3"
+                className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-4"
                 onPress={() => setPickerKind("invoice")}
               >
                 <Text
-                  className={`${invoiceId ? "text-slate-900" : "text-slate-400"}`}
+                  className={`text-base ${invoiceId ? "text-slate-900" : "text-slate-400"}`}
                 >
                   {selectedInvoiceLabel}
                 </Text>
@@ -261,15 +262,15 @@ const CreateIncidentScreen: React.FC = () => {
             </View>
 
             <View>
-              <Text className="mb-2 text-sm font-semibold text-slate-700">
+              <Text className="mb-2 text-base font-bold text-slate-700">
                 Loại sự cố
               </Text>
               <Pressable
-                className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3"
+                className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-4"
                 onPress={() => setPickerKind("type")}
               >
                 <Text
-                  className={`${type ? "text-slate-900" : "text-slate-400"}`}
+                  className={`text-base ${type ? "text-slate-900" : "text-slate-400"}`}
                 >
                   {selectedTypeLabel}
                 </Text>
@@ -282,22 +283,22 @@ const CreateIncidentScreen: React.FC = () => {
             </View>
 
             <View>
-              <Text className="mb-2 text-sm font-semibold text-slate-700">
+              <Text className="mb-2 text-base font-bold text-slate-700">
                 Media (ảnh/video)
               </Text>
               <Pressable
-                className="items-center justify-center rounded-xl border border-dashed border-emerald-300 bg-emerald-50 px-4 py-4"
+                className="items-center justify-center rounded-xl border border-dashed border-emerald-300 bg-emerald-50 px-4 py-5"
                 onPress={pickMedia}
               >
                 <Ionicons
                   name="cloud-upload-outline"
-                  size={22}
+                  size={26}
                   color="#059669"
                 />
-                <Text className="mt-1 text-sm font-semibold text-emerald-700">
+                <Text className="mt-1.5 text-base font-semibold text-emerald-700">
                   Chọn media
                 </Text>
-                <Text className="text-xs text-emerald-600">Tối đa 5 file</Text>
+                <Text className="text-sm text-emerald-600">Tối đa 5 file</Text>
               </Pressable>
 
               {media.length > 0 ? (
@@ -358,17 +359,30 @@ const CreateIncidentScreen: React.FC = () => {
               }}
               multiline
               textAlignVertical="top"
-              className="min-h-[120px]"
+              className="min-h-[80px]"
               error={errors.description}
             />
 
-            <Button
-              title={submitting ? "Đang gửi..." : "Gửi báo cáo"}
+            <Pressable
+              className={`mt-8 h-[64px] items-center justify-center rounded-full bg-[#16A34A] ${submitting ? "opacity-70" : ""}`}
+              style={{
+                shadowColor: "#16A34A",
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.35,
+                shadowRadius: 8,
+                elevation: 6,
+              }}
               onPress={submit}
-              loading={submitting}
               disabled={submitting}
-              className="h-12"
-            />
+            >
+              {submitting ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text className="text-xl font-bold text-white">
+                  Gửi báo cáo
+                </Text>
+              )}
+            </Pressable>
           </View>
         </Card>
       </ScrollView>
@@ -406,12 +420,14 @@ const CreateIncidentScreen: React.FC = () => {
                     setPickerKind(null);
                   }}
                 >
-                  <Text className="text-sm font-bold text-slate-900">
+                  <Text className="text-xl font-extrabold text-slate-900">
                     {item.label}
                   </Text>
-                  <Text className="mt-1 text-xs text-slate-500">
-                    {item.subLabel}
-                  </Text>
+                  {item.subLabel ? (
+                    <Text className="mt-1.5 text-base font-medium text-slate-600">
+                      {item.subLabel}
+                    </Text>
+                  ) : null}
                 </Pressable>
               ))}
             </ScrollView>

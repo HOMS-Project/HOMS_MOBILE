@@ -242,7 +242,7 @@ const EditProfileScreen: React.FC = () => {
           keyboardShouldPersistTaps="handled"
         >
           <Animated.View
-            className="px-5 pb-8 pt-12"
+            className="px-5 pb-8 pt-24"
             style={{ opacity: screenOpacity }}
           >
             <View className="flex-row items-center justify-between">
@@ -252,39 +252,46 @@ const EditProfileScreen: React.FC = () => {
               >
                 <Ionicons name="arrow-back" size={24} color="#0f172a" />
               </Pressable>
-              <Text className="text-2xl font-extrabold text-slate-900">
+              <Text className="text-3xl font-extrabold text-slate-900">
                 Chỉnh sửa hồ sơ
               </Text>
               <View className="h-10 w-10" />
             </View>
 
-            <View className="mt-6 items-center">
+            <View className="mt-12 items-center">
               <View className="relative">
                 <Image
                   source={{ uri: avatar || fallbackAvatar }}
-                  className="h-44 w-44 rounded-full border-4 border-white"
+                  className="h-52 w-52 rounded-full border-4 border-emerald-200"
+                  style={{
+                    shadowColor: "#16A34A",
+                    shadowOffset: { width: 0, height: 6 },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 12,
+                    elevation: 6,
+                  } as any}
                 />
 
                 <Pressable
-                  className={`absolute bottom-2 right-2 h-11 w-11 items-center justify-center rounded-full bg-white shadow-md ${uploadingAvatar ? "opacity-60" : ""}`}
+                  className={`absolute bottom-3 right-3 h-12 w-12 items-center justify-center rounded-full bg-white shadow-md ${uploadingAvatar ? "opacity-60" : ""}`}
                   onPress={pickAvatar}
                   disabled={uploadingAvatar}
                 >
                   {uploadingAvatar ? (
-                    <ActivityIndicator size="small" color="#0f172a" />
+                    <ActivityIndicator size="small" color="#16A34A" />
                   ) : (
-                    <Ionicons name="camera-outline" size={18} color="#0f172a" />
+                    <Ionicons name="camera-outline" size={20} color="#16A34A" />
                   )}
                 </Pressable>
               </View>
 
-              <Text className="mt-3 text-sm font-medium text-slate-500">
+              <Text className="mt-4 text-base font-medium text-slate-400">
                 Nhấn biểu tượng camera để cập nhật ảnh đại diện
               </Text>
             </View>
 
             <Animated.View
-              className="mt-7 overflow-hidden rounded-[34px] border border-white/70 bg-white/30 shadow-xl"
+              className="mx-6 mt-10 overflow-hidden rounded-[34px] border border-white/70 bg-white/30 shadow-xl"
               style={{ transform: [{ scale: cardScale }] }}
             >
               <BlurView
@@ -323,7 +330,14 @@ const EditProfileScreen: React.FC = () => {
                     style={{ transform: [{ scale: buttonScale }] }}
                   >
                     <Pressable
-                      className={`h-[68px] items-center justify-center rounded-2xl bg-emerald-600 shadow-lg ${saving || uploadingAvatar ? "opacity-70" : ""}`}
+                      className={`h-[64px] items-center justify-center rounded-full bg-[#16A34A] ${saving || uploadingAvatar ? "opacity-70" : ""}`}
+                      style={{
+                        shadowColor: "#16A34A",
+                        shadowOffset: { width: 0, height: 6 },
+                        shadowOpacity: 0.35,
+                        shadowRadius: 8,
+                        elevation: 6,
+                      }}
                       onPress={handleSave}
                       disabled={saving || uploadingAvatar}
                       onPressIn={() => animateButton(0.97)}

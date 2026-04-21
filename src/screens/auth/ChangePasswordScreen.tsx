@@ -225,7 +225,14 @@ const ChangePasswordScreen: React.FC<Props> = ({ onSubmit }) => {
                     style={{ transform: [{ scale: buttonScale }] }}
                   >
                     <Pressable
-                      className={`h-[68px] items-center justify-center rounded-2xl bg-emerald-600 shadow-lg ${loading ? "opacity-70" : ""}`}
+                      className={`h-[75px] items-center justify-center rounded-full bg-[#16A34A] ${loading ? "opacity-70" : ""}`}
+                      style={{
+                        shadowColor: "#16A34A",
+                        shadowOffset: { width: 0, height: 6 },
+                        shadowOpacity: 0.35,
+                        shadowRadius: 8,
+                        elevation: 6,
+                      }}
                       onPress={handleSubmit}
                       disabled={loading}
                       onPressIn={() => animateButton(0.97)}
