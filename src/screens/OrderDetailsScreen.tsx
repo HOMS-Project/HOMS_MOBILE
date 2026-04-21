@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -9,10 +9,12 @@ import {
   ScrollView,
   Text,
   View,
+  RefreshControl,
 } from "react-native";
 import {
   useNavigation,
   useRoute,
+  useFocusEffect,
   type RouteProp,
 } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -96,6 +98,7 @@ const OrderDetailsScreen: React.FC = () => {
   const route = useRoute<OrderDetailsRouteProp>();
   const navigation = useNavigation<Nav>();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
@@ -143,8 +146,16 @@ const OrderDetailsScreen: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    fetchOrderDetails();
+  useFocusEffect(
+    useCallback(() => {
+      fetchOrderDetails();
+    }, [])
+  );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchOrderDetails();
+    setRefreshing(false);
   }, []);
 
   if (loading) {
@@ -269,6 +280,14 @@ const OrderDetailsScreen: React.FC = () => {
           paddingBottom: 120,
         }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#10b981"]}
+            tintColor="#10b981"
+          />
+        }
       >
         <View className="flex-row items-center">
           <Pressable
@@ -469,17 +488,27 @@ const OrderDetailsScreen: React.FC = () => {
         </Card>
       </ScrollView>
 
-      <View className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 p-4">
-        <Button
-          title="Xem bản đồ và cập nhật"
-          className="h-16"
+      <View className="absolute bottom-0 left-0 right-0 border-t border-slate-100 bg-white/95 px-5 pb-10 pt-4">
+        <Pressable
+          className="h-[58px] w-full flex-row items-center justify-center rounded-full bg-[#16A34A] active:opacity-85"
+          style={{
+            shadowColor: "#16A34A",
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.35,
+            shadowRadius: 8,
+            elevation: 6,
+          }}
           onPress={() =>
             navigation.navigate("OrderMap", {
               assignmentId: order.assignmentId,
               invoiceId: order.id,
             })
           }
-        />
+        >
+          <Text className="text-[17px] font-bold tracking-wide text-white">
+            Xem bản đồ và cập nhật
+          </Text>
+        </Pressable>
       </View>
 
       <Modal
