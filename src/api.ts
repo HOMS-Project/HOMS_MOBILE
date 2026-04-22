@@ -4,12 +4,38 @@ import axios, { AxiosRequestConfig } from 'axios';
 // Dưới đây là IP của Anh Bùi, ai code thì vô cmd gõ ipconfig sau đó cop ip của mình vào đây
 const BASE_URL = 'http://192.168.2.8:5000/api';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 // In a real app, you would store this in AsyncStorage/ureStore
 let authToken: string | null = null;
 let csrfToken: string | null = null;
 
-export const setAuthToken = (token: string | null) => {
+export const loadAuthToken = async () => {
+  try {
+    const token = await AsyncStorage.getItem('authToken');
+    if (token) authToken = token;
+    return token;
+  } catch (error) {
+    console.error('Failed to load token', error);
+    return null;
+  }
+};
+
+export const setAuthToken = async (token: string | null, persist: boolean = true) => {
   authToken = token;
+  try {
+    if (token) {
+      if (persist) {
+        await AsyncStorage.setItem('authToken', token);
+      } else {
+        await AsyncStorage.removeItem('authToken'); // Ensure it's not saved
+      }
+    } else {
+      await AsyncStorage.removeItem('authToken');
+    }
+  } catch (error) {
+    console.error('Failed to save token', error);
+  }
 };
 
 const axiosClient = axios.create({

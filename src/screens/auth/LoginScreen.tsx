@@ -87,6 +87,7 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
 
   const screenOpacity = useRef(new Animated.Value(0)).current;
   const cardScale = useRef(new Animated.Value(0.96)).current;
@@ -115,15 +116,19 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
   }, [googleResponse]);
 
   useEffect(() => {
-    const loadLastEmail = async () => {
+    const loadPreferences = async () => {
       try {
         const stored = await AsyncStorage.getItem("lastEmail");
         if (stored) setEmail(stored);
+        const storedRememberId = await AsyncStorage.getItem("rememberMe");
+        if (storedRememberId !== null) {
+          setRememberMe(storedRememberId === "true");
+        }
       } catch (err) {
         // ignore
       }
     };
-    loadLastEmail();
+    loadPreferences();
   }, []);
 
   useEffect(() => {
@@ -165,9 +170,12 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
       if (result.success && result.data.accessToken) {
         try {
           const userEmail = result?.data?.user?.email || email;
-          if (userEmail) await AsyncStorage.setItem("lastEmail", userEmail);
+          if (userEmail) {
+            await AsyncStorage.setItem("lastEmail", userEmail);
+          }
+          await AsyncStorage.setItem("rememberMe", rememberMe.toString());
         } catch (_) {}
-        setAuthToken(result.data.accessToken);
+        setAuthToken(result.data.accessToken, rememberMe);
         navigation.navigate("MainTabs");
       } else {
         setError(result.message || "Đăng nhập thất bại");
@@ -293,14 +301,34 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
                     </Text>
                   ) : null}
 
-                  <View className="items-end pt-1">
+                  <View className="flex-row items-center justify-between pt-1">
+                    <Pressable
+                      className="flex-row items-center gap-2"
+                      onPress={() => setRememberMe(!rememberMe)}
+                    >
+                      <View
+                        className={`h-5 w-5 items-center justify-center rounded-[6px] border ${
+                          rememberMe
+                            ? "border-[#16A34A] bg-[#16A34A]"
+                            : "border-slate-300 bg-white"
+                        }`}
+                      >
+                        {rememberMe && (
+                          <Ionicons name="checkmark" size={14} color="#fff" />
+                        )}
+                      </View>
+                      <Text className="text-[15px] font-medium text-slate-700">
+                        Ghi nhớ đăng nhập
+                      </Text>
+                    </Pressable>
+
                     <Pressable
                       onPress={
                         onForgotPassword ||
                         (() => navigation.navigate("ForgotPassword"))
                       }
                     >
-                      <Text className="text-sm font-semibold text-emerald-700">
+                      <Text className="text-[15px] font-semibold text-[#16A34A]">
                         Quên mật khẩu?
                       </Text>
                     </Pressable>

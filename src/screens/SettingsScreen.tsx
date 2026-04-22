@@ -10,8 +10,8 @@ import {
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
-import type { RootStackParamList } from "../../App";
-import { apiRequest, endpoints } from "../api";
+import { type RootStackParamList } from "../../App";
+import { apiRequest, endpoints, setAuthToken } from "../api";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type SettingsRoute = "EditProfile" | "ChangePassword" | "Login";
@@ -87,9 +87,10 @@ const SettingsScreen: React.FC = () => {
     }, []),
   );
 
-  const handlePress = (route?: SettingsRoute) => {
+  const handlePress = async (route?: SettingsRoute) => {
     if (!route) return;
     if (route === "Login") {
+      await setAuthToken(null);
       navigation.reset({ index: 0, routes: [{ name: "Login" }] });
       return;
     }

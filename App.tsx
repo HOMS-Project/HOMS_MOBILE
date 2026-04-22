@@ -28,6 +28,7 @@ import TeamListScreen from "./src/screens/TeamListScreen";
 import TeamDetailScreen from "./src/screens/TeamDetailScreen";
 import IncidentListScreen from "./src/screens/IncidentListScreen";
 import CreateIncidentScreen from "./src/screens/CreateIncidentScreen";
+import { loadAuthToken } from "./src/api";
 
 export type RootStackParamList = {
   Login: undefined;
@@ -240,11 +241,33 @@ const MainTabs = () => (
 );
 
 export default function App() {
+  const [isReady, setIsReady] = useState(false);
+  const [initialRoute, setInitialRoute] = useState<keyof RootStackParamList>("Login");
+
+  useEffect(() => {
+    const initApp = async () => {
+      const token = await loadAuthToken();
+      if (token) {
+        setInitialRoute("MainTabs");
+      }
+      setIsReady(true);
+    };
+    initApp();
+  }, []);
+
+  if (!isReady) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <Text style={{ marginTop: 20 }}>Đang tải dữ liệu...</Text>
+      </View>
+    );
+  }
+
   return (
     <NavigationContainer>
       <StatusBar style="light" />
       <Stack.Navigator
-        initialRouteName="Login"
+        initialRouteName={initialRoute}
         screenOptions={{
           headerShown: false,
           animation: "slide_from_right",
