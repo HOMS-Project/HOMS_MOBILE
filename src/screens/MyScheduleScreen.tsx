@@ -15,6 +15,7 @@ import { staffApi } from "../api";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Section from "../components/ui/Section";
+import EmptyState from "../components/ui/EmptyState";
 import { showToast } from "../utils/toast";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -201,17 +202,10 @@ const MyScheduleScreen: React.FC = () => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        <View className="flex-row items-center justify-between">
-          <Pressable
-            className="h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
-            onPress={() => navigation.navigate("MainTabs")}
-          >
-            <Ionicons name="arrow-back" size={24} color="#0f172a" />
-          </Pressable>
+        <View className="flex-row items-center">
           <Text className="text-[34px] font-extrabold text-slate-900">
             Lịch của tôi
           </Text>
-          <View className="h-10 w-10" />
         </View>
 
         <View className="mt-6">
@@ -296,12 +290,12 @@ const MyScheduleScreen: React.FC = () => {
               </Pressable>
             ))
           ) : (
-            <Card className="items-center rounded-[26px] border-emerald-100 bg-emerald-50/60 py-8">
-              <Ionicons name="calendar-outline" size={36} color="#a7f3d0" />
-              <Text className="mt-3 text-base font-medium text-slate-500">
-                Không có đơn nào trong hôm nay
-              </Text>
-            </Card>
+            <EmptyState
+              icon="calendar-outline"
+              title="Hôm nay thảnh thơi"
+              description="Bạn không có đơn hàng nào được lên lịch trong hôm nay."
+              className="mt-0"
+            />
           )}
         </View>
 
@@ -388,11 +382,11 @@ const MyScheduleScreen: React.FC = () => {
             </Pressable>
           ))
         ) : (
-          <Card className="items-center py-10">
-            <Text className="text-lg font-medium text-slate-500">
-              Không có công việc sắp tới
-            </Text>
-          </Card>
+          <EmptyState
+            icon="time-outline"
+            title="Chưa có lịch mới"
+            description="Lịch làm việc sắp tới sẽ xuất hiện tại đây khi được phân công."
+          />
         )}
       </ScrollView>
     </View>

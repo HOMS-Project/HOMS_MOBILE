@@ -13,6 +13,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../App";
 import { staffApi } from "../api";
 import Card from "../components/ui/Card";
+import EmptyState from "../components/ui/EmptyState";
 import { showToast } from "../utils/toast";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -295,7 +296,7 @@ const OrderListScreen: React.FC = () => {
 
         {inProgress.length > 0 ? (
           <>
-            <Text className="mb-3 mt-6 text-2xl font-extrabold text-slate-900">
+            <Text className="mb-3 mt-10 text-2xl font-extrabold text-slate-900">
               Đang thực hiện
             </Text>
             {inProgress.map(renderOrderCard)}
@@ -304,7 +305,7 @@ const OrderListScreen: React.FC = () => {
 
         {accepted.length > 0 ? (
           <>
-            <Text className="mb-3 mt-5 text-2xl font-extrabold text-slate-900">
+            <Text className="mb-3 mt-10 text-2xl font-extrabold text-slate-900">
               Đã nhận
             </Text>
             {accepted.map(renderOrderCard)}
@@ -312,20 +313,18 @@ const OrderListScreen: React.FC = () => {
         ) : null}
 
         {others.length > 0 ? (
-          <>
-            <Text className="mb-3 mt-5 text-2xl font-extrabold text-slate-900">
-              Khác
-            </Text>
+          <View className="mt-10">
             {others.map(renderOrderCard)}
-          </>
+          </View>
         ) : null}
 
         {filtered.length === 0 ? (
-          <Card className="mt-6 items-center py-10">
-            <Text className="text-lg font-medium text-slate-500">
-              Không có đơn hàng phù hợp với bộ lọc
-            </Text>
-          </Card>
+          <EmptyState
+            icon="list-outline"
+            title="Chưa có đơn hàng nào"
+            description="Hiện tại không có đơn hàng nào phù hợp với bộ lọc của bạn."
+            className="mt-4"
+          />
         ) : null}
       </ScrollView>
     </View>

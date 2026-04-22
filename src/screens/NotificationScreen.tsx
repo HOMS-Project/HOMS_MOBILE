@@ -12,6 +12,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../App";
 import NotificationItem from "../components/NotificationItem";
+import EmptyState from "../components/ui/EmptyState";
 import {
   fetchStaffNotifications,
   markNotificationAsRead,
@@ -100,16 +101,11 @@ const NotificationScreen: React.FC = () => {
           <ActivityIndicator size="large" color="#0f766e" />
         </View>
       ) : notifications.length === 0 ? (
-        <View className="flex-1 items-center py-20 px-4">
-          <Ionicons
-            name="notifications-off-outline"
-            size={60}
-            color="#cbd5e1"
-          />
-          <Text className="text-lg text-slate-500 mt-4 text-center">
-            Bạn chưa có thông báo nào.
-          </Text>
-        </View>
+        <EmptyState
+          icon="notifications-off-outline"
+          title="Thông báo trống"
+          description="Bạn chưa nhận được thông báo nào. Mọi tin tức mới sẽ được cập nhật tại đây."
+        />
       ) : (
         <FlatList
           data={notifications}

@@ -13,6 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import type { RootStackParamList } from "../../App";
 import Card from "../components/ui/Card";
+import EmptyState from "../components/ui/EmptyState";
 import { apiRequest, endpoints } from "../api";
 import LocationTrackingService from "../services/locationTrackingService";
 import { fetchStaffNotifications } from "../services/notificationService";
@@ -267,12 +268,12 @@ const StaffHomeScreen: React.FC = () => {
             </View>
 
             <Pressable
-              className="h-12 w-12 items-center justify-center rounded-2xl bg-white/20"
+              className="h-14 w-14 items-center justify-center rounded-2xl bg-white/20"
               onPress={() => navigation.navigate("Notifications")}
             >
               <Ionicons
-                name="notifications-outline"
-                size={24}
+                name="notifications"
+                size={32}
                 color="#ffffff"
               />
 
@@ -397,11 +398,12 @@ const StaffHomeScreen: React.FC = () => {
               </Card>
             </Pressable>
           ) : (
-            <Card className="items-center border-emerald-100 bg-white py-10">
-              <Text className="text-xl font-medium text-slate-500">
-                Chưa có đơn hàng nào đang hoạt động.
-              </Text>
-            </Card>
+            <EmptyState
+              icon="cube-outline"
+              title="Sẵn sàng nhận đơn"
+              description="Hiện tại bạn không có đơn hàng nào đang thực hiện."
+              className="mt-0 py-8"
+            />
           )}
 
           <View className="mb-3 mt-6 flex-row items-center justify-between">
@@ -418,11 +420,12 @@ const StaffHomeScreen: React.FC = () => {
           {recentOrders.length > 0 ? (
             recentOrders.map((item) => renderOrderCard(item))
           ) : (
-            <Card className="items-center border-emerald-100 bg-white py-8">
-              <Text className="text-lg font-medium text-slate-500">
-                Không có đơn đã hoàn tất trong 1 tháng qua
-              </Text>
-            </Card>
+            <EmptyState
+              icon="time-outline"
+              title="Chưa có đơn hoàn tất"
+              description="Các đơn hàng bạn đã giao thành công sẽ xuất hiện tại đây."
+              className="mt-0 py-6"
+            />
           )}
         </View>
       </ScrollView>

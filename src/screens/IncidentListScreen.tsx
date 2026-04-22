@@ -14,6 +14,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../App";
 import Card from "../components/ui/Card";
+import EmptyState from "../components/ui/EmptyState";
 import { showToast } from "../utils/toast";
 import {
   fetchMyIncidents,
@@ -219,11 +220,11 @@ const IncidentListScreen: React.FC = () => {
           })}
 
           {incidents.length === 0 ? (
-            <Card className="items-center py-10">
-              <Text className="text-base font-medium text-slate-500">
-                Bạn chưa có báo cáo sự cố nào
-              </Text>
-            </Card>
+            <EmptyState
+              icon="shield-checkmark-outline"
+              title="Mọi thứ đều ổn"
+              description="Bạn chưa báo cáo sự cố nào. Các sự cố bạn tạo sẽ xuất hiện tại đây."
+            />
           ) : null}
         </View>
       </ScrollView>

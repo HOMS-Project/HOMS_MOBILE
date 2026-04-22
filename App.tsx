@@ -139,7 +139,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
       pointerEvents="box-none"
     >
       <View
-        className="h-[86px] w-[94%] flex-row items-center justify-between rounded-full bg-[#F2F7F2] px-[10px] py-[7px]"
+        className="h-[96px] w-[94%] flex-row items-center justify-between rounded-full bg-[#F2F7F2] px-[10px] py-[7px]"
         onLayout={(event) => {
           setBarWidth(event.nativeEvent.layout.width - 20);
         }}
@@ -159,10 +159,10 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
             style={{
               position: "absolute",
               left: 10,
-              top: 7,
+              top: 10,
               width: barWidth / state.routes.length,
-              height: 64,
-              borderRadius: 32,
+              height: 76,
+              borderRadius: 38,
               backgroundColor: tabActive,
               transform: [{ translateX: indicatorTranslateX }],
               shadowColor: "#166534",
@@ -196,7 +196,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
             <Pressable
               key={route.key}
               onPress={onPress}
-              className="mx-1 h-16 flex-1 items-center justify-center rounded-[32px]"
+              className="mx-1 h-20 flex-1 items-center justify-center rounded-[38px]"
               style={{
                 position: "relative",
                 zIndex: 2,
@@ -212,12 +212,12 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
               >
                 <Ionicons
                   name={focused ? activeIcon : inactiveIcon}
-                  size={34}
+                  size={40}
                   color={focused ? "#FFFFFF" : tabInactive}
                 />
               </Animated.View>
               <Text
-                className={`mt-[2px] text-[11px] font-bold leading-[13px] ${focused ? "text-white" : "text-[#8A8A8A]"}`}
+                className={`mt-[2px] text-[15px] font-bold leading-[17px] ${focused ? "text-white" : "text-[#8A8A8A]"}`}
               >
                 {label}
               </Text>

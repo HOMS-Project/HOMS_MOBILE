@@ -110,7 +110,7 @@ const SettingsScreen: React.FC = () => {
             Cài đặt
           </Text>
           <Pressable
-            className="h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white"
+            className="h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-white"
             style={{
               shadowColor: "#000",
               shadowOffset: { width: 0, height: 1 },
@@ -120,7 +120,7 @@ const SettingsScreen: React.FC = () => {
             }}
             onPress={() => navigation.navigate("Notifications")}
           >
-            <Ionicons name="notifications-outline" size={22} color="#0f172a" />
+            <Ionicons name="notifications" size={30} color="#0f172a" />
           </Pressable>
         </View>
 
