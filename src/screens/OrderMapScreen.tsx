@@ -390,47 +390,77 @@ const OrderMapScreen: React.FC = () => {
   // Evidence selection helpers
   const pickImages = async (target: "pickup" | "dropoff") => {
     try {
-      const permission =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (permission.status !== "granted") {
-        Alert.alert(
-          "Cần quyền truy cập",
-          "Vui lòng cho phép truy cập thư viện ảnh để tải bằng chứng.",
-        );
-        return;
+      const mediaImages = (ImagePicker as any).MediaType?.Images;
+      const baseOptions: any = { quality: 0.8 };
+      if (mediaImages) {
+        baseOptions.mediaTypes = [mediaImages];
       }
 
-      const mediaImages = (ImagePicker as any).MediaType?.Images;
-      const options: any = {
-        allowsMultipleSelection: true,
-        selectionLimit: 10,
-        quality: 0.7,
+      const addImages = (uris: string[]) => {
+        if (target === "pickup") {
+          setPickupImages((prev) =>
+            Array.from(new Set([...prev, ...uris])).slice(0, 10),
+          );
+        } else {
+          setDropoffImages((prev) =>
+            Array.from(new Set([...prev, ...uris])).slice(0, 10),
+          );
+        }
       };
 
-      if (mediaImages) {
-        options.mediaTypes = [mediaImages];
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync(options);
-      if (result.canceled) return;
-
-      const selected = (result.assets || [])
-        .map((asset) => asset.uri)
-        .filter(Boolean);
-      if (!selected.length) return;
-
-      if (target === "pickup") {
-        setPickupImages((prev) =>
-          Array.from(new Set([...prev, ...selected])).slice(0, 10),
-        );
-      } else {
-        setDropoffImages((prev) =>
-          Array.from(new Set([...prev, ...selected])).slice(0, 10),
-        );
-      }
+      Alert.alert(
+        "Thêm ảnh bằng chứng",
+        "Bạn muốn chụp ảnh mới hay chọn từ thư viện?",
+        [
+          {
+            text: "Chụp ảnh",
+            onPress: async () => {
+              const { status } =
+                await ImagePicker.requestCameraPermissionsAsync();
+              if (status !== "granted") {
+                Alert.alert(
+                  "Cần quyền truy cập",
+                  "Vui lòng cho phép truy cập Camera để chụp bằng chứng.",
+                );
+                return;
+              }
+              const result = await ImagePicker.launchCameraAsync({
+                ...baseOptions,
+                allowsEditing: false,
+              });
+              if (result.canceled) return;
+              const uris = (result.assets || []).map((a) => a.uri).filter(Boolean);
+              addImages(uris);
+            },
+          },
+          {
+            text: "Chọn từ thư viện",
+            onPress: async () => {
+              const { status } =
+                await ImagePicker.requestMediaLibraryPermissionsAsync();
+              if (status !== "granted") {
+                Alert.alert(
+                  "Cần quyền truy cập",
+                  "Vui lòng cho phép truy cập thư viện ảnh để tải bằng chứng.",
+                );
+                return;
+              }
+              const result = await ImagePicker.launchImageLibraryAsync({
+                ...baseOptions,
+                allowsMultipleSelection: true,
+                selectionLimit: 10,
+              });
+              if (result.canceled) return;
+              const uris = (result.assets || []).map((a) => a.uri).filter(Boolean);
+              addImages(uris);
+            },
+          },
+          { text: "Hủy", style: "cancel" },
+        ],
+      );
     } catch (error) {
       console.error("Pick images failed:", error);
-      Alert.alert("Lỗi", "Không thể chọn ảnh lúc này");
+      Alert.alert("Lỗi", "Không thể mở chức năng ảnh lúc này");
     }
   };
 
