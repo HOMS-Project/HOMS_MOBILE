@@ -8,13 +8,22 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // In a real app, you would store this in AsyncStorage/ureStore
 let authToken: string | null = null;
+let refreshTokenValue: string | null = null;
 let csrfToken: string | null = null;
+let isRefreshing = false;
+let pendingRequests: Array<(token: string) => void> = [];
+let _navigateToLogin: (() => void) | null = null;
+
+export const setNavigationRef = (fn: () => void) => {
+  _navigateToLogin = fn;
+};
 
 export const loadAuthToken = async () => {
   try {
-    const token = await AsyncStorage.getItem('authToken');
-    if (token) authToken = token;
-    return token;
+    const [token, rToken] = await AsyncStorage.multiGet(['authToken', 'refreshToken']);
+    if (token[1]) authToken = token[1];
+    if (rToken[1]) refreshTokenValue = rToken[1];
+    return token[1];
   } catch (error) {
     console.error('Failed to load token', error);
     return null;
@@ -28,13 +37,27 @@ export const setAuthToken = async (token: string | null, persist: boolean = true
       if (persist) {
         await AsyncStorage.setItem('authToken', token);
       } else {
-        await AsyncStorage.removeItem('authToken'); // Ensure it's not saved
+        await AsyncStorage.removeItem('authToken');
       }
     } else {
-      await AsyncStorage.removeItem('authToken');
+      await AsyncStorage.multiRemove(['authToken', 'refreshToken']);
+      refreshTokenValue = null;
     }
   } catch (error) {
     console.error('Failed to save token', error);
+  }
+};
+
+export const setRefreshToken = async (token: string | null) => {
+  refreshTokenValue = token;
+  try {
+    if (token) {
+      await AsyncStorage.setItem('refreshToken', token);
+    } else {
+      await AsyncStorage.removeItem('refreshToken');
+    }
+  } catch (error) {
+    console.error('Failed to save refresh token', error);
   }
 };
 
@@ -117,6 +140,65 @@ axiosClient.interceptors.response.use(
     }
 
     console.error(`[API] Request failed: ${message}`);
+
+    // Auto-refresh on 401 Token expired
+    if (status === 401 && originalRequest && !originalRequest._authRetried) {
+      if (isRefreshing) {
+        // Queue this request until refresh is done
+        return new Promise<void>((resolve) => {
+          pendingRequests.push((newToken: string) => {
+            originalRequest.headers = {
+              ...(originalRequest.headers || {}),
+              Authorization: `Bearer ${newToken}`,
+            };
+            resolve(axiosClient.request(originalRequest));
+          });
+        });
+      }
+
+      originalRequest._authRetried = true;
+      isRefreshing = true;
+
+      try {
+        const storedRefresh = await AsyncStorage.getItem('refreshToken');
+        if (!storedRefresh) throw new Error('No refresh token');
+
+        const refreshResponse = await axiosClient.post('/auth/refresh', {
+          refreshToken: storedRefresh,
+        });
+
+        const newAccessToken = refreshResponse.data?.accessToken;
+        const newRefreshToken = refreshResponse.data?.refreshToken;
+
+        if (!newAccessToken) throw new Error('Refresh failed');
+
+        // Persist new tokens
+        await AsyncStorage.setItem('authToken', newAccessToken);
+        if (newRefreshToken) await AsyncStorage.setItem('refreshToken', newRefreshToken);
+        authToken = newAccessToken;
+
+        // Resolve all queued requests
+        pendingRequests.forEach((cb) => cb(newAccessToken));
+        pendingRequests = [];
+
+        // Retry original request with new token
+        originalRequest.headers = {
+          ...(originalRequest.headers || {}),
+          Authorization: `Bearer ${newAccessToken}`,
+        };
+        return axiosClient.request(originalRequest);
+      } catch (refreshError) {
+        // Refresh failed — force logout
+        pendingRequests = [];
+        await AsyncStorage.multiRemove(['authToken', 'refreshToken']);
+        authToken = null;
+        if (_navigateToLogin) _navigateToLogin();
+        return Promise.reject(new Error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại'));
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
     return Promise.reject(new Error(message));
   }
 );

@@ -1,7 +1,7 @@
 import "react-native-reanimated";
 import "./global.css";
 import React, { useEffect, useRef, useState } from "react";
-import { Text, View, Pressable, Animated, Easing } from "react-native";
+import { Text, View, Pressable, Animated, Easing, Alert } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -28,7 +28,8 @@ import TeamListScreen from "./src/screens/TeamListScreen";
 import TeamDetailScreen from "./src/screens/TeamDetailScreen";
 import IncidentListScreen from "./src/screens/IncidentListScreen";
 import CreateIncidentScreen from "./src/screens/CreateIncidentScreen";
-import { loadAuthToken } from "./src/api";
+import { loadAuthToken, setNavigationRef } from "./src/api";
+import { createNavigationContainerRef } from "@react-navigation/native";
 
 export type RootStackParamList = {
   Login: undefined;
@@ -240,6 +241,8 @@ const MainTabs = () => (
   </Tab.Navigator>
 );
 
+export const navRef = createNavigationContainerRef<RootStackParamList>();
+
 export default function App() {
   const [isReady, setIsReady] = useState(false);
   const [initialRoute, setInitialRoute] = useState<keyof RootStackParamList>("Login");
@@ -253,6 +256,14 @@ export default function App() {
       setIsReady(true);
     };
     initApp();
+
+    // Register navigation redirect for expired sessions
+    setNavigationRef(() => {
+      if (navRef.isReady()) {
+        Alert.alert("Thông báo", "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.");
+        navRef.reset({ index: 0, routes: [{ name: 'Login' }] });
+      }
+    });
   }, []);
 
   if (!isReady) {
@@ -264,7 +275,7 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navRef}>
       <StatusBar style="light" />
       <Stack.Navigator
         initialRouteName={initialRoute}

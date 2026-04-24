@@ -22,7 +22,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AuthHeader from "../../components/AuthHeader";
 import type { RootStackParamList } from "../../../App";
 
-import { apiRequest, endpoints, setAuthToken } from "../../api";
+import { apiRequest, endpoints, setAuthToken, setRefreshToken } from "../../api";
 
 interface Props {
   onForgotPassword?: () => void;
@@ -175,7 +175,11 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
           }
           await AsyncStorage.setItem("rememberMe", rememberMe.toString());
         } catch (_) {}
-        setAuthToken(result.data.accessToken, rememberMe);
+        await setAuthToken(result.data.accessToken, rememberMe);
+        // Save refresh token (7-day) to enable auto-silent-refresh
+        if (result.data.refreshToken) {
+          await setRefreshToken(result.data.refreshToken);
+        }
         navigation.navigate("MainTabs");
       } else {
         setError(result.message || "Đăng nhập thất bại");
@@ -206,7 +210,10 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
           const userEmail = result?.data?.user?.email;
           if (userEmail) await AsyncStorage.setItem("lastEmail", userEmail);
         } catch (_) {}
-        setAuthToken(result.data.accessToken);
+        await setAuthToken(result.data.accessToken);
+        if (result.data.refreshToken) {
+          await setRefreshToken(result.data.refreshToken);
+        }
         navigation.navigate("MainTabs");
       } else {
         setError(result.message || "Đăng nhập Google thất bại");

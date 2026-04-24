@@ -140,6 +140,7 @@ const EditProfileScreen: React.FC = () => {
         type: asset.mimeType || "image/jpeg",
       } as any);
       formData.append("upload_preset", UPLOAD_PRESET);
+      formData.append("folder", "avatars");
 
       const cloudUrl = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
       const res = await fetch(cloudUrl, {
@@ -187,16 +188,15 @@ const EditProfileScreen: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const formData = new FormData();
-      formData.append("fullName", name);
-      formData.append("phone", phone);
+      const payload = {
+        fullName: name,
+        phone: phone,
+        avatar: avatar,
+      };
 
       const result = await apiRequest(endpoints.user.updateProfile, {
         method: "PUT",
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        body: formData as any,
+        body: JSON.stringify(payload),
       });
       if (result.success) {
         Alert.alert("Thành công", "Cập nhật hồ sơ thành công");
