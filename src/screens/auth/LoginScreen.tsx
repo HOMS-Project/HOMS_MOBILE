@@ -53,6 +53,7 @@ const FormField: React.FC<FormFieldProps> = ({
   autoCapitalize,
   autoCorrect,
 }) => {
+  const [hidden, setHidden] = React.useState(true);
   return (
     <View className="gap-2.5">
       <Text className="text-base font-bold text-slate-700">{label}</Text>
@@ -64,15 +65,25 @@ const FormField: React.FC<FormFieldProps> = ({
           placeholderTextColor="#94a3b8"
           value={value}
           onChangeText={onChangeText}
-          secureTextEntry={secureTextEntry}
+          secureTextEntry={secureTextEntry && hidden}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
           autoCorrect={autoCorrect}
         />
+        {secureTextEntry && (
+          <Pressable onPress={() => setHidden((h) => !h)} hitSlop={12}>
+            <Ionicons
+              name={hidden ? "eye-off-outline" : "eye-outline"}
+              size={22}
+              color="#94a3b8"
+            />
+          </Pressable>
+        )}
       </View>
     </View>
   );
 };
+
 
 WebBrowser.maybeCompleteAuthSession();
 const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "";

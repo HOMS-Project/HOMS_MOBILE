@@ -44,6 +44,7 @@ const FormField: React.FC<FormFieldProps> = ({
   icon,
   secureTextEntry = false,
 }) => {
+  const [hidden, setHidden] = React.useState(true);
   return (
     <View className="gap-2.5">
       <Text className="text-base font-bold text-slate-700">{label}</Text>
@@ -55,12 +56,22 @@ const FormField: React.FC<FormFieldProps> = ({
           placeholderTextColor="#94a3b8"
           value={value}
           onChangeText={onChangeText}
-          secureTextEntry={secureTextEntry}
+          secureTextEntry={secureTextEntry && hidden}
         />
+        {secureTextEntry && (
+          <Pressable onPress={() => setHidden((h) => !h)} hitSlop={12}>
+            <Ionicons
+              name={hidden ? "eye-off-outline" : "eye-outline"}
+              size={22}
+              color="#94a3b8"
+            />
+          </Pressable>
+        )}
       </View>
     </View>
   );
 };
+
 
 const ChangePasswordScreen: React.FC<Props> = ({ onSubmit }) => {
   const navigation =
