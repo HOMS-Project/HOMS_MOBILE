@@ -5,14 +5,13 @@ import {
   Alert,
   Easing,
   Image,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   Text,
   TextInput,
   View,
 } from "react-native";
+import KeyboardSafeArea from "../components/KeyboardSafeArea";
 import * as ImagePicker from "expo-image-picker";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
@@ -231,13 +230,10 @@ const EditProfileScreen: React.FC = () => {
       <View className="absolute left-[-80px] top-[36%] h-64 w-64 rounded-full bg-cyan-100/35" />
       <View className="absolute -bottom-24 -left-14 h-72 w-72 rounded-full bg-emerald-100/45" />
 
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
+      <KeyboardSafeArea>
         <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ paddingBottom: 32 }}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 52 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
@@ -357,7 +353,7 @@ const EditProfileScreen: React.FC = () => {
             </Animated.View>
           </Animated.View>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardSafeArea>
 
       {loading ? (
         <View className="absolute inset-0 items-center justify-center bg-white/60">

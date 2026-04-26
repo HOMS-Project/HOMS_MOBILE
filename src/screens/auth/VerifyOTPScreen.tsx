@@ -5,11 +5,9 @@ import {
   Easing,
   View,
   Text,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
 } from "react-native";
+import KeyboardSafeArea from "../../components/KeyboardSafeArea";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -75,16 +73,10 @@ const VerifyOTPScreen: React.FC<Props> = ({ onSubmit, digits = 4 }) => {
       <View className="absolute left-[-80px] top-[36%] h-64 w-64 rounded-full bg-cyan-100/35" />
       <View className="absolute -bottom-24 -left-14 h-72 w-72 rounded-full bg-emerald-100/45" />
 
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      <KeyboardSafeArea
+        scrollable
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingBottom: 40 }}
       >
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
           <Animated.View
             className="px-5 pb-8 pt-10"
             style={{ opacity: screenOpacity }}
@@ -201,8 +193,7 @@ const VerifyOTPScreen: React.FC<Props> = ({ onSubmit, digits = 4 }) => {
               </View>
             </Animated.View>
           </Animated.View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardSafeArea>
     </View>
   );
 };

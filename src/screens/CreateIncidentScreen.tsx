@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from "react-native";
+import KeyboardSafeArea from "../components/KeyboardSafeArea";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -226,18 +227,19 @@ const CreateIncidentScreen: React.FC = () => {
         </Text>
       </View>
 
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{
-          padding: 20,
-          paddingTop: 80,
-          paddingBottom: 42,
-        }}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        showsVerticalScrollIndicator={false}
-      >
+      <KeyboardSafeArea>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            padding: 20,
+            paddingTop: 80,
+            paddingBottom: 52,
+          }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
         <Card className="mt-0 rounded-[24px] p-5">
           <View className="gap-6">
             <View>
@@ -385,7 +387,8 @@ const CreateIncidentScreen: React.FC = () => {
             </Pressable>
           </View>
         </Card>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardSafeArea>
 
       <Modal
         transparent
