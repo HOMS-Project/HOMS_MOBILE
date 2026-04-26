@@ -17,7 +17,7 @@ import { apiRequest, endpoints, setAuthToken } from "../api";
 import { useTabBar } from "../contexts/TabBarContext";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
-type SettingsRoute = "EditProfile" | "ChangePassword" | "Login";
+type SettingsRoute = "EditProfile" | "ChangePassword" | "Login" | "About";
 
 const fallbackAvatar =
   "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80";
@@ -45,16 +45,11 @@ const options: Array<{
     icon: "shield-checkmark-outline",
   },
   {
-    id: "help",
-    label: "Trợ giúp và hỗ trợ",
-    desc: "Liên hệ bộ phận vận hành",
-    icon: "chatbubble-ellipses-outline",
-  },
-  {
     id: "about",
     label: "Về ứng dụng",
-    desc: "HOMS Driver v1",
-    icon: "information-outline",
+    desc: "HOMS Driver v1.0.0",
+    route: "About",
+    icon: "information-circle-outline",
   },
   {
     id: "logout",

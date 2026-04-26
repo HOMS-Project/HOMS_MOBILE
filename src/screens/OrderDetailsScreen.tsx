@@ -301,7 +301,7 @@ const OrderDetailsScreen: React.FC = () => {
           </Text>
         </View>
 
-        <Card className="mt-6 items-center rounded-[28px] border-emerald-100 bg-emerald-50/80 p-7">
+        <Card className="mt-6 items-center rounded-[18px] border-emerald-100 bg-emerald-50/80 p-7">
           <View
             className={`rounded-full px-4 py-2 ${statusClass(order.status)}`}
           >
@@ -309,7 +309,7 @@ const OrderDetailsScreen: React.FC = () => {
               {statusLabel(order.status)}
             </Text>
           </View>
-          <Text className="mt-3 text-4xl font-extrabold tracking-wide text-slate-900">
+          <Text className="mt-3 text-3xl font-extrabold tracking-wide text-slate-900">
             {order.orderCode}
           </Text>
         </Card>
@@ -383,7 +383,7 @@ const OrderDetailsScreen: React.FC = () => {
         </Card>
 
         <Card className="mt-5 rounded-[24px] p-6">
-          <Text className="text-[30px] font-extrabold text-slate-900">
+          <Text className="text-[24px] font-extrabold text-slate-900">
             Thông tin khách hàng
           </Text>
 

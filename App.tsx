@@ -28,6 +28,7 @@ import TeamListScreen from "./src/screens/TeamListScreen";
 import TeamDetailScreen from "./src/screens/TeamDetailScreen";
 import IncidentListScreen from "./src/screens/IncidentListScreen";
 import CreateIncidentScreen from "./src/screens/CreateIncidentScreen";
+import AboutScreen from "./src/screens/AboutScreen";
 import { loadAuthToken, setNavigationRef } from "./src/api";
 import { createNavigationContainerRef } from "@react-navigation/native";
 import { TabBarProvider, useTabBar } from "./src/contexts/TabBarContext";
@@ -48,6 +49,7 @@ export type RootStackParamList = {
   IncidentList: undefined;
   CreateIncident: undefined;
   Notifications: undefined;
+  About: undefined;
 };
 
 export type MainTabParamList = {
@@ -312,6 +314,7 @@ export default function App() {
         <Stack.Screen name="IncidentList" component={IncidentListScreen} />
         <Stack.Screen name="CreateIncident" component={CreateIncidentScreen} />
         <Stack.Screen name="Notifications" component={NotificationScreen} />
+        <Stack.Screen name="About" component={AboutScreen} />
       </Stack.Navigator>
       </NavigationContainer>
     </TabBarProvider>
