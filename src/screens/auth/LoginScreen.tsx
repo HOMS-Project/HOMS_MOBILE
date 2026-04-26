@@ -192,7 +192,10 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
         if (result.data.refreshToken) {
           await setRefreshToken(result.data.refreshToken);
         }
-        navigation.navigate("MainTabs");
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "MainTabs" }],
+        });
       } else {
         setError(result.message || "Đăng nhập thất bại");
       }
@@ -226,7 +229,10 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
         if (result.data.refreshToken) {
           await setRefreshToken(result.data.refreshToken);
         }
-        navigation.navigate("MainTabs");
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "MainTabs" }],
+        });
       } else {
         setError(result.message || "Đăng nhập Google thất bại");
       }
