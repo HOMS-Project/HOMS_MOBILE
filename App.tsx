@@ -281,7 +281,7 @@ export default function App() {
 
   return (
     <TabBarProvider>
-      <NavigationContainer ref={navRef}>
+        <NavigationContainer ref={navRef}>
       <StatusBar style="light" />
       <Stack.Navigator
         initialRouteName={initialRoute}

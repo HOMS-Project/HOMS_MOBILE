@@ -314,7 +314,7 @@ const CreateIncidentScreen: React.FC = () => {
                     return (
                       <View key={`${item.uri}-${idx}`} className="mr-3 w-28">
                         {video ? (
-                          <View className="h-24 w-28 items-center justify-center rounded-xl border border-slate-200 bg-slate-200">
+                          <View className="h-24 w-28 items-center justify-center rounded-xl border border-slate-100 bg-white">
                             <Ionicons
                               name="videocam"
                               size={22}
@@ -322,7 +322,7 @@ const CreateIncidentScreen: React.FC = () => {
                             />
                           </View>
                         ) : (
-                          <View className="h-24 w-28 items-center justify-center rounded-xl border border-slate-200 bg-slate-200 p-1">
+                          <View className="h-24 w-28 items-center justify-center rounded-xl border border-slate-100 bg-white">
                             <Image
                               source={{ uri: item.uri }}
                               className="h-full w-full rounded-lg"

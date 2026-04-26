@@ -16,6 +16,7 @@ import {
   Dimensions,
   Easing,
   PanResponder,
+  BackHandler,
 } from "react-native";
 import { WebView } from "react-native-webview";
 import * as ImagePicker from "expo-image-picker";
@@ -284,6 +285,23 @@ const OrderMapScreen: React.FC = () => {
       console.warn("OSRM Routing Proxy error:", err?.message || err);
     }
   };
+
+  useEffect(() => {
+    const backAction = () => {
+      navigation.reset({
+        index: 1,
+        routes: [{ name: "MainTabs" }, { name: "OrderList" }],
+      });
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, [navigation]);
 
   const fetchStatus = async () => {
     if (!invoiceId || invoiceId === "undefined") {
@@ -949,7 +967,12 @@ const OrderMapScreen: React.FC = () => {
 
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() =>
+            navigation.reset({
+              index: 1,
+              routes: [{ name: "MainTabs" }, { name: "OrderList" }],
+            })
+          }
           style={styles.backBtn}
         >
           <Ionicons name="arrow-back" size={24} color="#0f172a" />
@@ -1137,17 +1160,7 @@ const OrderMapScreen: React.FC = () => {
                 {renderServerEvidenceList(existingAfterImages)}
               </View>
             </View>
-          </View>
-
-          <TouchableOpacity
-            style={[styles.deviateBtn, actionLoading && styles.pickBtnDisabled]}
-            onPress={() => setIsModalVisible(true)}
-            disabled={actionLoading}
-          >
-            <Text style={styles.deviateBtnText}>
-              ⚠️ Báo Tắc Đường / Đổi Lộ Trình
-            </Text>
-          </TouchableOpacity>
+          </View> 
 
           {renderActionButton()}
         </ScrollView>

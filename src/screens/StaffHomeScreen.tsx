@@ -20,7 +20,6 @@ import { apiRequest, endpoints } from "../api";
 import LocationTrackingService from "../services/locationTrackingService";
 import { fetchStaffNotifications } from "../services/notificationService";
 import { useTabBar } from "../contexts/TabBarContext";
-
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 type DashboardOrder = {
@@ -320,33 +319,33 @@ const StaffHomeScreen: React.FC = () => {
             </Pressable>
           </View>
 
-          <View className="mt-5 flex-row gap-2">
+          <View className="mt-6 flex-row gap-3">
             <Pressable
-              className="flex-1 items-center rounded-2xl border border-emerald-100 bg-[#f4fbf6] px-2 py-4"
+              className="flex-1 items-center rounded-3xl bg-white p-4 shadow-sm border border-slate-50"
               onPress={() => navigation.navigate("OrderList")}
             >
-              <Ionicons name="receipt-outline" size={22} color="#166534" />
-              <Text className="mt-1.5 text-center text-[13px] font-extrabold text-slate-800">
+              <Ionicons name="receipt-outline" size={28} color="#059669" />
+              <Text className="mt-2 text-center text-[12px] font-bold text-slate-800">
                 Danh sách đơn
               </Text>
             </Pressable>
 
             <Pressable
-              className="flex-1 items-center rounded-2xl border border-emerald-100 bg-[#f4fbf6] px-2 py-4"
+              className="flex-1 items-center rounded-3xl bg-white p-4 shadow-sm border border-slate-50"
               onPress={goToTeamList}
             >
-              <Ionicons name="people-outline" size={22} color="#166534" />
-              <Text className="mt-1.5 text-center text-[13px] font-extrabold text-slate-800">
+              <Ionicons name="people-outline" size={28} color="#059669" />
+              <Text className="mt-2 text-center text-[12px] font-bold text-slate-800">
                 Quản lý đội
               </Text>
             </Pressable>
 
             <Pressable
-              className="flex-1 items-center rounded-2xl border border-emerald-100 bg-[#f4fbf6] px-2 py-4"
+              className="flex-1 items-center rounded-3xl bg-white p-4 shadow-sm border border-slate-50"
               onPress={() => navigation.navigate("IncidentList")}
             >
-              <Ionicons name="warning-outline" size={22} color="#166534" />
-              <Text className="mt-1.5 text-center text-[13px] font-extrabold text-slate-800">
+              <Ionicons name="alert-circle-outline" size={28} color="#059669" />
+              <Text className="mt-2 text-center text-[12px] font-bold text-slate-800">
                 Báo cáo sự cố
               </Text>
             </Pressable>

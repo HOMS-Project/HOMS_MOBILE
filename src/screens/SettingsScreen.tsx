@@ -181,8 +181,8 @@ const SettingsScreen: React.FC = () => {
           </Text>
         </View>
 
-        {/* ── Menu Items (no card, centred, smaller padding) ── */}
-        <View className="mt-8 items-center gap-4 px-6">
+        {/* ── Menu Items (narrowed and centered) ── */}
+        <View className="mt-8 items-center gap-3 px-12">
           {options.map((item) => (
             <Pressable
               key={item.id}

@@ -94,7 +94,7 @@ const TeamDetailScreen: React.FC = () => {
   const renderMember = (member: TeamMember, roleKey: string, index: number) => (
     <View
       key={`${roleKey}-${member.id || member.fullName}-${index}`}
-      className="mb-2 rounded-xl bg-emerald-50/50 p-3"
+      className="mb-2 p-1"
     >
       <View className="flex-row items-center gap-3">
         {member.avatar ? (
@@ -212,13 +212,13 @@ const TeamDetailScreen: React.FC = () => {
             </Pressable>
           </View>
 
-          <View className="mt-2.5 self-start rounded-full bg-emerald-50 px-3 py-1">
+          <View className="mt-2.5 self-start rounded-full bg-slate-50 px-3 py-1">
             <Text className="text-[11px] font-bold text-emerald-700">
               {statusLabel(detail.status)}
             </Text>
           </View>
 
-          <View className="mt-4 gap-2.5 rounded-xl bg-emerald-50/50 p-3">
+          <View className="mt-4 gap-2.5 p-1">
             <View className="flex-row items-start gap-2">
               <Ionicons name="ellipse" size={9} color="#2563eb" />
               <Text className="flex-1 text-sm font-medium text-slate-700">
@@ -244,7 +244,7 @@ const TeamDetailScreen: React.FC = () => {
           </View>
 
           {detail.vehicle ? (
-            <View className="rounded-xl bg-emerald-50/50 p-3">
+            <View className="p-1">
               <Text className="text-lg font-bold text-slate-900">
                 {detail.vehicle.plateNumber || "Chưa có biển số"}
               </Text>
@@ -253,7 +253,7 @@ const TeamDetailScreen: React.FC = () => {
               </Text>
             </View>
           ) : (
-            <View className="rounded-xl bg-emerald-50/50 p-3">
+            <View className="p-1">
               <Text className="text-sm text-slate-500">
                 Chưa có thông tin xe
               </Text>

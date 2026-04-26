@@ -163,7 +163,7 @@ const IncidentListScreen: React.FC = () => {
                   </View>
                 </View>
 
-                <View className="mt-3.5 rounded-2xl bg-emerald-50/50 p-3">
+                <View className="mt-3.5 p-1">
                   {mediaList.length > 0 ? (
                     <ScrollView
                       horizontal
@@ -174,7 +174,7 @@ const IncidentListScreen: React.FC = () => {
                         isVideo(mediaUrl) ? (
                           <View
                             key={`${incident.id}-media-${index}`}
-                            className="h-24 w-24 items-center justify-center rounded-xl bg-slate-200"
+                            className="h-24 w-28 items-center justify-center rounded-xl border border-slate-100"
                           >
                             <Ionicons
                               name="videocam"
@@ -188,7 +188,7 @@ const IncidentListScreen: React.FC = () => {
                         ) : (
                           <Pressable
                             key={`${incident.id}-media-${index}`}
-                            className="h-24 w-24 overflow-hidden rounded-xl bg-slate-200 p-1"
+                            className="h-24 w-24 overflow-hidden rounded-xl border border-slate-100 bg-white"
                             onPress={() => setPreviewImage(mediaUrl)}
                           >
                             <Image

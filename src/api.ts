@@ -139,71 +139,72 @@ axiosClient.interceptors.response.use(
       return axiosClient.request(originalRequest);
     }
 
-    // Avoid logging token expiry as an error since we handle it automatically via refresh
-    if (status !== 401 || !message.toLowerCase().includes('token')) {
+    // Suppress logging for token expiry as we handle it automatically via refresh
+    if (status !== 401 && !message.toLowerCase().includes('token')) {
       console.error(`[API] Request failed: ${message}`);
     }
 
     // Auto-refresh on 401 Token expired
     if (status === 401 && originalRequest && !originalRequest._authRetried) {
+      if (isRefreshing) {
+        // Queue this request until refresh is done
+        return new Promise<void>((resolve) => {
+          pendingRequests.push((newToken: string) => {
+            originalRequest.headers = {
+              ...(originalRequest.headers || {}),
+              Authorization: `Bearer ${newToken}`,
+            };
+            resolve(axiosClient.request(originalRequest));
+          });
+        });
+      }
+
       originalRequest._authRetried = true;
+      isRefreshing = true;
+
       try {
-        const newToken = await refreshAccessToken();
+        const storedRefresh = await AsyncStorage.getItem('refreshToken');
+        if (!storedRefresh) throw new Error('No refresh token');
+
+        const refreshResponse = await axiosClient.post('/auth/refresh', {
+          refreshToken: storedRefresh,
+        });
+
+        const newAccessToken = refreshResponse.data?.accessToken;
+        const newRefreshToken = refreshResponse.data?.refreshToken;
+
+        if (!newAccessToken) throw new Error('Refresh failed');
+
+        // Persist new tokens
+        await AsyncStorage.setItem('authToken', newAccessToken);
+        if (newRefreshToken) await AsyncStorage.setItem('refreshToken', newRefreshToken);
+        authToken = newAccessToken;
+
+        // Resolve all queued requests
+        pendingRequests.forEach((cb) => cb(newAccessToken));
+        pendingRequests = [];
+
+        // Retry original request with new token
         originalRequest.headers = {
           ...(originalRequest.headers || {}),
-          Authorization: `Bearer ${newToken}`,
+          Authorization: `Bearer ${newAccessToken}`,
         };
         return axiosClient.request(originalRequest);
-      } catch (err) {
-        return Promise.reject(err);
+      } catch (refreshError) {
+        // Refresh failed — force logout
+        pendingRequests = [];
+        await AsyncStorage.multiRemove(['authToken', 'refreshToken']);
+        authToken = null;
+        if (_navigateToLogin) _navigateToLogin();
+        return Promise.reject(new Error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại'));
+      } finally {
+        isRefreshing = false;
       }
     }
 
     return Promise.reject(new Error(message));
   }
 );
-
-const refreshAccessToken = async () => {
-  if (isRefreshing) {
-    return new Promise<string>((resolve, reject) => {
-      pendingRequests.push((token: string) => {
-        if (token) resolve(token);
-        else reject(new Error('Refresh failed'));
-      });
-    });
-  }
-
-  isRefreshing = true;
-  try {
-    const storedRefresh = await AsyncStorage.getItem('refreshToken');
-    if (!storedRefresh) throw new Error('No refresh token');
-
-    const refreshResponse = await axiosClient.post('/auth/refresh', {
-      refreshToken: storedRefresh,
-    });
-
-    const newAccessToken = refreshResponse.data?.accessToken;
-    const newRefreshToken = refreshResponse.data?.refreshToken;
-
-    if (!newAccessToken) throw new Error('Refresh failed');
-
-    await AsyncStorage.setItem('authToken', newAccessToken);
-    if (newRefreshToken) await AsyncStorage.setItem('refreshToken', newRefreshToken);
-    authToken = newAccessToken;
-
-    pendingRequests.forEach((cb) => cb(newAccessToken));
-    pendingRequests = [];
-    return newAccessToken;
-  } catch (error) {
-    pendingRequests = [];
-    await AsyncStorage.multiRemove(['authToken', 'refreshToken']);
-    authToken = null;
-    if (_navigateToLogin) _navigateToLogin();
-    throw new Error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
-  } finally {
-    isRefreshing = false;
-  }
-};
 
 export const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
   const method = (options.method || 'GET').toUpperCase();
@@ -270,21 +271,112 @@ export const staffApi = {
   getIncidentTypes: () => axiosClient.get(endpoints.staff.getIncidentTypes).then((res) => res.data),
   getMyIncidents: () => axiosClient.get(endpoints.staff.getMyIncidents).then((res) => res.data),
   createIncident: async (formData: FormData) => {
-    return axiosClient.post(endpoints.staff.createIncident, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    }).then(res => res.data);
+    let token = csrfToken;
+    if (!token) token = await fetchCsrfToken();
+
+    const doFetch = (currentToken: string) =>
+      fetch(`${BASE_URL}${endpoints.staff.createIncident}`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          Accept: 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          'X-CSRF-Token': currentToken,
+        },
+      });
+
+    let res;
+    try {
+      res = await doFetch(token);
+    } catch (err: any) {
+      // Possible connection drop due to immediate 403 from CSRF rejection
+      token = await fetchCsrfToken();
+      res = await doFetch(token);
+    }
+
+    if (!res.ok) {
+      if (res.status === 403) {
+        token = await fetchCsrfToken();
+        res = await doFetch(token);
+      }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Network Error during upload');
+      }
+    }
+    return res.json();
   },
   updateAssignmentStatus: (assignmentId: string, status: string) =>
     axiosClient.patch(endpoints.staff.updateAssignmentStatus(assignmentId), { status }).then((res) => res.data),
   submitPickup: async (orderId: string, formData: FormData) => {
-    return axiosClient.post(endpoints.staff.pickup(orderId), formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    }).then(res => res.data);
+    let token = csrfToken;
+    if (!token) token = await fetchCsrfToken();
+
+    const doFetch = (currentToken: string) =>
+      fetch(`${BASE_URL}${endpoints.staff.pickup(orderId)}`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          Accept: 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          'X-CSRF-Token': currentToken,
+        },
+      });
+
+    let res;
+    try {
+      res = await doFetch(token);
+    } catch (err: any) {
+      token = await fetchCsrfToken();
+      res = await doFetch(token);
+    }
+
+    if (!res.ok) {
+      if (res.status === 403) {
+        token = await fetchCsrfToken();
+        res = await doFetch(token);
+      }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Network Error during upload');
+      }
+    }
+    return res.json();
   },
   submitDropoff: async (orderId: string, formData: FormData) => {
-    return axiosClient.post(endpoints.staff.dropoff(orderId), formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    }).then(res => res.data);
+    let token = csrfToken;
+    if (!token) token = await fetchCsrfToken();
+
+    const doFetch = (currentToken: string) =>
+      fetch(`${BASE_URL}${endpoints.staff.dropoff(orderId)}`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          Accept: 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          'X-CSRF-Token': currentToken,
+        },
+      });
+
+    let res;
+    try {
+      res = await doFetch(token);
+    } catch (err: any) {
+      token = await fetchCsrfToken();
+      res = await doFetch(token);
+    }
+
+    if (!res.ok) {
+      if (res.status === 403) {
+        token = await fetchCsrfToken();
+        res = await doFetch(token);
+      }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Network Error during upload');
+      }
+    }
+    return res.json();
   },
   getProxyRoute: (p1: string, p2: string) =>
     axiosClient.get(endpoints.staff.getProxyRoute, { params: { p1, p2 } }).then((res) => res.data),

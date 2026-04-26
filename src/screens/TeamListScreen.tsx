@@ -91,8 +91,14 @@ const TeamListScreen: React.FC = () => {
   };
 
   const filteredOrders = useMemo(() => {
-    if (statusFilter === "ALL") return orders;
-    return orders.filter((order) => order.status === statusFilter);
+    const base = statusFilter === "ALL" ? orders : orders.filter((order) => order.status === statusFilter);
+    
+    // Sắp xếp mới nhất từ trên xuống (theo scheduledTime)
+    return [...base].sort((a, b) => {
+      const timeA = new Date(a.scheduledTime || 0).getTime();
+      const timeB = new Date(b.scheduledTime || 0).getTime();
+      return timeB - timeA;
+    });
   }, [orders, statusFilter]);
 
   const availableFilters: StatusFilter[] = useMemo(() => {
@@ -225,7 +231,7 @@ const TeamListScreen: React.FC = () => {
                     </View>
                   </View>
 
-                  <View className="gap-2.5 rounded-xl bg-emerald-50/50 p-3">
+                  <View className="gap-2.5 p-1">
                     <View className="flex-row items-start gap-2">
                       <Ionicons name="ellipse" size={9} color="#2563eb" />
                       <Text

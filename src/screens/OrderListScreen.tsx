@@ -105,11 +105,17 @@ const OrderListScreen: React.FC = () => {
     );
   }
 
-  const normalized = orders.map((o) => ({
-    ...o,
-    status: (o.status || "").toUpperCase(),
-    items: Array.isArray((o as any)?.items) ? (o as any).items : [],
-  }));
+  const normalized = orders
+    .map((o) => ({
+      ...o,
+      status: (o.status || "").toUpperCase(),
+      items: Array.isArray((o as any)?.items) ? (o as any).items : [],
+    }))
+    .sort((a, b) => {
+      const timeA = new Date(a.scheduledTime || 0).getTime();
+      const timeB = new Date(b.scheduledTime || 0).getTime();
+      return timeB - timeA;
+    });
 
   const applyTimeFilter = (o: Order) => {
     if (timeFilter === "ALL") return true;
@@ -180,7 +186,7 @@ const OrderListScreen: React.FC = () => {
             </View>
           </View>
 
-          <View className="gap-2.5 rounded-xl border border-slate-100 bg-white p-3">
+          <View className="gap-2.5 p-1">
             <View className="flex-row items-start gap-2">
               <Ionicons name="ellipse" size={9} color="#2563eb" />
               <Text

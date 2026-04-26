@@ -50,6 +50,18 @@ type OrderDetail = {
     beforeNote?: string;
     afterNote?: string;
   };
+  survey?: {
+    distanceKm?: number;
+    floors?: number;
+    hasElevator?: boolean;
+    carryMeter?: number;
+    needsPacking?: boolean;
+    needsAssembling?: boolean;
+    insuranceRequired?: boolean;
+    estimatedHours?: number;
+    suggestedVehicle?: string;
+    suggestedStaffCount?: number;
+  };
 };
 
 const stripSecTag = (name?: string) => {
@@ -137,6 +149,7 @@ const OrderDetailsScreen: React.FC = () => {
                 ? payload.completionEvidence.afterNote
                 : "",
           },
+          survey: payload.survey || null,
         });
       }
     } catch (error) {
@@ -277,7 +290,7 @@ const OrderDetailsScreen: React.FC = () => {
         contentContainerStyle={{
           padding: 16,
           paddingTop: 32,
-          paddingBottom: 40,
+          paddingBottom: 140,
         }}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -333,10 +346,12 @@ const OrderDetailsScreen: React.FC = () => {
             <Ionicons name="time-outline" size={18} color="#d97706" />
             <View className="flex-1">
               <Text className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                Thời gian điều phối dự kiến
+                Thời gian vận chuyển ước tính
               </Text>
               <Text className="mt-0.5 text-sm font-semibold text-slate-800">
-                {formatDate(order.dispatchTime || order.scheduledTime)}
+                {order.survey?.estimatedHours 
+                  ? `${order.survey.estimatedHours} giờ` 
+                  : "Chưa có ước tính"}
               </Text>
             </View>
           </View>
@@ -347,7 +362,7 @@ const OrderDetailsScreen: React.FC = () => {
             Lộ trình di chuyển
           </Text>
 
-          <View className="gap-2.5 rounded-xl border border-slate-100 bg-white p-3">
+          <View className="gap-2.5 p-1">
             <View className="flex-row items-start gap-2">
               <Ionicons name="ellipse" size={9} color="#2563eb" />
               <View className="flex-1">
@@ -423,7 +438,98 @@ const OrderDetailsScreen: React.FC = () => {
           </View>
         </Card>
 
+        {order.survey && (
+          <>
+            <Card className="mt-4 rounded-[20px] p-4">
+              <Text className="text-lg font-extrabold text-slate-900">
+                1. Địa hình & Vận chuyển
+              </Text>
+              
+              {(order.survey.floors || 0) > 1 && !order.survey.hasElevator && (
+                <View className="mt-3 flex-row items-center rounded-xl bg-amber-50 p-3 border border-amber-100">
+                  <Ionicons name="warning" size={18} color="#D97706" />
+                  <Text className="ml-2 flex-1 text-xs font-bold text-amber-800">
+                    Lưu ý: Đơn hàng ở tầng cao ({order.survey.floors}) và KHÔNG có thang máy.
+                  </Text>
+                </View>
+              )}
+
+              <View className="mt-4 flex-row flex-wrap gap-y-4">
+                <View className="w-1/2 pr-2">
+                  <Text className="text-[13px] font-bold text-slate-500 uppercase tracking-wider">Số tầng lầu</Text>
+                  <Text className="mt-1 text-base font-extrabold text-slate-900">{order.survey.floors ?? "--"}</Text>
+                </View>
+                <View className="w-1/2 pl-2">
+                  <Text className="text-[13px] font-bold text-slate-500 uppercase tracking-wider">Thang máy</Text>
+                  <View className="mt-1 flex-row items-center">
+                    <Ionicons 
+                      name={order.survey.hasElevator ? "checkmark-circle" : "close-circle"} 
+                      size={18} 
+                      color={order.survey.hasElevator ? "#10b981" : "#ef4444"} 
+                    />
+                    <Text className={`ml-1.5 text-base font-extrabold ${order.survey.hasElevator ? "text-emerald-700" : "text-rose-700"}`}>
+                      {order.survey.hasElevator ? "Có" : "Không"}
+                    </Text>
+                  </View>
+                </View>
+                <View className="w-1/2 pr-2">
+                  <Text className="text-[13px] font-bold text-slate-500 uppercase tracking-wider">Bề bộ (m)</Text>
+                  <Text className="mt-1 text-base font-extrabold text-slate-900">{order.survey.carryMeter ?? "--"} m</Text>
+                </View>
+                <View className="w-1/2 pl-2">
+                  <Text className="text-[13px] font-bold text-slate-500 uppercase tracking-wider">Quãng đường</Text>
+                  <Text className={`mt-1 text-base font-extrabold ${(order.survey.distanceKm || 0) > 15 ? "text-amber-600" : "text-slate-900"}`}>
+                    {order.survey.distanceKm ?? "--"} km
+                  </Text>
+                </View>
+              </View>
+            </Card>
+
+            <Card className="mt-4 rounded-[20px] p-4">
+              <Text className="text-lg font-extrabold text-slate-900">
+                2. Dịch vụ & Bảo hiểm
+              </Text>
+              
+              <View className="mt-4 flex-row flex-wrap gap-2">
+                <View className={`flex-row items-center px-3 py-2 rounded-xl border ${order.survey.needsAssembling ? "bg-emerald-50 border-emerald-100" : "bg-slate-50 border-slate-100 opacity-60"}`}>
+                  <Ionicons 
+                    name={order.survey.needsAssembling ? "construct" : "remove-circle-outline"} 
+                    size={16} 
+                    color={order.survey.needsAssembling ? "#059669" : "#94a3b8"} 
+                  />
+                  <Text className={`ml-2 text-sm font-bold ${order.survey.needsAssembling ? "text-emerald-800" : "text-slate-500"}`}>
+                    {order.survey.needsAssembling ? "Cần tháo/lắp" : "Không tháo/lắp"}
+                  </Text>
+                </View>
+
+                <View className={`flex-row items-center px-3 py-2 rounded-xl border ${order.survey.needsPacking ? "bg-emerald-50 border-emerald-100" : "bg-slate-50 border-slate-100 opacity-60"}`}>
+                  <Ionicons 
+                    name={order.survey.needsPacking ? "archive" : "remove-circle-outline"} 
+                    size={16} 
+                    color={order.survey.needsPacking ? "#059669" : "#94a3b8"} 
+                  />
+                  <Text className={`ml-2 text-sm font-bold ${order.survey.needsPacking ? "text-emerald-800" : "text-slate-500"}`}>
+                    {order.survey.needsPacking ? "Cần đóng gói" : "Không đóng gói"}
+                  </Text>
+                </View>
+
+                <View className={`flex-row items-center px-3 py-2 rounded-xl border ${order.survey.insuranceRequired ? "bg-blue-50 border-blue-100" : "bg-slate-50 border-slate-100 opacity-60"}`}>
+                  <Ionicons 
+                    name={order.survey.insuranceRequired ? "shield-checkmark" : "shield-outline"} 
+                    size={16} 
+                    color={order.survey.insuranceRequired ? "#2563eb" : "#94a3b8"} 
+                  />
+                  <Text className={`ml-2 text-sm font-bold ${order.survey.insuranceRequired ? "text-blue-800" : "text-slate-500"}`}>
+                    {order.survey.insuranceRequired ? "Có bảo hiểm" : "Không bảo hiểm"}
+                  </Text>
+                </View>
+              </View>
+            </Card>
+          </>
+        )}
+
         <Card className="mt-4 rounded-[20px] p-4">
+
           <View className="flex-row items-center justify-between">
             <Text className="text-lg font-extrabold text-slate-900">
               Danh sách đồ đạc
@@ -488,15 +594,15 @@ const OrderDetailsScreen: React.FC = () => {
         </Card>
       </ScrollView>
 
-      <View className="absolute bottom-0 left-0 right-0 border-t border-slate-100 bg-white/95 px-5 pb-10 pt-4">
+      <View className="absolute bottom-0 left-0 right-0 border-t border-slate-100 bg-white/95 px-5 pb-8 pt-3">
         <Pressable
-          className="h-[64px] w-full flex-row items-center justify-center rounded-full bg-[#16A34A] active:opacity-85"
+          className="h-[52px] w-full flex-row items-center justify-center rounded-full bg-[#16A34A] active:opacity-85"
           style={{
             shadowColor: "#16A34A",
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.35,
-            shadowRadius: 8,
-            elevation: 6,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 6,
+            elevation: 4,
           }}
           onPress={() =>
             navigation.navigate("OrderMap", {
@@ -505,7 +611,7 @@ const OrderDetailsScreen: React.FC = () => {
             })
           }
         >
-          <Text className="text-xl font-bold tracking-wide text-white">
+          <Text className="text-base font-bold tracking-wide text-white">
             Xem bản đồ và cập nhật
           </Text>
         </Pressable>
