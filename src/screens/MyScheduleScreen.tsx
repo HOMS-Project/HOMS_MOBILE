@@ -1,6 +1,8 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -17,6 +19,7 @@ import Button from "../components/ui/Button";
 import Section from "../components/ui/Section";
 import EmptyState from "../components/ui/EmptyState";
 import { showToast } from "../utils/toast";
+import { useTabBar } from "../contexts/TabBarContext";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -77,6 +80,11 @@ const MyScheduleScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
 
+  // ── Tab bar visibility (Grab-style) ────────────────────────────────
+  const { setTabBarVisible } = useTabBar();
+  const lastScrollY = useRef(0);
+  const scrollDir = useRef<"up" | "down">("up");
+
   const fetchJobs = useCallback(async () => {
     try {
       const result = await staffApi.getOrders();
@@ -115,8 +123,24 @@ const MyScheduleScreen: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       fetchJobs();
-    }, [fetchJobs]),
+      setTabBarVisible(true);
+      lastScrollY.current = 0;
+      scrollDir.current = "up";
+      return () => { setTabBarVisible(true); };
+    }, [fetchJobs, setTabBarVisible]),
   );
+
+  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = e.nativeEvent.contentOffset.y;
+    const dy = y - lastScrollY.current;
+    lastScrollY.current = y;
+    if (Math.abs(dy) < 4) return;
+    const dir = dy > 0 ? "down" : "up";
+    if (dir !== scrollDir.current) {
+      scrollDir.current = dir;
+      setTabBarVisible(dir === "up");
+    }
+  };
 
   const handleAccept = async (job: Job) => {
     setAcceptingId(job.id);
@@ -195,9 +219,11 @@ const MyScheduleScreen: React.FC = () => {
         contentContainerStyle={{
           padding: 20,
           paddingTop: 42,
-          paddingBottom: 36,
+          paddingBottom: 160,
         }}
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={handleScroll}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }

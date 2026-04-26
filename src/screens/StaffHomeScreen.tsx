@@ -1,7 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
   ScrollView,
   Text,
@@ -17,6 +19,7 @@ import EmptyState from "../components/ui/EmptyState";
 import { apiRequest, endpoints } from "../api";
 import LocationTrackingService from "../services/locationTrackingService";
 import { fetchStaffNotifications } from "../services/notificationService";
+import { useTabBar } from "../contexts/TabBarContext";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -87,6 +90,11 @@ const StaffHomeScreen: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // ── Tab bar visibility (Grab-style) ────────────────────────────────
+  const { setTabBarVisible } = useTabBar();
+  const lastScrollY = useRef(0);
+  const scrollDir = useRef<"up" | "down">("up");
+
   const fetchData = useCallback(async () => {
     try {
       const ordersPromise = apiRequest(endpoints.staff.getOrders)
@@ -137,7 +145,15 @@ const StaffHomeScreen: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       fetchData();
-    }, [fetchData]),
+      // Always show the tab bar when screen is focused
+      setTabBarVisible(true);
+      lastScrollY.current = 0;
+      scrollDir.current = "up";
+      return () => {
+        // Ensure tab bar is visible when leaving this screen
+        setTabBarVisible(true);
+      };
+    }, [fetchData, setTabBarVisible]),
   );
 
   const normalizedOrders = useMemo(
@@ -224,12 +240,29 @@ const StaffHomeScreen: React.FC = () => {
     navigation.navigate("TeamList");
   };
 
+  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = e.nativeEvent.contentOffset.y;
+    const dy = y - lastScrollY.current;
+    lastScrollY.current = y;
+
+    // ignore tiny jitter
+    if (Math.abs(dy) < 4) return;
+
+    const dir = dy > 0 ? "down" : "up";
+    if (dir !== scrollDir.current) {
+      scrollDir.current = dir;
+      setTabBarVisible(dir === "up");
+    }
+  };
+
   return (
     <View className="flex-1 bg-[#edf4ef]">
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 36 }}
+        contentContainerStyle={{ paddingBottom: 160 }}
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={handleScroll}
       >
         <LinearGradient
           colors={["#0f3f2a", "#156f45", "#1d8a55"]}

@@ -30,6 +30,7 @@ import IncidentListScreen from "./src/screens/IncidentListScreen";
 import CreateIncidentScreen from "./src/screens/CreateIncidentScreen";
 import { loadAuthToken, setNavigationRef } from "./src/api";
 import { createNavigationContainerRef } from "@react-navigation/native";
+import { TabBarProvider, useTabBar } from "./src/contexts/TabBarContext";
 
 export type RootStackParamList = {
   Login: undefined;
@@ -88,6 +89,7 @@ const tabMeta: Record<
 
 const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
   const [barWidth, setBarWidth] = useState(0);
+  const { tabBarTranslateY } = useTabBar();
   const indicatorTranslateX = useRef(new Animated.Value(0)).current;
   const iconScaleAnims = useRef(
     state.routes.map(
@@ -135,9 +137,10 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
   }, [state.index, state.routes, iconScaleAnims, iconLiftAnims]);
 
   return (
-    <View
+    <Animated.View
       className="absolute bottom-0 left-0 right-0 items-center pb-[30px]"
       pointerEvents="box-none"
+      style={{ transform: [{ translateY: tabBarTranslateY }] }}
     >
       <View
         className="h-[96px] w-[94%] flex-row items-center justify-between rounded-full bg-[#F2F7F2] px-[10px] py-[7px]"
@@ -226,7 +229,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
           );
         })}
       </View>
-    </View>
+    </Animated.View>
   );
 };
 
@@ -275,7 +278,8 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer ref={navRef}>
+    <TabBarProvider>
+      <NavigationContainer ref={navRef}>
       <StatusBar style="light" />
       <Stack.Navigator
         initialRouteName={initialRoute}
@@ -309,6 +313,7 @@ export default function App() {
         <Stack.Screen name="CreateIncident" component={CreateIncidentScreen} />
         <Stack.Screen name="Notifications" component={NotificationScreen} />
       </Stack.Navigator>
-    </NavigationContainer>
+      </NavigationContainer>
+    </TabBarProvider>
   );
 }

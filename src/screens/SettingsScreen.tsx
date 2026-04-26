@@ -1,7 +1,9 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
   ScrollView,
   Text,
@@ -12,6 +14,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { type RootStackParamList } from "../../App";
 import { apiRequest, endpoints, setAuthToken } from "../api";
+import { useTabBar } from "../contexts/TabBarContext";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type SettingsRoute = "EditProfile" | "ChangePassword" | "Login";
@@ -68,6 +71,11 @@ const SettingsScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
 
+  // ── Tab bar visibility (Grab-style) ────────────────────────────────
+  const { setTabBarVisible } = useTabBar();
+  const lastScrollY = useRef(0);
+  const scrollDir = useRef<"up" | "down">("up");
+
   const fetchProfile = async () => {
     try {
       const result = await apiRequest(endpoints.user.getProfile);
@@ -84,8 +92,24 @@ const SettingsScreen: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       fetchProfile();
-    }, []),
+      setTabBarVisible(true);
+      lastScrollY.current = 0;
+      scrollDir.current = "up";
+      return () => { setTabBarVisible(true); };
+    }, [setTabBarVisible]),
   );
+
+  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = e.nativeEvent.contentOffset.y;
+    const dy = y - lastScrollY.current;
+    lastScrollY.current = y;
+    if (Math.abs(dy) < 4) return;
+    const dir = dy > 0 ? "down" : "up";
+    if (dir !== scrollDir.current) {
+      scrollDir.current = dir;
+      setTabBarVisible(dir === "up");
+    }
+  };
 
   const handlePress = async (route?: SettingsRoute) => {
     if (!route) return;
@@ -101,8 +125,10 @@ const SettingsScreen: React.FC = () => {
     <View className="flex-1 bg-[#edf4ef]">
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 160 }}
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={handleScroll}
       >
         {/* ── Header ── */}
         <View className="flex-row items-center justify-between px-5 pb-4 pt-14">
