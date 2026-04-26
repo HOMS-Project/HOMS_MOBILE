@@ -140,14 +140,14 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
 
   return (
     <Animated.View
-      className="absolute bottom-0 left-0 right-0 items-center pb-[30px]"
+      className="absolute bottom-0 left-0 right-0 items-center pb-5"
       pointerEvents="box-none"
       style={{ transform: [{ translateY: tabBarTranslateY }] }}
     >
       <View
-        className="h-[96px] w-[94%] flex-row items-center justify-between rounded-full bg-[#F2F7F2] px-[10px] py-[7px]"
+        className="h-[68px] w-[94%] flex-row items-center justify-between rounded-full bg-[#F2F7F2] px-[8px] py-[6px]"
         onLayout={(event) => {
-          setBarWidth(event.nativeEvent.layout.width - 20);
+          setBarWidth(event.nativeEvent.layout.width - 16);
         }}
         style={{
           maxWidth: 500,
@@ -164,11 +164,11 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
             pointerEvents="none"
             style={{
               position: "absolute",
-              left: 10,
-              top: 10,
+              left: 8,
+              top: 8,
               width: barWidth / state.routes.length,
-              height: 76,
-              borderRadius: 38,
+              height: 52,
+              borderRadius: 26,
               backgroundColor: tabActive,
               transform: [{ translateX: indicatorTranslateX }],
               shadowColor: "#166534",
@@ -202,7 +202,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
             <Pressable
               key={route.key}
               onPress={onPress}
-              className="mx-1 h-20 flex-1 items-center justify-center rounded-[38px]"
+              className="mx-1 h-[56px] flex-1 items-center justify-center rounded-[26px]"
               style={{
                 position: "relative",
                 zIndex: 2,
@@ -218,12 +218,12 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
               >
                 <Ionicons
                   name={focused ? activeIcon : inactiveIcon}
-                  size={40}
+                  size={26}
                   color={focused ? "#FFFFFF" : tabInactive}
                 />
               </Animated.View>
               <Text
-                className={`mt-[2px] text-[15px] font-bold leading-[17px] ${focused ? "text-white" : "text-[#8A8A8A]"}`}
+                className={`mt-[1px] text-[11px] font-bold leading-[14px] ${focused ? "text-white" : "text-[#8A8A8A]"}`}
               >
                 {label}
               </Text>

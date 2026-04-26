@@ -122,9 +122,9 @@ const TeamListScreen: React.FC = () => {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          padding: 20,
-          paddingTop: 42,
-          paddingBottom: 36,
+          padding: 16,
+          paddingTop: 32,
+          paddingBottom: 24,
         }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -132,34 +132,34 @@ const TeamListScreen: React.FC = () => {
       >
         <View className="flex-row items-center">
           <Pressable
-            className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
+            className="mr-3 h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm"
             onPress={handleGoBack}
           >
-            <Ionicons name="arrow-back" size={24} color="#0f172a" />
+            <Ionicons name="arrow-back" size={20} color="#0f172a" />
           </Pressable>
 
-          <Text className="flex-1 text-3xl font-extrabold text-slate-900">
+          <Text className="flex-1 text-xl font-extrabold text-slate-900">
             Quản lý đội
           </Text>
           <Pressable
-            className="h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm"
+            className="h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-sm"
             onPress={() => setShowFilters((prev) => !prev)}
           >
             <Ionicons
               name={showFilters ? "close" : "options-outline"}
-              size={22}
+              size={20}
               color="#0f172a"
             />
           </Pressable>
         </View>
 
-        <Text className="mt-2 text-base text-slate-500">
+        <Text className="mt-1 text-sm text-slate-500">
           Danh sách đơn có đội được phân công cho bạn
         </Text>
 
         {showFilters ? (
-          <Card className="mt-5 rounded-[24px] p-5">
-            <Text className="text-sm font-bold uppercase tracking-wide text-slate-500">
+          <Card className="mt-4 rounded-2xl p-4">
+            <Text className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
               Lọc theo trạng thái
             </Text>
             <View className="mt-2 flex-row flex-wrap">
@@ -168,11 +168,11 @@ const TeamListScreen: React.FC = () => {
                 return (
                   <Pressable
                     key={value}
-                    className={`mb-2 mr-2 rounded-full border px-4 py-2.5 ${selected ? "border-emerald-500 bg-emerald-50" : "border-slate-200 bg-white"}`}
+                    className={`mb-2 mr-2 rounded-full border px-3 py-1.5 ${selected ? "border-emerald-500 bg-emerald-50" : "border-slate-200 bg-white"}`}
                     onPress={() => setStatusFilter(value)}
                   >
                     <Text
-                      className={`text-base font-bold ${selected ? "text-emerald-700" : "text-slate-600"}`}
+                      className={`text-sm font-bold ${selected ? "text-emerald-700" : "text-slate-600"}`}
                     >
                       {STATUS_LABEL[value]}
                     </Text>
@@ -204,20 +204,20 @@ const TeamListScreen: React.FC = () => {
                   })
                 }
               >
-                <Card className="gap-4 rounded-[24px] p-6">
+                <Card className="gap-3 rounded-2xl p-4">
                   <View className="flex-row items-start justify-between">
-                    <View className="mr-3 flex-1">
-                      <Text className="text-xl font-bold text-slate-900">
+                    <View className="mr-2 flex-1">
+                      <Text className="text-base font-bold text-slate-900">
                         {order.orderCode}
                       </Text>
-                      <Text className="mt-1 text-lg text-slate-500">
+                      <Text className="mt-0.5 text-sm text-slate-500">
                         {dateText}
                       </Text>
                     </View>
                     <View
-                      className={`rounded-full px-4 py-2 ${statusClass(order.status)}`}
+                      className={`rounded-full px-3 py-1 ${statusClass(order.status)}`}
                     >
-                      <Text className="text-base font-bold">
+                      <Text className="text-[11px] font-bold">
                         {STATUS_LABEL[
                           (order.status as StatusFilter) || "ALL"
                         ] || order.status}
@@ -225,11 +225,11 @@ const TeamListScreen: React.FC = () => {
                     </View>
                   </View>
 
-                  <View className="gap-3 rounded-2xl bg-emerald-50/50 p-4">
+                  <View className="gap-2.5 rounded-xl bg-emerald-50/50 p-3">
                     <View className="flex-row items-start gap-2">
-                      <Ionicons name="ellipse" size={11} color="#2563eb" />
+                      <Ionicons name="ellipse" size={9} color="#2563eb" />
                       <Text
-                        className="flex-1 text-lg font-medium text-slate-700"
+                        className="flex-1 text-sm font-medium text-slate-700"
                         numberOfLines={1}
                       >
                         {order.pickupAddress || "Chưa có địa điểm nhận"}
@@ -239,9 +239,9 @@ const TeamListScreen: React.FC = () => {
                     <View className="ml-1 h-4 w-px bg-slate-300" />
 
                     <View className="flex-row items-start gap-2">
-                      <Ionicons name="ellipse" size={11} color="#ef4444" />
+                      <Ionicons name="ellipse" size={9} color="#ef4444" />
                       <Text
-                        className="flex-1 text-lg font-medium text-slate-700"
+                        className="flex-1 text-sm font-medium text-slate-700"
                         numberOfLines={1}
                       >
                         {order.deliveryAddress || "Chưa có địa điểm giao"}

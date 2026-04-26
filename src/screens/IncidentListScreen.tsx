@@ -98,9 +98,9 @@ const IncidentListScreen: React.FC = () => {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          padding: 20,
-          paddingTop: 42,
-          paddingBottom: 42,
+          padding: 16,
+          paddingTop: 32,
+          paddingBottom: 32,
         }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -108,19 +108,19 @@ const IncidentListScreen: React.FC = () => {
       >
         <View className="flex-row items-center gap-3">
           <Pressable
-            className="h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
+            className="h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm"
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={24} color="#0f172a" />
+            <Ionicons name="arrow-back" size={20} color="#0f172a" />
           </Pressable>
-          <Text className="flex-1 text-2xl font-extrabold text-slate-900">
+          <Text className="flex-1 text-xl font-extrabold text-slate-900">
             Báo cáo sự cố
           </Text>
           <Pressable
-            className="rounded-full border border-emerald-700 bg-emerald-600 px-4 py-1.5 shadow-sm"
+            className="rounded-full border border-emerald-700 bg-emerald-600 px-3 py-1 shadow-sm"
             onPress={() => navigation.navigate("CreateIncident")}
           >
-            <Text className="text-base font-extrabold text-white">
+            <Text className="text-sm font-extrabold text-white">
               Tạo báo cáo
             </Text>
           </Pressable>
@@ -136,49 +136,49 @@ const IncidentListScreen: React.FC = () => {
               : [];
 
             return (
-              <Card key={incident.id} className="rounded-[24px] p-5">
+              <Card key={incident.id} className="rounded-2xl p-4">
                 <View className="flex-row items-start justify-between">
-                  <View className="mr-3 flex-1">
-                    <Text className="text-xl font-bold text-slate-900">
+                  <View className="mr-2 flex-1">
+                    <Text className="text-base font-bold text-slate-900">
                       {incident.invoiceCode || "Chưa có mã đơn"}
                     </Text>
-                    <Text className="mt-1 text-lg text-slate-500">
+                    <Text className="mt-0.5 text-sm text-slate-500">
                       {reportTime}
                     </Text>
                   </View>
                   <View
-                    className={`rounded-full px-4 py-1.5 ${statusClass(incident.status)}`}
+                    className={`rounded-full px-3 py-1 ${statusClass(incident.status)}`}
                   >
-                    <Text className="text-base font-bold">
+                    <Text className="text-[11px] font-bold">
                       {statusLabel(incident.status)}
                     </Text>
                   </View>
                 </View>
 
-                <View className="mt-3 flex-row items-center gap-2">
-                  <View className="rounded-full bg-emerald-100/80 px-4 py-1.5">
-                    <Text className="text-base font-bold text-slate-700">
+                <View className="mt-2.5 flex-row items-center gap-2">
+                  <View className="rounded-full bg-emerald-100/80 px-3 py-1">
+                    <Text className="text-[11px] font-bold text-slate-700">
                       {typeLabel(incident.type)}
                     </Text>
                   </View>
                 </View>
 
-                <View className="mt-4 rounded-2xl bg-emerald-50/50 p-3">
+                <View className="mt-3.5 rounded-2xl bg-emerald-50/50 p-3">
                   {mediaList.length > 0 ? (
                     <ScrollView
                       horizontal
                       showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={{ gap: 12, paddingRight: 2 }}
+                      contentContainerStyle={{ gap: 8, paddingRight: 2 }}
                     >
                       {mediaList.map((mediaUrl, index) =>
                         isVideo(mediaUrl) ? (
                           <View
                             key={`${incident.id}-media-${index}`}
-                            className="h-32 w-32 items-center justify-center rounded-xl bg-slate-200"
+                            className="h-24 w-24 items-center justify-center rounded-xl bg-slate-200"
                           >
                             <Ionicons
                               name="videocam"
-                              size={34}
+                              size={24}
                               color="#334155"
                             />
                             <Text className="mt-1 text-sm font-medium text-slate-600">
@@ -188,7 +188,7 @@ const IncidentListScreen: React.FC = () => {
                         ) : (
                           <Pressable
                             key={`${incident.id}-media-${index}`}
-                            className="h-32 w-32 overflow-hidden rounded-xl bg-slate-200 p-1"
+                            className="h-24 w-24 overflow-hidden rounded-xl bg-slate-200 p-1"
                             onPress={() => setPreviewImage(mediaUrl)}
                           >
                             <Image
@@ -209,7 +209,7 @@ const IncidentListScreen: React.FC = () => {
                   )}
 
                   <Text
-                    className="mt-3 text-lg leading-7 text-slate-600"
+                    className="mt-2.5 text-sm leading-6 text-slate-600"
                     numberOfLines={3}
                   >
                     {incident.description || "Chưa có ghi chú"}

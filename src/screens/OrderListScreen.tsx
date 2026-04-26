@@ -153,16 +153,16 @@ const OrderListScreen: React.FC = () => {
           }
         }}
       >
-        <Card className="gap-4 rounded-[24px] p-6">
+        <Card className="gap-3 rounded-[20px] p-4">
           <View className="flex-row items-start justify-between">
             <View className="mr-3 flex-1">
               <View className="flex-row items-center gap-2">
-                <Text className="text-2xl">📦</Text>
-                <Text className="text-xl font-bold text-slate-900">
+                <Text className="text-xl">📦</Text>
+                <Text className="text-base font-bold text-slate-900">
                   {order.orderCode}
                 </Text>
               </View>
-              <Text className="mt-1 text-lg text-slate-500">
+              <Text className="mt-0.5 text-sm text-slate-500">
                 {new Date(order.scheduledTime).toLocaleDateString()} ·{" "}
                 {new Date(order.scheduledTime).toLocaleTimeString([], {
                   hour: "2-digit",
@@ -172,19 +172,19 @@ const OrderListScreen: React.FC = () => {
             </View>
 
             <View
-              className={`rounded-full px-4 py-2 ${statusClass(order.status)}`}
+              className={`rounded-full px-3 py-1 ${statusClass(order.status)}`}
             >
-              <Text className="text-base font-bold">
+              <Text className="text-[11px] font-bold">
                 {statusLabel(order.status)}
               </Text>
             </View>
           </View>
 
-          <View className="gap-3 rounded-2xl border border-slate-100 bg-white p-4">
+          <View className="gap-2.5 rounded-xl border border-slate-100 bg-white p-3">
             <View className="flex-row items-start gap-2">
-              <Ionicons name="ellipse" size={11} color="#2563eb" />
+              <Ionicons name="ellipse" size={9} color="#2563eb" />
               <Text
-                className="flex-1 text-lg font-medium text-slate-700"
+                className="flex-1 text-sm font-medium text-slate-700"
                 numberOfLines={1}
               >
                 {order.pickup.address}
@@ -194,9 +194,9 @@ const OrderListScreen: React.FC = () => {
             <View className="ml-1 h-4 w-px bg-slate-300" />
 
             <View className="flex-row items-start gap-2">
-              <Ionicons name="ellipse" size={11} color="#ef4444" />
+              <Ionicons name="ellipse" size={9} color="#ef4444" />
               <Text
-                className="flex-1 text-lg font-medium text-slate-700"
+                className="flex-1 text-sm font-medium text-slate-700"
                 numberOfLines={1}
               >
                 {order.delivery.address}
@@ -215,11 +215,11 @@ const OrderListScreen: React.FC = () => {
   ) => (
     <Pressable
       key={value}
-      className={`mb-2 mr-2 rounded-full border px-4 py-2.5 ${selected ? "border-emerald-500 bg-emerald-50" : "border-slate-200 bg-white"}`}
+      className={`mb-2 mr-2 rounded-full border px-3 py-1.5 ${selected ? "border-emerald-500 bg-emerald-50" : "border-slate-200 bg-white"}`}
       onPress={onPress}
     >
       <Text
-        className={`text-base font-bold ${selected ? "text-emerald-700" : "text-slate-600"}`}
+        className={`text-sm font-bold ${selected ? "text-emerald-700" : "text-slate-600"}`}
       >
         {filterLabel(value)}
       </Text>
@@ -234,9 +234,9 @@ const OrderListScreen: React.FC = () => {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          padding: 20,
-          paddingTop: 42,
-          paddingBottom: 36,
+          padding: 16,
+          paddingTop: 32,
+          paddingBottom: 24,
         }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -244,21 +244,21 @@ const OrderListScreen: React.FC = () => {
       >
         <View className="mt-1 flex-row items-center">
           <Pressable
-            className="h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
+            className="h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm"
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={24} color="#0f172a" />
+            <Ionicons name="arrow-back" size={20} color="#0f172a" />
           </Pressable>
-          <Text className="ml-3 flex-1 text-3xl font-extrabold text-slate-900">
+          <Text className="ml-3 flex-1 text-xl font-extrabold text-slate-900">
             Đơn hàng đã phân công
           </Text>
           <Pressable
-            className="h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm"
+            className="h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-sm"
             onPress={() => setShowFilters((prev) => !prev)}
           >
             <Ionicons
               name={showFilters ? "close" : "options-outline"}
-              size={22}
+              size={20}
               color="#0f172a"
             />
           </Pressable>
@@ -296,7 +296,7 @@ const OrderListScreen: React.FC = () => {
 
         {inProgress.length > 0 ? (
           <>
-            <Text className="mb-3 mt-10 text-2xl font-extrabold text-slate-900">
+            <Text className="mb-2.5 mt-8 text-lg font-extrabold text-slate-900">
               Đang thực hiện
             </Text>
             {inProgress.map(renderOrderCard)}
@@ -305,7 +305,7 @@ const OrderListScreen: React.FC = () => {
 
         {accepted.length > 0 ? (
           <>
-            <Text className="mb-3 mt-10 text-2xl font-extrabold text-slate-900">
+            <Text className="mb-2.5 mt-8 text-lg font-extrabold text-slate-900">
               Đã nhận
             </Text>
             {accepted.map(renderOrderCard)}

@@ -42,7 +42,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ item, onPress }) =>
       onPressOut={() => animateTo(1)}
     >
       <Animated.View
-        className={`rounded-2xl border p-4 ${
+        className={`rounded-xl border p-3.5 ${
           unread
             ? "border-emerald-300 bg-emerald-50"
             : "border-slate-200 bg-white"
@@ -58,20 +58,20 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ item, onPress }) =>
       >
         <View className="flex-row items-start gap-3">
           <View
-            className={`h-11 w-11 items-center justify-center rounded-full ${
+            className={`h-9 w-9 items-center justify-center rounded-full ${
               unread ? "bg-emerald-100" : "bg-slate-100"
             }`}
           >
             <Ionicons
               name="notifications"
-              size={22}
+              size={18}
               color={unread ? "#047857" : "#64748b"}
             />
           </View>
 
           <View className="flex-1">
             <Text
-              className={`text-base ${
+              className={`text-[15px] ${
                 unread
                   ? "font-extrabold text-emerald-900"
                   : "font-bold text-slate-800"
@@ -80,7 +80,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ item, onPress }) =>
             >
               {item.title}
             </Text>
-            <Text className="mt-1 text-sm leading-5 text-slate-600" numberOfLines={2}>
+            <Text className="mt-0.5 text-[13px] leading-5 text-slate-600" numberOfLines={2}>
               {item.message}
             </Text>
             <Text className="mt-2 text-xs text-slate-400">{formatTime(item.createdAt)}</Text>

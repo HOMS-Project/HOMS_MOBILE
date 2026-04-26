@@ -117,14 +117,14 @@ const FeatureCard: React.FC<{
   return (
     <Animated.View
       style={{ opacity, transform: [{ translateY }] }}
-      className="mb-3 flex-row items-start gap-4 rounded-2xl border border-emerald-100 bg-white p-4"
+      className="mb-3 flex-row items-start gap-3 rounded-xl border border-emerald-100 bg-white p-3.5"
     >
-      <View className="h-11 w-11 items-center justify-center rounded-xl bg-emerald-100">
-        <Ionicons name={icon} size={22} color="#059669" />
+      <View className="h-9 w-9 items-center justify-center rounded-xl bg-emerald-100">
+        <Ionicons name={icon} size={18} color="#059669" />
       </View>
       <View className="flex-1">
-        <Text className="text-base font-bold text-slate-800">{title}</Text>
-        <Text className="mt-0.5 text-sm leading-5 text-slate-500">{desc}</Text>
+        <Text className="text-sm font-bold text-slate-800">{title}</Text>
+        <Text className="mt-0.5 text-xs leading-5 text-slate-500">{desc}</Text>
       </View>
     </Animated.View>
   );
@@ -190,25 +190,25 @@ const AboutScreen: React.FC = () => {
           style={{
             flexDirection: "row",
             alignItems: "center",
-            paddingHorizontal: 20,
-            paddingTop: 56,
-            paddingBottom: 8,
+            paddingHorizontal: 16,
+            paddingTop: 52,
+            paddingBottom: 4,
           }}
         >
           <Pressable
             onPress={() => navigation.goBack()}
             style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
+              width: 36,
+              height: 36,
+              borderRadius: 18,
               backgroundColor: "#fff",
               alignItems: "center",
               justifyContent: "center",
               shadowColor: "#000",
               shadowOpacity: 0.08,
-              shadowRadius: 6,
-              shadowOffset: { width: 0, height: 2 },
-              elevation: 3,
+              shadowRadius: 4,
+              shadowOffset: { width: 0, height: 1 },
+              elevation: 2,
             }}
           >
             <Ionicons name="arrow-back" size={22} color="#0f172a" />
@@ -217,10 +217,10 @@ const AboutScreen: React.FC = () => {
             style={{
               flex: 1,
               textAlign: "center",
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: "700",
               color: "#0f172a",
-              marginRight: 40,
+              marginRight: 36,
             }}
           >
             Về ứng dụng
@@ -232,8 +232,8 @@ const AboutScreen: React.FC = () => {
           style={{
             opacity: headerOpacity,
             transform: [{ scale: headerScale }],
-            marginHorizontal: 20,
-            marginTop: 12,
+            marginHorizontal: 16,
+            marginTop: 8,
             borderRadius: 28,
             overflow: "hidden",
           }}
@@ -242,26 +242,26 @@ const AboutScreen: React.FC = () => {
             colors={["#0f3f2a", "#156f45", "#1da862"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={{ padding: 28, paddingBottom: 32 }}
+            style={{ padding: 22, paddingBottom: 26 }}
           >
             {/* Logo placeholder */}
             <View
               style={{
-                width: 72,
-                height: 72,
-                borderRadius: 20,
+                width: 60,
+                height: 60,
+                borderRadius: 16,
                 backgroundColor: "rgba(255,255,255,0.15)",
                 alignItems: "center",
                 justifyContent: "center",
-                marginBottom: 16,
+                marginBottom: 12,
               }}
             >
-              <Ionicons name="cube-outline" size={40} color="#fff" />
+              <Ionicons name="cube-outline" size={32} color="#fff" />
             </View>
 
             <Text
               style={{
-                fontSize: 34,
+                fontSize: 24,
                 fontWeight: "900",
                 color: "#fff",
                 letterSpacing: -0.5,
@@ -271,7 +271,7 @@ const AboutScreen: React.FC = () => {
             </Text>
             <Text
               style={{
-                fontSize: 15,
+                fontSize: 13,
                 color: "rgba(255,255,255,0.75)",
                 marginTop: 4,
                 fontWeight: "500",
@@ -294,11 +294,11 @@ const AboutScreen: React.FC = () => {
                   borderWidth: 1,
                   borderColor: "rgba(255,255,255,0.35)",
                   backgroundColor: "rgba(255,255,255,0.1)",
-                  paddingHorizontal: 14,
-                  paddingVertical: 6,
+                  paddingHorizontal: 12,
+                  paddingVertical: 4,
                   flexDirection: "row",
                   alignItems: "center",
-                  gap: 6,
+                  gap: 5,
                 }}
               >
                 <Ionicons
@@ -322,8 +322,8 @@ const AboutScreen: React.FC = () => {
                   borderWidth: 1,
                   borderColor: "rgba(255,255,255,0.25)",
                   backgroundColor: "rgba(255,255,255,0.08)",
-                  paddingHorizontal: 14,
-                  paddingVertical: 6,
+                  paddingHorizontal: 12,
+                  paddingVertical: 4,
                 }}
               >
                 <Text
@@ -341,30 +341,30 @@ const AboutScreen: React.FC = () => {
         </Animated.View>
 
         {/* ── Giới thiệu ── */}
-        <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+        <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
           <Text
             style={{
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: "800",
               color: "#0f172a",
-              marginBottom: 10,
+              marginBottom: 8,
             }}
           >
             Giới thiệu
           </Text>
           <View
             style={{
-              borderRadius: 20,
+              borderRadius: 16,
               backgroundColor: "#fff",
               borderWidth: 1,
               borderColor: "#d1fae5",
-              padding: 18,
+              padding: 16,
             }}
           >
             <Text
               style={{
-                fontSize: 15,
-                lineHeight: 24,
+                fontSize: 13,
+                lineHeight: 22,
                 color: "#475569",
               }}
             >
@@ -383,13 +383,13 @@ const AboutScreen: React.FC = () => {
         </View>
 
         {/* ── Tính năng ── */}
-        <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+        <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
           <Text
             style={{
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: "800",
               color: "#0f172a",
-              marginBottom: 12,
+              marginBottom: 10,
             }}
           >
             Tính năng chính

@@ -94,12 +94,12 @@ const VerifyOTPScreen: React.FC<Props> = ({ onSubmit, digits = 4 }) => {
                 tint="light"
                 className="absolute inset-0"
               />
-              <View className="p-6">
-                <Text className="text-[36px] font-black tracking-tight text-slate-900">
+              <View className="p-5">
+                <Text className="text-3xl font-black tracking-tight text-slate-900">
                   Xác thực OTP
                 </Text>
 
-                <Text className="mt-2 text-base leading-6 text-slate-500">
+                <Text className="mt-1 text-sm leading-5 text-slate-500">
                   Nhập mã OTP đã gửi đến email của bạn.
                 </Text>
                 {email ? (
@@ -114,13 +114,13 @@ const VerifyOTPScreen: React.FC<Props> = ({ onSubmit, digits = 4 }) => {
                     onChange={setCode}
                     inputProps={{
                       style: {
-                        width: 58,
-                        height: 58,
-                        borderRadius: 12,
+                        width: 44,
+                        height: 48,
+                        borderRadius: 10,
                         borderWidth: 1,
                         borderColor: "#bbf7d0",
                         backgroundColor: "#ffffff",
-                        fontSize: 22,
+                        fontSize: 18,
                         fontWeight: "700",
                         color: "#0f172a",
                       },
@@ -133,13 +133,13 @@ const VerifyOTPScreen: React.FC<Props> = ({ onSubmit, digits = 4 }) => {
                   style={{ transform: [{ scale: buttonScale }] }}
                 >
                   <Pressable
-                    className={`h-[75px] items-center justify-center rounded-full bg-[#16A34A] ${submitting ? "opacity-70" : ""}`}
+                    className={`h-[52px] items-center justify-center rounded-full bg-[#16A34A] ${submitting ? "opacity-70" : ""}`}
                     style={{
                       shadowColor: "#16A34A",
-                      shadowOffset: { width: 0, height: 6 },
-                      shadowOpacity: 0.35,
-                      shadowRadius: 8,
-                      elevation: 6,
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.3,
+                      shadowRadius: 6,
+                      elevation: 4,
                     }}
                     disabled={submitting}
                     onPressIn={() => animateButton(0.97)}

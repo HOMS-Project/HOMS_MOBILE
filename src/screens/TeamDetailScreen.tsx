@@ -94,41 +94,41 @@ const TeamDetailScreen: React.FC = () => {
   const renderMember = (member: TeamMember, roleKey: string, index: number) => (
     <View
       key={`${roleKey}-${member.id || member.fullName}-${index}`}
-      className="mb-3 rounded-2xl bg-emerald-50/50 p-4"
+      className="mb-2 rounded-xl bg-emerald-50/50 p-3"
     >
       <View className="flex-row items-center gap-3">
         {member.avatar ? (
           <Image
             source={{ uri: member.avatar }}
-            className="h-11 w-11 rounded-full bg-slate-200"
+            className="h-9 w-9 rounded-full bg-slate-200"
             resizeMode="cover"
           />
         ) : (
-          <View className="h-11 w-11 items-center justify-center rounded-full bg-emerald-500">
-            <Text className="text-base font-extrabold text-white">
+          <View className="h-9 w-9 items-center justify-center rounded-full bg-emerald-500">
+            <Text className="text-sm font-extrabold text-white">
               {(member.fullName?.[0] || "U").toUpperCase()}
             </Text>
           </View>
         )}
 
         <View className="flex-1">
-          <Text className="text-lg font-bold text-slate-900">
+          <Text className="text-base font-bold text-slate-900">
             {member.fullName}
             {member.isCurrentUser ? " (bạn)" : ""}
           </Text>
-          <Text className="text-base text-slate-500">
+          <Text className="text-sm text-slate-500">
             {member.phone || "Chưa có số điện thoại"}
           </Text>
         </View>
 
         <Pressable
-          className={`h-10 w-10 items-center justify-center rounded-full ${member.phone ? "bg-emerald-500" : "bg-slate-200"}`}
+          className={`h-8 w-8 items-center justify-center rounded-full ${member.phone ? "bg-emerald-500" : "bg-slate-200"}`}
           disabled={!member.phone}
           onPress={() => handleCallMember(member.phone)}
         >
           <Ionicons
             name="call"
-            size={18}
+            size={16}
             color={member.phone ? "#fff" : "#64748b"}
           />
         </Pressable>
@@ -171,104 +171,104 @@ const TeamDetailScreen: React.FC = () => {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          padding: 20,
-          paddingTop: 42,
-          paddingBottom: 36,
+          padding: 16,
+          paddingTop: 32,
+          paddingBottom: 24,
         }}
         showsVerticalScrollIndicator={false}
       >
         <View className="flex-row items-center">
           <Pressable
-            className="h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
+            className="h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm"
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={24} color="#0f172a" />
+            <Ionicons name="arrow-back" size={20} color="#0f172a" />
           </Pressable>
-          <Text className="ml-3 flex-1 text-3xl font-extrabold text-slate-900">
+          <Text className="ml-3 flex-1 text-xl font-extrabold text-slate-900">
             Chi tiết đội
           </Text>
         </View>
 
-        <Card className="mt-5 rounded-[24px] p-6">
+        <Card className="mt-4 rounded-2xl p-4">
           <View className="flex-row items-start justify-between">
-            <View className="mr-3 flex-1">
-              <Text className="text-2xl font-bold text-slate-900">
+            <View className="mr-2 flex-1">
+              <Text className="text-xl font-bold text-slate-900">
                 {detail.orderCode}
               </Text>
-              <Text className="mt-1 text-base text-slate-500">{dateText}</Text>
+              <Text className="mt-0.5 text-sm text-slate-500">{dateText}</Text>
             </View>
 
             <Pressable
-              className="rounded-full bg-emerald-100 px-4 py-2"
+              className="rounded-full bg-emerald-100 px-3 py-1.5"
               onPress={() =>
                 navigation.navigate("OrderDetails", {
                   invoiceId: detail.invoiceId || invoiceId,
                 })
               }
             >
-              <Text className="text-base font-bold text-emerald-700">
+              <Text className="text-xs font-bold text-emerald-700">
                 Xem đơn hàng
               </Text>
             </Pressable>
           </View>
 
-          <View className="mt-3 self-start rounded-full bg-emerald-50 px-4 py-2">
-            <Text className="text-sm font-bold text-emerald-700">
+          <View className="mt-2.5 self-start rounded-full bg-emerald-50 px-3 py-1">
+            <Text className="text-[11px] font-bold text-emerald-700">
               {statusLabel(detail.status)}
             </Text>
           </View>
 
-          <View className="mt-4 gap-2 rounded-2xl bg-emerald-50/50 p-4">
+          <View className="mt-4 gap-2.5 rounded-xl bg-emerald-50/50 p-3">
             <View className="flex-row items-start gap-2">
-              <Ionicons name="ellipse" size={10} color="#2563eb" />
-              <Text className="flex-1 text-base font-medium text-slate-700">
+              <Ionicons name="ellipse" size={9} color="#2563eb" />
+              <Text className="flex-1 text-sm font-medium text-slate-700">
                 {detail.pickupAddress || "Chưa có điểm nhận"}
               </Text>
             </View>
             <View className="ml-1 h-4 w-px bg-slate-300" />
             <View className="flex-row items-start gap-2">
-              <Ionicons name="ellipse" size={10} color="#ef4444" />
-              <Text className="flex-1 text-base font-medium text-slate-700">
+              <Ionicons name="ellipse" size={9} color="#ef4444" />
+              <Text className="flex-1 text-sm font-medium text-slate-700">
                 {detail.deliveryAddress || "Chưa có điểm giao"}
               </Text>
             </View>
           </View>
         </Card>
 
-        <Card className="mt-4 rounded-[24px] p-6">
+        <Card className="mt-4 rounded-2xl p-4">
           <View className="mb-3 flex-row items-center gap-2">
-            <Ionicons name="car-outline" size={20} color="#0f766e" />
-            <Text className="text-2xl font-extrabold text-slate-900">
+            <Ionicons name="car-outline" size={18} color="#0f766e" />
+            <Text className="text-lg font-extrabold text-slate-900">
               Xe phân công
             </Text>
           </View>
 
           {detail.vehicle ? (
-            <View className="rounded-2xl bg-emerald-50/50 p-4">
-              <Text className="text-2xl font-bold text-slate-900">
+            <View className="rounded-xl bg-emerald-50/50 p-3">
+              <Text className="text-lg font-bold text-slate-900">
                 {detail.vehicle.plateNumber || "Chưa có biển số"}
               </Text>
-              <Text className="mt-1 text-base text-slate-500">
+              <Text className="mt-0.5 text-sm text-slate-500">
                 {detail.vehicle.vehicleType || "Chưa có loại xe"}
               </Text>
             </View>
           ) : (
-            <View className="rounded-2xl bg-emerald-50/50 p-4">
-              <Text className="text-base text-slate-500">
+            <View className="rounded-xl bg-emerald-50/50 p-3">
+              <Text className="text-sm text-slate-500">
                 Chưa có thông tin xe
               </Text>
             </View>
           )}
         </Card>
 
-        <Card className="mt-4 rounded-[24px] p-6">
+        <Card className="mt-4 rounded-2xl p-4">
           <Pressable
             className="flex-row items-center justify-between"
             onPress={() => setShowDrivers((prev) => !prev)}
           >
             <View className="flex-row items-center gap-2">
-              <Ionicons name="person-outline" size={20} color="#0f766e" />
-              <Text className="text-2xl font-extrabold text-slate-900">
+              <Ionicons name="person-outline" size={18} color="#0f766e" />
+              <Text className="text-lg font-extrabold text-slate-900">
                 Tài xế ({detail.drivers.length})
               </Text>
             </View>
@@ -294,14 +294,14 @@ const TeamDetailScreen: React.FC = () => {
           ) : null}
         </Card>
 
-        <Card className="mt-4 rounded-[24px] p-6">
+        <Card className="mt-4 rounded-2xl p-4">
           <Pressable
             className="flex-row items-center justify-between"
             onPress={() => setShowAssistants((prev) => !prev)}
           >
             <View className="flex-row items-center gap-2">
-              <Ionicons name="people-outline" size={20} color="#0f766e" />
-              <Text className="text-2xl font-extrabold text-slate-900">
+              <Ionicons name="people-outline" size={18} color="#0f766e" />
+              <Text className="text-lg font-extrabold text-slate-900">
                 Nhân viên phụ trợ ({detail.assistants.length})
               </Text>
             </View>

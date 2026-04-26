@@ -87,11 +87,11 @@ const NotificationScreen: React.FC = () => {
       <View className="flex-row items-center px-4 pb-4">
         <Pressable
           onPress={() => navigation.goBack()}
-          className="h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
+          className="h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm"
         >
-          <Ionicons name="arrow-back" size={24} color="#0f172a" />
+          <Ionicons name="arrow-back" size={20} color="#0f172a" />
         </Pressable>
-        <Text className="ml-4 text-2xl font-extrabold text-slate-900">
+        <Text className="ml-3 text-xl font-extrabold text-slate-900">
           Thông Báo
         </Text>
       </View>

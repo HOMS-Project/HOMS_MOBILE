@@ -18,19 +18,19 @@ const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   return (
     <View
-      className={`items-center justify-center py-12 px-6 ${className}`}
+      className={`items-center justify-center py-8 px-5 ${className}`}
       {...props}
     >
-      <View className="mb-6 h-24 w-24 items-center justify-center rounded-full bg-emerald-50">
-        <View className="h-16 w-16 items-center justify-center rounded-full bg-emerald-100/50">
-          <Ionicons name={icon} size={38} color="#059669" />
+      <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
+        <View className="h-12 w-12 items-center justify-center rounded-full bg-emerald-100/50">
+          <Ionicons name={icon} size={28} color="#059669" />
         </View>
       </View>
-      <Text className="text-center text-xl font-bold text-slate-900">
+      <Text className="text-center text-lg font-bold text-slate-900">
         {title}
       </Text>
       {description ? (
-        <Text className="mt-2 text-center text-base leading-6 text-slate-500">
+        <Text className="mt-1.5 text-center text-sm leading-5 text-slate-500">
           {description}
         </Text>
       ) : null}

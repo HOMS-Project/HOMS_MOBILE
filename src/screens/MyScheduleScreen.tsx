@@ -217,9 +217,9 @@ const MyScheduleScreen: React.FC = () => {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          padding: 20,
-          paddingTop: 42,
-          paddingBottom: 160,
+          padding: 16,
+          paddingTop: 32,
+          paddingBottom: 120,
         }}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
@@ -229,13 +229,13 @@ const MyScheduleScreen: React.FC = () => {
         }
       >
         <View className="flex-row items-center">
-          <Text className="text-[34px] font-extrabold text-slate-900">
+          <Text className="text-2xl font-extrabold text-slate-900">
             Lịch của tôi
           </Text>
         </View>
 
-        <View className="mt-6">
-          <Text className="mb-3 text-lg font-bold text-slate-900">Công việc hôm nay</Text>
+        <View className="mt-5">
+          <Text className="mb-2 text-base font-bold text-slate-900">Công việc hôm nay</Text>
           {todayJobs.length > 0 ? (
             todayJobs.map((item) => (
               <Pressable
@@ -247,16 +247,16 @@ const MyScheduleScreen: React.FC = () => {
                   })
                 }
               >
-                <Card className="gap-4 rounded-[26px] border-emerald-200 bg-emerald-50/80 p-5">
+                <Card className="gap-3 rounded-2xl border-emerald-200 bg-emerald-50/80 p-4">
                   <View className="flex-row items-start justify-between">
-                    <View className="mr-3 flex-1">
+                    <View className="mr-2 flex-1">
                       <View className="flex-row items-center gap-2">
-                        <Text className="text-2xl">📋</Text>
-                        <Text className="text-xl font-bold text-slate-800">
+                        <Text className="text-xl">📋</Text>
+                        <Text className="text-base font-bold text-slate-800">
                           {item.invoice}
                         </Text>
                       </View>
-                      <Text className="mt-1 text-base text-slate-500">
+                      <Text className="mt-0.5 text-sm text-slate-500">
                         {item.date}
                       </Text>
                     </View>
@@ -269,15 +269,15 @@ const MyScheduleScreen: React.FC = () => {
                     </View>
                   </View>
 
-                  <View className="gap-3 rounded-2xl border border-emerald-100 bg-white p-3">
+                  <View className="gap-2 rounded-xl border border-emerald-100 bg-white p-3">
                     <View className="flex-row items-start gap-2">
-                      <Ionicons name="ellipse" size={10} color="#2563eb" />
+                      <Ionicons name="ellipse" size={8} color="#2563eb" />
                       <View className="flex-1">
-                        <Text className="text-sm font-bold uppercase tracking-wide text-slate-500">
+                        <Text className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
                           {item.pickup.title}
                         </Text>
                         <Text
-                          className="text-base font-medium text-slate-700"
+                          className="text-sm font-medium text-slate-700"
                           numberOfLines={1}
                         >
                           {item.pickup.address}
@@ -288,13 +288,13 @@ const MyScheduleScreen: React.FC = () => {
                     <View className="ml-1 h-4 w-px bg-slate-300" />
 
                     <View className="flex-row items-start gap-2">
-                      <Ionicons name="ellipse" size={10} color="#ef4444" />
+                      <Ionicons name="ellipse" size={8} color="#ef4444" />
                       <View className="flex-1">
-                        <Text className="text-sm font-bold uppercase tracking-wide text-slate-500">
+                        <Text className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
                           {item.dropoff.title}
                         </Text>
                         <Text
-                          className="text-base font-medium text-slate-700"
+                          className="text-sm font-medium text-slate-700"
                           numberOfLines={1}
                         >
                           {item.dropoff.address}

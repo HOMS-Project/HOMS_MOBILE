@@ -47,12 +47,12 @@ const ProfileField: React.FC<ProfileFieldProps> = ({
   keyboardType,
 }) => {
   return (
-    <View className="gap-2.5">
-      <Text className="text-base font-bold text-slate-700">{label}</Text>
-      <View className="h-[68px] flex-row items-center rounded-xl border border-emerald-100 bg-white/95 px-5">
-        <Ionicons name={icon} size={22} color="#4b5563" />
+    <View className="gap-2">
+      <Text className="text-sm font-bold text-slate-700">{label}</Text>
+      <View className="h-[52px] flex-row items-center rounded-xl border border-emerald-100 bg-white/95 px-4">
+        <Ionicons name={icon} size={18} color="#4b5563" />
         <TextInput
-          className="ml-3.5 flex-1 text-lg text-slate-900"
+          className="ml-3 flex-1 text-base text-slate-900"
           placeholder={placeholder}
           placeholderTextColor="#94a3b8"
           value={value}
@@ -238,27 +238,27 @@ const EditProfileScreen: React.FC = () => {
           keyboardShouldPersistTaps="handled"
         >
           <Animated.View
-            className="px-5 pb-8 pt-24"
+            className="px-5 pb-6 pt-16"
             style={{ opacity: screenOpacity }}
           >
             <View className="flex-row items-center justify-between">
               <Pressable
-                className="h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
+                className="h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm"
                 onPress={() => navigation.goBack()}
               >
-                <Ionicons name="arrow-back" size={24} color="#0f172a" />
+                <Ionicons name="arrow-back" size={20} color="#0f172a" />
               </Pressable>
-              <Text className="text-3xl font-extrabold text-slate-900">
+              <Text className="text-2xl font-extrabold text-slate-900">
                 Chỉnh sửa hồ sơ
               </Text>
               <View className="h-10 w-10" />
             </View>
 
-            <View className="mt-12 items-center">
+            <View className="mt-8 items-center">
               <View className="relative">
                 <Image
                   source={{ uri: avatar || fallbackAvatar }}
-                  className="h-52 w-52 rounded-full border-4 border-emerald-200"
+                  className="h-32 w-32 rounded-full border-4 border-emerald-200"
                   style={{
                     shadowColor: "#16A34A",
                     shadowOffset: { width: 0, height: 6 },
@@ -269,25 +269,25 @@ const EditProfileScreen: React.FC = () => {
                 />
 
                 <Pressable
-                  className={`absolute bottom-3 right-3 h-12 w-12 items-center justify-center rounded-full bg-white shadow-md ${uploadingAvatar ? "opacity-60" : ""}`}
+                  className={`absolute bottom-2 right-2 h-9 w-9 items-center justify-center rounded-full bg-white shadow-md ${uploadingAvatar ? "opacity-60" : ""}`}
                   onPress={pickAvatar}
                   disabled={uploadingAvatar}
                 >
                   {uploadingAvatar ? (
                     <ActivityIndicator size="small" color="#16A34A" />
                   ) : (
-                    <Ionicons name="camera-outline" size={20} color="#16A34A" />
+                    <Ionicons name="camera-outline" size={18} color="#16A34A" />
                   )}
                 </Pressable>
               </View>
 
-              <Text className="mt-4 text-base font-medium text-slate-400">
+              <Text className="mt-3 text-sm font-medium text-slate-400">
                 Nhấn biểu tượng camera để cập nhật ảnh đại diện
               </Text>
             </View>
 
             <Animated.View
-              className="mx-6 mt-10 overflow-hidden rounded-[34px] border border-white/70 bg-white/30 shadow-xl"
+              className="mx-2 mt-8 overflow-hidden rounded-[28px] border border-white/70 bg-white/30 shadow-xl"
               style={{ transform: [{ scale: cardScale }] }}
             >
               <BlurView
@@ -295,8 +295,8 @@ const EditProfileScreen: React.FC = () => {
                 tint="light"
                 className="absolute inset-0"
               />
-              <View className="p-6">
-                <Text className="text-[32px] font-black tracking-tight text-slate-900">
+              <View className="p-5">
+                <Text className="text-xl font-black tracking-tight text-slate-900">
                   Thông tin cá nhân
                 </Text>
                 <Text className="mt-1 text-sm leading-6 text-slate-500">
@@ -326,13 +326,13 @@ const EditProfileScreen: React.FC = () => {
                     style={{ transform: [{ scale: buttonScale }] }}
                   >
                     <Pressable
-                      className={`h-[64px] items-center justify-center rounded-full bg-[#16A34A] ${saving || uploadingAvatar ? "opacity-70" : ""}`}
+                      className={`h-[52px] items-center justify-center rounded-full bg-[#16A34A] ${saving || uploadingAvatar ? "opacity-70" : ""}`}
                       style={{
                         shadowColor: "#16A34A",
-                        shadowOffset: { width: 0, height: 6 },
-                        shadowOpacity: 0.35,
-                        shadowRadius: 8,
-                        elevation: 6,
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 6,
+                        elevation: 4,
                       }}
                       onPress={handleSave}
                       disabled={saving || uploadingAvatar}
@@ -342,7 +342,7 @@ const EditProfileScreen: React.FC = () => {
                       {saving ? (
                         <ActivityIndicator color="#ffffff" />
                       ) : (
-                        <Text className="text-xl font-bold text-white">
+                        <Text className="text-base font-bold text-white">
                           Lưu thay đổi
                         </Text>
                       )}

@@ -46,12 +46,12 @@ const FormField: React.FC<FormFieldProps> = ({
 }) => {
   const [hidden, setHidden] = React.useState(true);
   return (
-    <View className="gap-2.5">
-      <Text className="text-base font-bold text-slate-700">{label}</Text>
-      <View className="h-[68px] flex-row items-center rounded-xl border border-emerald-100 bg-white/95 px-5">
-        <Ionicons name={icon} size={22} color="#4b5563" />
+    <View className="gap-1.5">
+      <Text className="text-[13px] font-bold text-slate-700">{label}</Text>
+      <View className="h-[48px] flex-row items-center rounded-xl border border-emerald-100 bg-white/95 px-4">
+        <Ionicons name={icon} size={18} color="#4b5563" />
         <TextInput
-          className="ml-3.5 flex-1 text-lg text-slate-900"
+          className="ml-3 flex-1 text-[15px] text-slate-900"
           placeholder={placeholder}
           placeholderTextColor="#94a3b8"
           value={value}
@@ -62,7 +62,7 @@ const FormField: React.FC<FormFieldProps> = ({
           <Pressable onPress={() => setHidden((h) => !h)} hitSlop={12}>
             <Ionicons
               name={hidden ? "eye-off-outline" : "eye-outline"}
-              size={22}
+              size={18}
               color="#94a3b8"
             />
           </Pressable>
@@ -167,18 +167,18 @@ const ChangePasswordScreen: React.FC<Props> = ({ onSubmit }) => {
 
       <KeyboardSafeArea
         scrollable
-        contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingBottom: 40 }}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingBottom: 24 }}
       >
           <Animated.View
-            className="px-5 pb-8 pt-10"
+            className="px-5 pb-4 pt-6"
             style={{ opacity: screenOpacity }}
           >
             <View className="items-center">
-              <AuthHeader size={370} />
+              <AuthHeader size={200} />
             </View>
 
             <Animated.View
-              className="overflow-hidden rounded-[34px] border border-white/70 bg-white/30 shadow-xl"
+              className="overflow-hidden rounded-[28px] border border-white/70 bg-white/30 shadow-xl"
               style={{ transform: [{ scale: cardScale }] }}
             >
               <BlurView
@@ -186,16 +186,16 @@ const ChangePasswordScreen: React.FC<Props> = ({ onSubmit }) => {
                 tint="light"
                 className="absolute inset-0"
               />
-              <View className="p-6">
-                <Text className="text-[36px] font-black tracking-tight text-slate-900">
+              <View className="p-5">
+                <Text className="text-[24px] font-black tracking-tight text-slate-900">
                   Đổi mật khẩu
                 </Text>
 
-                <Text className="mt-2 text-base leading-6 text-slate-500">
+                <Text className="mt-1 text-[13px] leading-5 text-slate-500">
                   Tạo mật khẩu mới và đảm bảo khác với mật khẩu cũ.
                 </Text>
 
-                <View className="mt-7 gap-5">
+                <View className="mt-5 gap-4">
                   <FormField
                     label="Nhập mật khẩu hiện tại"
                     placeholder="@#%"
@@ -224,17 +224,17 @@ const ChangePasswordScreen: React.FC<Props> = ({ onSubmit }) => {
                   />
 
                   <Animated.View
-                    className="mt-2"
+                    className="mt-1"
                     style={{ transform: [{ scale: buttonScale }] }}
                   >
                     <Pressable
-                      className={`h-[75px] items-center justify-center rounded-full bg-[#16A34A] ${loading ? "opacity-70" : ""}`}
+                      className={`h-[52px] items-center justify-center rounded-full bg-[#16A34A] ${loading ? "opacity-70" : ""}`}
                       style={{
                         shadowColor: "#16A34A",
-                        shadowOffset: { width: 0, height: 6 },
-                        shadowOpacity: 0.35,
-                        shadowRadius: 8,
-                        elevation: 6,
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 6,
+                        elevation: 5,
                       }}
                       onPress={handleSubmit}
                       disabled={loading}
@@ -244,7 +244,7 @@ const ChangePasswordScreen: React.FC<Props> = ({ onSubmit }) => {
                       {loading ? (
                         <ActivityIndicator color="#ffffff" />
                       ) : (
-                        <Text className="text-xl font-bold text-white">
+                        <Text className="text-base font-bold text-white">
                           Cập nhật
                         </Text>
                       )}

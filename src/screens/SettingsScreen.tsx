@@ -120,18 +120,18 @@ const SettingsScreen: React.FC = () => {
     <View className="flex-1 bg-[#edf4ef]">
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 160 }}
+        contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={handleScroll}
       >
         {/* ── Header ── */}
-        <View className="flex-row items-center justify-between px-5 pb-4 pt-14">
-          <Text className="text-4xl font-extrabold text-slate-900">
+        <View className="flex-row items-center justify-between px-4 pb-3 pt-12">
+          <Text className="text-2xl font-extrabold text-slate-900">
             Cài đặt
           </Text>
           <Pressable
-            className="h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-white"
+            className="h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white"
             style={{
               shadowColor: "#000",
               shadowOffset: { width: 0, height: 1 },
@@ -141,14 +141,14 @@ const SettingsScreen: React.FC = () => {
             }}
             onPress={() => navigation.navigate("Notifications")}
           >
-            <Ionicons name="notifications" size={30} color="#0f172a" />
+            <Ionicons name="notifications" size={22} color="#0f172a" />
           </Pressable>
         </View>
 
         {/* ── Profile (no card) ── */}
-        <View className="mt-14 items-center">
+        <View className="mt-8 items-center">
           <View
-            className="h-48 w-48 overflow-hidden rounded-full border-4 border-emerald-200 bg-slate-200"
+            className="h-32 w-32 overflow-hidden rounded-full border-4 border-emerald-200 bg-slate-200"
             style={{
               shadowColor: "#16A34A",
               shadowOffset: { width: 0, height: 6 },
@@ -159,70 +159,70 @@ const SettingsScreen: React.FC = () => {
           >
             {loading ? (
               <View className="flex-1 items-center justify-center">
-                <ActivityIndicator color="#16A34A" size="large" />
+                <ActivityIndicator color="#16A34A" />
               </View>
             ) : (
               <Image
                 source={{ uri: user?.avatar || fallbackAvatar }}
-                className="h-48 w-48"
+                className="h-32 w-32"
                 resizeMode="cover"
               />
             )}
           </View>
 
-          <Text className="mt-6 text-[38px] font-extrabold text-slate-900">
+          <Text className="mt-4 text-xl font-extrabold text-slate-900">
             {user?.fullName || user?.username || "Tài xế"}
           </Text>
-          <Text className="mt-2.5 text-lg text-slate-500">
+          <Text className="mt-1 text-sm text-slate-500">
             {user?.email || "Chưa có email"}
           </Text>
-          <Text className="mt-1.5 text-lg text-slate-500">
+          <Text className="mt-0.5 text-sm text-slate-500">
             {user?.phone || user?.phoneNumber || "Chưa có số điện thoại"}
           </Text>
         </View>
 
         {/* ── Menu Items (no card, centred, smaller padding) ── */}
-        <View className="mt-10 items-center gap-7 px-20">
+        <View className="mt-8 items-center gap-4 px-6">
           {options.map((item) => (
             <Pressable
               key={item.id}
-              className="w-full flex-row items-center py-1"
+              className="w-full flex-row items-center py-2"
               onPress={() => handlePress(item.route)}
             >
               {/* Circle icon — #16A34A green */}
               <View
-                className="h-14 w-14 items-center justify-center rounded-full"
+                className="h-10 w-10 items-center justify-center rounded-full"
                 style={{
                   backgroundColor: item.danger ? "#fee2e2" : "#16A34A",
                   shadowColor: item.danger ? "#ef4444" : "#16A34A",
-                  shadowOffset: { width: 0, height: 3 },
-                  shadowOpacity: 0.25,
-                  shadowRadius: 6,
-                  elevation: 4,
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 4,
+                  elevation: 3,
                 }}
               >
                 <Ionicons
                   name={item.icon}
-                  size={24}
+                  size={20}
                   color={item.danger ? "#ef4444" : "#ffffff"}
                 />
               </View>
 
               {/* Label & desc */}
-              <View className="ml-4 flex-1">
+              <View className="ml-3 flex-1">
                 <Text
-                  className="text-2xl font-bold"
+                  className="text-base font-bold"
                   style={{ color: item.danger ? "#ef4444" : "#0f172a" }}
                 >
                   {item.label}
                 </Text>
-                <Text className="text-lg text-slate-400">{item.desc}</Text>
+                <Text className="text-sm text-slate-400">{item.desc}</Text>
               </View>
 
               {/* Chevron */}
               <Ionicons
                 name="chevron-forward"
-                size={20}
+                size={18}
                 color={item.danger ? "#fca5a5" : "#94a3b8"}
               />
             </Pressable>

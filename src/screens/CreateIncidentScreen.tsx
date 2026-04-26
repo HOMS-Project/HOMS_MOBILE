@@ -215,14 +215,14 @@ const CreateIncidentScreen: React.FC = () => {
       <View className="absolute -left-16 bottom-14 h-56 w-56 rounded-full bg-sky-200/40" />
 
       {/* Fixed header */}
-      <View className="flex-row items-center gap-3 px-5 pb-4 pt-14">
+      <View className="flex-row items-center gap-3 px-4 pb-3 pt-12">
         <Pressable
-          className="h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
+          className="h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm"
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={24} color="#0f172a" />
+          <Ionicons name="arrow-back" size={20} color="#0f172a" />
         </Pressable>
-        <Text className="flex-1 text-2xl font-extrabold text-slate-900">
+        <Text className="flex-1 text-xl font-extrabold text-slate-900">
           Tạo báo cáo sự cố
         </Text>
       </View>
@@ -231,27 +231,27 @@ const CreateIncidentScreen: React.FC = () => {
         <ScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{
-            padding: 20,
-            paddingTop: 80,
-            paddingBottom: 52,
+            padding: 16,
+            paddingTop: 10,
+            paddingBottom: 40,
           }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
           showsVerticalScrollIndicator={false}
         >
-        <Card className="mt-0 rounded-[24px] p-5">
-          <View className="gap-6">
+        <Card className="mt-0 rounded-2xl p-4">
+          <View className="gap-5">
             <View>
-              <Text className="mb-2 text-base font-bold text-slate-700">
+              <Text className="mb-1.5 text-sm font-bold text-slate-700">
                 Đơn hàng
               </Text>
               <Pressable
-                className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-4"
+                className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3"
                 onPress={() => setPickerKind("invoice")}
               >
                 <Text
-                  className={`text-base ${invoiceId ? "text-slate-900" : "text-slate-400"}`}
+                  className={`text-sm ${invoiceId ? "text-slate-900" : "text-slate-400"}`}
                 >
                   {selectedInvoiceLabel}
                 </Text>
@@ -264,15 +264,15 @@ const CreateIncidentScreen: React.FC = () => {
             </View>
 
             <View>
-              <Text className="mb-2 text-base font-bold text-slate-700">
+              <Text className="mb-1.5 text-sm font-bold text-slate-700">
                 Loại sự cố
               </Text>
               <Pressable
-                className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-4"
+                className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3"
                 onPress={() => setPickerKind("type")}
               >
                 <Text
-                  className={`text-base ${type ? "text-slate-900" : "text-slate-400"}`}
+                  className={`text-sm ${type ? "text-slate-900" : "text-slate-400"}`}
                 >
                   {selectedTypeLabel}
                 </Text>
@@ -285,22 +285,22 @@ const CreateIncidentScreen: React.FC = () => {
             </View>
 
             <View>
-              <Text className="mb-2 text-base font-bold text-slate-700">
+              <Text className="mb-1.5 text-sm font-bold text-slate-700">
                 Media (ảnh/video)
               </Text>
               <Pressable
-                className="items-center justify-center rounded-xl border border-dashed border-emerald-300 bg-emerald-50 px-4 py-5"
+                className="items-center justify-center rounded-xl border border-dashed border-emerald-300 bg-emerald-50 px-4 py-4"
                 onPress={pickMedia}
               >
                 <Ionicons
                   name="cloud-upload-outline"
-                  size={26}
+                  size={22}
                   color="#059669"
                 />
-                <Text className="mt-1.5 text-base font-semibold text-emerald-700">
+                <Text className="mt-1 text-sm font-semibold text-emerald-700">
                   Chọn media
                 </Text>
-                <Text className="text-sm text-emerald-600">Tối đa 5 file</Text>
+                <Text className="text-xs text-emerald-600">Tối đa 5 file</Text>
               </Pressable>
 
               {media.length > 0 ? (
@@ -312,17 +312,17 @@ const CreateIncidentScreen: React.FC = () => {
                   {media.map((item, idx) => {
                     const video = isVideoUrl(item.uri, item.mimeType);
                     return (
-                      <View key={`${item.uri}-${idx}`} className="mr-3 w-36">
+                      <View key={`${item.uri}-${idx}`} className="mr-3 w-28">
                         {video ? (
-                          <View className="h-32 w-36 items-center justify-center rounded-xl border border-slate-200 bg-slate-200">
+                          <View className="h-24 w-28 items-center justify-center rounded-xl border border-slate-200 bg-slate-200">
                             <Ionicons
                               name="videocam"
-                              size={26}
+                              size={22}
                               color="#334155"
                             />
                           </View>
                         ) : (
-                          <View className="h-32 w-36 items-center justify-center rounded-xl border border-slate-200 bg-slate-200 p-1">
+                          <View className="h-24 w-28 items-center justify-center rounded-xl border border-slate-200 bg-slate-200 p-1">
                             <Image
                               source={{ uri: item.uri }}
                               className="h-full w-full rounded-lg"
@@ -331,10 +331,10 @@ const CreateIncidentScreen: React.FC = () => {
                           </View>
                         )}
                         <Pressable
-                          className="mt-2 items-center rounded-full bg-rose-100 py-1.5"
+                          className="mt-1.5 items-center rounded-full bg-rose-100 py-1"
                           onPress={() => removeMedia(item.uri)}
                         >
-                          <Text className="text-sm font-semibold text-rose-600">
+                          <Text className="text-xs font-semibold text-rose-600">
                             Xóa
                           </Text>
                         </Pressable>
@@ -366,13 +366,13 @@ const CreateIncidentScreen: React.FC = () => {
             />
 
             <Pressable
-              className={`mt-8 h-[64px] items-center justify-center rounded-full bg-[#16A34A] ${submitting ? "opacity-70" : ""}`}
+              className={`mt-6 h-[52px] items-center justify-center rounded-full bg-[#16A34A] ${submitting ? "opacity-70" : ""}`}
               style={{
                 shadowColor: "#16A34A",
-                shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: 0.35,
-                shadowRadius: 8,
-                elevation: 6,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 6,
+                elevation: 4,
               }}
               onPress={submit}
               disabled={submitting}
@@ -380,7 +380,7 @@ const CreateIncidentScreen: React.FC = () => {
               {submitting ? (
                 <ActivityIndicator color="#ffffff" />
               ) : (
-                <Text className="text-xl font-bold text-white">
+                <Text className="text-base font-bold text-white">
                   Gửi báo cáo
                 </Text>
               )}
@@ -411,7 +411,7 @@ const CreateIncidentScreen: React.FC = () => {
               {pickerItems.map((item) => (
                 <Pressable
                   key={item.value}
-                  className="mb-2 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4"
+                  className="mb-2 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-3.5"
                   onPress={() => {
                     if (pickerKind === "invoice") {
                       setInvoiceId(item.value);
@@ -423,11 +423,11 @@ const CreateIncidentScreen: React.FC = () => {
                     setPickerKind(null);
                   }}
                 >
-                  <Text className="text-xl font-extrabold text-slate-900">
+                  <Text className="text-base font-extrabold text-slate-900">
                     {item.label}
                   </Text>
                   {item.subLabel ? (
-                    <Text className="mt-1.5 text-base font-medium text-slate-600">
+                    <Text className="mt-1 text-sm font-medium text-slate-600">
                       {item.subLabel}
                     </Text>
                   ) : null}
