@@ -2,26 +2,24 @@ export default ({ config }) => {
 
   return {
     ...config,
-    "name": "homs",
+    "name": "HOMS",
     "slug": "homs",
     "version": "1.0.0",
     "scheme": "homs",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/HOMSlogo.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/HOMSlogo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/HOMSlogo.png"
       },
-      "package": "com.anonymous.myApp",
+      "package": "com.homs.app",
       "predictiveBackGestureEnabled": false,
       "config": {
         "googleMaps": {
@@ -30,6 +28,7 @@ export default ({ config }) => {
       }
     },
     "ios": {
+      "bundleIdentifier": "com.homs.app",
       "supportsTablet": true
     },
     "web": {
@@ -39,7 +38,10 @@ export default ({ config }) => {
       "expo-font"
     ],
     "extra": {
-      "GOONG_API_KEY": process.env.GOONG_API_KEY
+      "GOONG_API_KEY": process.env.GOONG_API_KEY,
+      "eas": {
+        "projectId": "30597413-b365-4e7b-9adb-507a47bd25de"
+      }
     }
   };
 };

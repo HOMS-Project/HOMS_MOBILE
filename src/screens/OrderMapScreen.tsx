@@ -623,7 +623,10 @@ const OrderMapScreen: React.FC = () => {
       setDropoffImages([]);
       setDropoffNote("");
       await fetchStatus();
-      navigation.navigate("OrderList");
+      navigation.reset({
+        index: 1,
+        routes: [{ name: "MainTabs" }, { name: "OrderList" }],
+      });
     } catch (error: any) {
       showToast(error?.message || "Không thể hoàn tất giao hàng");
     } finally {

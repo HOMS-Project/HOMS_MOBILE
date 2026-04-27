@@ -3,7 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Replace with your actual backend URL when in production/dev
-const BACKEND_URL = 'http://192.168.106.234:5000'; // For physical device testing
+const BACKEND_URL = 'http://192.168.1.9:5000'; // For physical device testing
 // const BACKEND_URL = 'http://10.0.2.2:5000'; // For android emulator
 
 class LocationTrackingService {

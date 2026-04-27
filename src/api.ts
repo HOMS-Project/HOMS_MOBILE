@@ -1,8 +1,8 @@
 // src/api.ts
 import axios, { AxiosRequestConfig } from 'axios';
 
-// Dưới đây là IP của Anh Bùi, ai code thì vô cmd gõ ipconfig sau đó cop ip của mình vào đây
-const BASE_URL = 'http://192.168.2.8:5000/api';
+// URL Backend từ biến môi trường .env
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.9:5000/api';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 

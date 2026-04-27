@@ -5,14 +5,15 @@
     "version": "1.0.0",
     "scheme": "homs",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/HOMSlogo.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/HOMSlogoTr.png",
+      "image": "./assets/HOMSlogo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "android": {
+      "package": "com.homs.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -21,6 +22,7 @@
       }
     },
     "ios": {
+      "bundleIdentifier": "com.homs.app",
       "supportsTablet": true
     },
     "web": {
@@ -28,6 +30,11 @@
     },
     "plugins": [
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "30597413-b365-4e7b-9adb-507a47bd25de"
+      }
+    }
   }
 }

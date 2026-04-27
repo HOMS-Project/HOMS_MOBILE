@@ -225,7 +225,10 @@ const ResetPasswordScreen: React.FC<Props> = ({ onSubmit }) => {
                               [
                                 {
                                   text: "OK",
-                                  onPress: () => navigation.navigate("Login"),
+                                  onPress: () => navigation.reset({
+                                    index: 0,
+                                    routes: [{ name: "Login" }],
+                                  }),
                                 },
                               ],
                             );
