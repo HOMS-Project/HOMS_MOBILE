@@ -3,8 +3,8 @@ import { io, Socket } from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Replace with your actual backend URL when in production/dev
-const BACKEND_URL = 'http://192.168.1.9:5000'; // For physical device testing
-// const BACKEND_URL = 'http://10.0.2.2:5000'; // For android emulator
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.9:5000/api';
+const BACKEND_URL = API_URL.replace(/\/api\/?$/, ''); // Strip out /api if present
 
 class LocationTrackingService {
   private socket: Socket | null = null;
@@ -13,8 +13,9 @@ class LocationTrackingService {
 
   public async initSocket() {
     if (!this.socket) {
+      console.log('LocationTrackingService: Connecting to', BACKEND_URL);
       this.socket = io(BACKEND_URL, {
-        transports: ['websocket'],
+        transports: ['polling', 'websocket'],
         autoConnect: true,
       });
 
