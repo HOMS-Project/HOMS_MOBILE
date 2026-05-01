@@ -2,7 +2,7 @@ import React from "react";
 import { View, StyleSheet, Image } from "react-native";
 import { spacing } from "../theme";
 
-const logo = require("../../assets/homslogotr.png");
+const logo = require("../../assets/homslogotr.jpg");
 
 interface Props {
   size?: number;
