@@ -7,6 +7,7 @@ export type TeamOrderSummary = {
   invoiceCode?: string;
   status: string;
   scheduledTime?: string;
+  moveType?: string;
   pickupAddress: string;
   deliveryAddress: string;
 };
@@ -110,6 +111,7 @@ export const fetchAssignedInvoices = async (): Promise<TeamOrderSummary[]> => {
     invoiceCode: item.invoiceCode,
     status: String(item.status || "").toUpperCase(),
     scheduledTime: item.scheduledTime,
+    moveType: item.moveType,
     pickupAddress: item.pickup?.address || "",
     deliveryAddress: item.delivery?.address || "",
   }));

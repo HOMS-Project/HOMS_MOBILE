@@ -30,6 +30,7 @@ type Job = {
   scheduledTime?: string;
   date: string;
   invoice: string;
+  moveType?: string;
   status: string;
   pickup: { title: string; address: string };
   dropoff: { title: string; address: string };
@@ -99,6 +100,7 @@ const MyScheduleScreen: React.FC = () => {
           ? new Date(o.scheduledTime).toLocaleDateString("vi-VN")
           : "",
         invoice: o.orderCode,
+        moveType: o.moveType,
         status: (o.status || "").toUpperCase(),
         pickup: {
           title: o.pickup?.address?.split(",")[0] || "Điểm lấy",
@@ -255,6 +257,23 @@ const MyScheduleScreen: React.FC = () => {
                         <Text className="text-base font-bold text-slate-800">
                           {item.invoice}
                         </Text>
+                        <View className="flex-row items-center gap-1.5">
+                          {item.moveType === "TRUCK_RENTAL" && (
+                            <View className="rounded-full bg-orange-100 px-2 py-0.5">
+                              <Text className="text-[9px] font-bold text-orange-700">Thuê xe</Text>
+                            </View>
+                          )}
+                          {item.moveType === "FULL_HOUSE" && (
+                            <View className="rounded-full bg-blue-100 px-2 py-0.5">
+                              <Text className="text-[9px] font-bold text-blue-700">Chuyển nhà</Text>
+                            </View>
+                          )}
+                          {item.moveType === "SPECIFIC_ITEMS" && (
+                            <View className="rounded-full bg-purple-100 px-2 py-0.5">
+                              <Text className="text-[9px] font-bold text-purple-700">Chuyển đồ</Text>
+                            </View>
+                          )}
+                        </View>
                       </View>
                       <Text className="mt-0.5 text-sm text-slate-500">
                         {item.date}
@@ -347,6 +366,23 @@ const MyScheduleScreen: React.FC = () => {
                       <Text className="text-xl font-bold text-slate-800">
                         {item.invoice}
                       </Text>
+                      <View className="mt-1 flex-row items-center gap-1.5">
+                        {item.moveType === "TRUCK_RENTAL" && (
+                          <View className="rounded-full bg-orange-100 px-2 py-0.5">
+                            <Text className="text-[10px] font-bold text-orange-700">Thuê xe</Text>
+                          </View>
+                        )}
+                        {item.moveType === "FULL_HOUSE" && (
+                          <View className="rounded-full bg-blue-100 px-2 py-0.5">
+                            <Text className="text-[10px] font-bold text-blue-700">Chuyển nhà</Text>
+                          </View>
+                        )}
+                        {item.moveType === "SPECIFIC_ITEMS" && (
+                          <View className="rounded-full bg-purple-100 px-2 py-0.5">
+                            <Text className="text-[10px] font-bold text-purple-700">Chuyển đồ</Text>
+                          </View>
+                        )}
+                      </View>
                     </View>
                     <Text className="mt-1 text-base text-slate-500">
                       {item.date}

@@ -30,6 +30,7 @@ type DashboardOrder = {
   orderCode?: string;
   status?: string;
   scheduledTime?: string;
+  moveType?: string;
   pickup?: { address?: string };
   delivery?: { address?: string };
 };
@@ -160,6 +161,7 @@ const StaffHomeScreen: React.FC = () => {
       orders.map((o) => ({
         ...o,
         status: (o.status || "").toUpperCase(),
+        moveType: (o as any).moveType,
       })),
     [orders],
   );
@@ -197,12 +199,34 @@ const StaffHomeScreen: React.FC = () => {
         <Card className="gap-3 rounded-2xl border-emerald-100 bg-white p-4 shadow-sm">
           <View className="flex-row items-start justify-between">
             <View className="mr-2 flex-1">
-              <Text className="text-base font-extrabold text-slate-900">
-                {order.orderCode || "Đơn hàng"}
-              </Text>
-              <Text className="mt-0.5 text-sm text-slate-500">
+              <View className="flex-row items-center gap-2">
+                <Text className="text-base font-extrabold text-slate-900">
+                  {order.orderCode || "Đơn hàng"}
+                </Text>
+                {order.moveType === "TRUCK_RENTAL" && (
+                  <View className="rounded-full bg-orange-100 px-2 py-0.5">
+                    <Text className="text-[10px] font-bold text-orange-700">Thuê xe</Text>
+                  </View>
+                )}
+                {order.moveType === "FULL_HOUSE" && (
+                  <View className="rounded-full bg-blue-100 px-2 py-0.5">
+                    <Text className="text-[10px] font-bold text-blue-700">Chuyển nhà</Text>
+                  </View>
+                )}
+                {order.moveType === "SPECIFIC_ITEMS" && (
+                  <View className="rounded-full bg-purple-100 px-2 py-0.5">
+                    <Text className="text-[10px] font-bold text-purple-700">Chuyển đồ</Text>
+                  </View>
+                )}
+              </View>
+              <Text className="mt-0.5 text-xs text-slate-500">
                 {order.scheduledTime
-                  ? new Date(order.scheduledTime).toLocaleString("vi-VN")
+                  ? new Date(order.scheduledTime).toLocaleString("vi-VN", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      day: "2-digit",
+                      month: "2-digit",
+                    })
                   : "Chưa có lịch"}
               </Text>
             </View>
@@ -381,17 +405,34 @@ const StaffHomeScreen: React.FC = () => {
               <Card className="gap-3 border-emerald-200 bg-[#ecf8ef] p-4">
                 <View className="flex-row items-start justify-between">
                   <View className="mr-2 flex-1">
-                    <Text className="text-base font-extrabold text-slate-900">
-                      {currentOrder.orderCode || "Đơn hàng"}
-                    </Text>
+                    <View className="flex-row items-center gap-2">
+                      <Text className="text-base font-extrabold text-slate-900">
+                        {currentOrder.orderCode || "Đơn hàng"}
+                      </Text>
+                      {currentOrder.moveType === "TRUCK_RENTAL" && (
+                        <View className="rounded-full bg-orange-100 px-2 py-0.5">
+                          <Text className="text-[10px] font-bold text-orange-700">Thuê xe</Text>
+                        </View>
+                      )}
+                      {currentOrder.moveType === "FULL_HOUSE" && (
+                        <View className="rounded-full bg-blue-100 px-2 py-0.5">
+                          <Text className="text-[10px] font-bold text-blue-700">Chuyển nhà</Text>
+                        </View>
+                      )}
+                      {currentOrder.moveType === "SPECIFIC_ITEMS" && (
+                        <View className="rounded-full bg-purple-100 px-2 py-0.5">
+                          <Text className="text-[10px] font-bold text-purple-700">Chuyển đồ</Text>
+                        </View>
+                      )}
+                    </View>
                     <Text className="mt-0.5 text-sm text-slate-500">
                       {currentOrder.scheduledTime
                         ? new Date(
-                          currentOrder.scheduledTime,
-                        ).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
+                            currentOrder.scheduledTime,
+                          ).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
                         : "Chưa có lịch"}
                     </Text>
                   </View>

@@ -57,6 +57,7 @@ const TeamListScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+  const [serviceFilter, setServiceFilter] = useState<string>("ALL");
   const [orders, setOrders] = useState<TeamOrderSummary[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<SortOrder>("DESC");
@@ -97,9 +98,10 @@ const TeamListScreen: React.FC = () => {
   const filteredOrders = useMemo(() => {
     const base = orders.filter((order) => {
       const statusOk = statusFilter === "ALL" || order.status === statusFilter;
+      const serviceOk = serviceFilter === "ALL" || order.moveType === serviceFilter;
       const searchOk = order.orderCode?.toLowerCase().includes(searchQuery.toLowerCase()) || 
                        (searchQuery === "");
-      return statusOk && searchOk;
+      return statusOk && serviceOk && searchOk;
     });
     
     // Sắp xếp theo scheduledTime
@@ -226,6 +228,33 @@ const TeamListScreen: React.FC = () => {
             </View>
 
             <Text className="mt-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+              Lọc theo loại dịch vụ
+            </Text>
+            <View className="mt-2 flex-row flex-wrap">
+              {[
+                { value: "ALL", label: "Tất cả" },
+                { value: "FULL_HOUSE", label: "Chuyển nhà" },
+                { value: "SPECIFIC_ITEMS", label: "Chuyển đồ" },
+                { value: "TRUCK_RENTAL", label: "Thuê xe tải" },
+              ].map((item) => {
+                const selected = serviceFilter === item.value;
+                return (
+                  <Pressable
+                    key={item.value}
+                    className={`mb-2 mr-2 rounded-full border px-3 py-1.5 ${selected ? "border-emerald-500 bg-emerald-50" : "border-slate-200 bg-white"}`}
+                    onPress={() => setServiceFilter(item.value)}
+                  >
+                    <Text
+                      className={`text-sm font-bold ${selected ? "text-emerald-700" : "text-slate-600"}`}
+                    >
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <Text className="mt-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">
               Sắp xếp theo thời gian
             </Text>
             <View className="mt-2 flex-row flex-wrap">
@@ -238,7 +267,7 @@ const TeamListScreen: React.FC = () => {
                   <Text
                     className={`text-sm font-bold ${sortOrder === s ? "text-emerald-700" : "text-slate-600"}`}
                   >
-                    {s === "DESC" ? "Mới nhất trước" : "Cũ nhất trước"}
+                    {s === "DESC" ? "Mới nhất" : "Cũ nhất"}
                   </Text>
                 </Pressable>
               ))}
@@ -270,9 +299,26 @@ const TeamListScreen: React.FC = () => {
                 <Card className="gap-3 rounded-2xl p-4">
                   <View className="flex-row items-start justify-between">
                     <View className="mr-2 flex-1">
-                      <Text className="text-base font-bold text-slate-900">
-                        {order.orderCode}
-                      </Text>
+                      <View className="flex-row items-center gap-2">
+                        <Text className="text-base font-bold text-slate-900">
+                          {order.orderCode}
+                        </Text>
+                        {order.moveType === "TRUCK_RENTAL" && (
+                          <View className="rounded-full bg-orange-100 px-2 py-0.5">
+                            <Text className="text-[10px] font-bold text-orange-700">Thuê xe</Text>
+                          </View>
+                        )}
+                        {order.moveType === "FULL_HOUSE" && (
+                          <View className="rounded-full bg-blue-100 px-2 py-0.5">
+                            <Text className="text-[10px] font-bold text-blue-700">Chuyển nhà</Text>
+                          </View>
+                        )}
+                        {order.moveType === "SPECIFIC_ITEMS" && (
+                          <View className="rounded-full bg-purple-100 px-2 py-0.5">
+                            <Text className="text-[10px] font-bold text-purple-700">Chuyển đồ</Text>
+                          </View>
+                        )}
+                      </View>
                       <Text className="mt-0.5 text-sm text-slate-500">
                         {dateText}
                       </Text>

@@ -28,11 +28,13 @@ type Order = {
   pickup: { address: string; district: string };
   delivery: { address: string; district: string };
   scheduledTime: string;
+  moveType: string;
   items: { name: string; quantity: number }[];
 };
 
 type StatusFilter = "ALL" | "IN_PROGRESS" | "ACCEPTED" | "COMPLETED" | "ASSIGNED" | "CANCELLED" | "OTHER";
 type TimeFilter = "ALL" | "TODAY" | "WEEK" | "MONTH";
+type ServiceTypeFilter = "ALL" | "FULL_HOUSE" | "SPECIFIC_ITEMS" | "TRUCK_RENTAL";
 type SortOrder = "DESC" | "ASC";
 
 const statusLabel = (status: string) => {
@@ -57,7 +59,7 @@ const statusClass = (status: string) => {
   return "bg-emerald-100 text-emerald-700";
 };
 
-const filterLabel = (filter: StatusFilter | TimeFilter | SortOrder) => {
+const filterLabel = (filter: StatusFilter | TimeFilter | ServiceTypeFilter | SortOrder) => {
   if (filter === "ALL") return "Tất cả";
   if (filter === "IN_PROGRESS") return "Đang thực hiện";
   if (filter === "ACCEPTED") return "Đã nhận";
@@ -70,6 +72,9 @@ const filterLabel = (filter: StatusFilter | TimeFilter | SortOrder) => {
   if (filter === "MONTH") return "Tháng này";
   if (filter === "DESC") return "Mới nhất";
   if (filter === "ASC") return "Cũ nhất";
+  if (filter === "FULL_HOUSE") return "Chuyển nhà";
+  if (filter === "SPECIFIC_ITEMS") return "Chuyển đồ";
+  if (filter === "TRUCK_RENTAL") return "Thuê xe tải";
   return filter;
 };
 
@@ -81,6 +86,7 @@ const OrderListScreen: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("ALL");
+  const [serviceFilter, setServiceFilter] = useState<ServiceTypeFilter>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<SortOrder>("DESC");
 
@@ -150,8 +156,9 @@ const OrderListScreen: React.FC = () => {
           ? !["IN_PROGRESS", "ACCEPTED", "COMPLETED", "ASSIGNED", "CANCELLED"].includes(o.status)
           : o.status === statusFilter;
     const timeOk = applyTimeFilter(o);
+    const serviceOk = serviceFilter === "ALL" ? true : o.moveType === serviceFilter;
     const searchOk = o.orderCode?.toLowerCase().includes(searchQuery.toLowerCase());
-    return statusOk && timeOk && searchOk;
+    return statusOk && timeOk && serviceOk && searchOk;
   });
 
   const inProgress = filtered.filter((o) => o.status === "IN_PROGRESS");
@@ -180,6 +187,21 @@ const OrderListScreen: React.FC = () => {
                 <Text className="text-base font-bold text-slate-900">
                   {order.orderCode}
                 </Text>
+                {order.moveType === "TRUCK_RENTAL" && (
+                  <View className="rounded-full bg-orange-100 px-2 py-0.5">
+                    <Text className="text-[10px] font-bold text-orange-700">Thuê xe</Text>
+                  </View>
+                )}
+                {order.moveType === "FULL_HOUSE" && (
+                  <View className="rounded-full bg-blue-100 px-2 py-0.5">
+                    <Text className="text-[10px] font-bold text-blue-700">Chuyển nhà</Text>
+                  </View>
+                )}
+                {order.moveType === "SPECIFIC_ITEMS" && (
+                  <View className="rounded-full bg-purple-100 px-2 py-0.5">
+                    <Text className="text-[10px] font-bold text-purple-700">Chuyển đồ</Text>
+                  </View>
+                )}
               </View>
               <Text className="mt-0.5 text-sm text-slate-500">
                 {new Date(order.scheduledTime).toLocaleDateString()} ·{" "}
@@ -228,7 +250,7 @@ const OrderListScreen: React.FC = () => {
   };
 
   const renderChip = (
-    value: StatusFilter | TimeFilter | SortOrder,
+    value: StatusFilter | TimeFilter | ServiceTypeFilter | SortOrder,
     selected: boolean,
     onPress: () => void,
   ) => (
@@ -326,6 +348,15 @@ const OrderListScreen: React.FC = () => {
             <View className="mt-2 flex-row flex-wrap">
               {(["ALL", "TODAY", "WEEK", "MONTH"] as const).map((t) =>
                 renderChip(t, timeFilter === t, () => setTimeFilter(t)),
+              )}
+            </View>
+
+            <Text className="mt-3 text-sm font-bold uppercase tracking-wide text-slate-500">
+              Loại dịch vụ
+            </Text>
+            <View className="mt-2 flex-row flex-wrap">
+              {(["ALL", "FULL_HOUSE", "SPECIFIC_ITEMS", "TRUCK_RENTAL"] as const).map((s) =>
+                renderChip(s, serviceFilter === s, () => setServiceFilter(s)),
               )}
             </View>
 
