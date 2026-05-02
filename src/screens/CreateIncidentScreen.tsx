@@ -89,9 +89,12 @@ const CreateIncidentScreen: React.FC = () => {
     const selected = invoiceOptions.find(
       (item) => item.invoiceId === invoiceId,
     );
-    return selected
-      ? `${selected.invoiceCode || selected.orderCode} · ${selected.status}`
-      : "Chọn đơn hàng";
+    if (!selected) return "Chọn đơn hàng";
+    const serviceLabel =
+      selected.moveType === "FULL_HOUSE" ? "Chuyển nhà" :
+      selected.moveType === "SPECIFIC_ITEMS" ? "Chuyển đồ" :
+      selected.moveType === "TRUCK_RENTAL" ? "Thuê xe tải" : "";
+    return `${selected.invoiceCode || selected.orderCode}${serviceLabel ? ` · ${serviceLabel}` : ""} · ${selected.status}`;
   }, [invoiceId, invoiceOptions]);
 
   const selectedTypeLabel = useMemo(() => {
@@ -198,11 +201,17 @@ const CreateIncidentScreen: React.FC = () => {
 
   const pickerItems =
     pickerKind === "invoice"
-      ? invoiceOptions.map((item) => ({
-          value: item.invoiceId,
-          label: `${item.invoiceCode || item.orderCode} · ${item.status}`,
-          subLabel: `${item.pickupAddress} → ${item.deliveryAddress}`,
-        }))
+      ? invoiceOptions.map((item) => {
+          const serviceLabel =
+            item.moveType === "FULL_HOUSE" ? "Chuyển nhà" :
+            item.moveType === "SPECIFIC_ITEMS" ? "Chuyển đồ" :
+            item.moveType === "TRUCK_RENTAL" ? "Thuê xe tải" : "";
+          return {
+            value: item.invoiceId,
+            label: `${item.invoiceCode || item.orderCode}${serviceLabel ? ` · ${serviceLabel}` : ""}`,
+            subLabel: `${item.pickupAddress} → ${item.deliveryAddress}`,
+          };
+        })
       : typeOptions.map((item) => ({
           value: item.value,
           label: item.label,

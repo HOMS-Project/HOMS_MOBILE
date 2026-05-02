@@ -578,10 +578,11 @@ const OrderMapScreen: React.FC = () => {
   };
 
   const handleStart = async () => {
-    if (pickupImages.length === 0 && existingBeforeImages.length === 0) {
+    const isTruckRental = orderData?.moveType === "TRUCK_RENTAL";
+    if (!isTruckRental && pickupImages.length === 0 && existingBeforeImages.length === 0) {
       Alert.alert(
         "Thiếu bằng chứng",
-        "Bạn cần chụp ảnh đồ đạc trước khi di chuyển",
+        "Bạn cần chụp ảnh bằng chứng trước khi di chuyển",
       );
       return;
     }

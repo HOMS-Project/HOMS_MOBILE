@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -13,6 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import {
   useNavigation,
   useRoute,
+  useFocusEffect,
   type RouteProp,
 } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -59,9 +60,11 @@ const TeamDetailScreen: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    fetchDetail();
-  }, [invoiceId]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchDetail();
+    }, [invoiceId]),
+  );
 
   const handleCallMember = (phone: string) => {
     if (!phone) {

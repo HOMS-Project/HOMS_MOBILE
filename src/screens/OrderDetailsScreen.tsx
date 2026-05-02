@@ -175,14 +175,14 @@ const OrderDetailsScreen: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       fetchOrderDetails();
-    }, [])
+    }, [route.params?.invoiceId])
   );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchOrderDetails();
     setRefreshing(false);
-  }, []);
+  }, [route.params?.invoiceId]);
 
   if (loading) {
     return (
@@ -465,7 +465,7 @@ const OrderDetailsScreen: React.FC = () => {
           </View>
         </Card>
 
-        {order.survey && (
+        {order.survey && order.moveType !== "TRUCK_RENTAL" && (
           <>
             {order.moveType !== "TRUCK_RENTAL" && (
               <Card className="mt-4 rounded-[20px] p-4">

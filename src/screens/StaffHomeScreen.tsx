@@ -161,7 +161,7 @@ const StaffHomeScreen: React.FC = () => {
       orders.map((o) => ({
         ...o,
         status: (o.status || "").toUpperCase(),
-        moveType: (o as any).moveType,
+        moveType: o.moveType,
       })),
     [orders],
   );

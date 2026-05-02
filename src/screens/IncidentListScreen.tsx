@@ -327,11 +327,21 @@ const IncidentListScreen: React.FC = () => {
           })}
 
           {filteredIncidents.length === 0 ? (
-            <EmptyState
-              icon="shield-checkmark-outline"
-              title="Không có sự cố nào"
-              description="Không tìm thấy báo cáo sự cố nào phù hợp với bộ lọc của bạn."
-            />
+            <View className="items-center py-10">
+              <Ionicons name="shield-checkmark-outline" size={48} color="#94a3b8" />
+              <Text className="mt-3 text-base font-semibold text-slate-500">
+                Không có sự cố nào
+              </Text>
+              <Text className="mt-1 px-6 text-center text-sm text-slate-400">
+                Không tìm thấy báo cáo sự cố nào phù hợp với bộ lọc của bạn.
+              </Text>
+              <Pressable
+                className="mt-5 rounded-full bg-emerald-600 px-6 py-2.5"
+                onPress={() => navigation.navigate("CreateIncident")}
+              >
+                <Text className="text-sm font-bold text-white">+ Tạo báo cáo mới</Text>
+              </Pressable>
+            </View>
           ) : null}
         </View>
       </ScrollView>
