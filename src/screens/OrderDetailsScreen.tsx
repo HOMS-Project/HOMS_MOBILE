@@ -31,6 +31,7 @@ type OrderDetail = {
   id: string;
   assignmentId: string;
   orderCode: string;
+  moveType?: string;
   status: string;
   pickup: { address: string; district: string };
   delivery: { address: string; district: string };
@@ -43,6 +44,10 @@ type OrderDetail = {
     phoneNumber?: string;
     email?: string;
     avatar?: string;
+  };
+  rentalDetails?: {
+    rentalDurationHours?: number;
+    truckType?: string;
   };
   completionEvidence?: {
     beforeImages?: string[];
@@ -67,6 +72,13 @@ type OrderDetail = {
 const stripSecTag = (name?: string) => {
   if (!name) return "";
   return name.replace(/^\s*\[SEC:[^\]]+\]\s*/i, "").trim();
+};
+
+const moveTypeLabel = (type?: string) => {
+  if (type === "FULL_HOUSE") return "Chuyển nhà trọn gói";
+  if (type === "SPECIFIC_ITEMS") return "Chuyển đồ đạc";
+  if (type === "TRUCK_RENTAL") return "Thuê xe tải";
+  return "Dịch vụ vận chuyển";
 };
 
 const formatDate = (dateString?: string) => {
@@ -150,6 +162,7 @@ const OrderDetailsScreen: React.FC = () => {
                 : "",
           },
           survey: payload.survey || null,
+          rentalDetails: payload.rentalDetails || null,
         });
       }
     } catch (error) {
@@ -327,6 +340,20 @@ const OrderDetailsScreen: React.FC = () => {
           </Text>
         </Card>
 
+        <Card className="mt-4 flex-row items-center rounded-[20px] p-4">
+          <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
+            <Ionicons name="cube-outline" size={20} color="#047857" />
+          </View>
+          <View className="flex-1">
+            <Text className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
+              Loại dịch vụ
+            </Text>
+            <Text className="mt-0.5 text-base font-extrabold text-slate-900">
+              {moveTypeLabel(order.moveType)}
+            </Text>
+          </View>
+        </Card>
+
         <Card className="mt-4 gap-3.5 rounded-[20px] p-4">
           <View className="flex-row items-start gap-3">
             <Ionicons name="calendar-outline" size={18} color="#0f766e" />
@@ -346,12 +373,12 @@ const OrderDetailsScreen: React.FC = () => {
             <Ionicons name="time-outline" size={18} color="#d97706" />
             <View className="flex-1">
               <Text className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                Thời gian vận chuyển ước tính
+                {order.moveType === "TRUCK_RENTAL" ? "Thời gian thuê xe" : "Thời gian vận chuyển ước tính"}
               </Text>
               <Text className="mt-0.5 text-sm font-semibold text-slate-800">
-                {order.survey?.estimatedHours 
-                  ? `${order.survey.estimatedHours} giờ` 
-                  : "Chưa có ước tính"}
+                {order.moveType === "TRUCK_RENTAL" 
+                  ? (order.rentalDetails?.rentalDurationHours ? `${order.rentalDetails.rentalDurationHours} giờ` : "Chưa có thông tin")
+                  : (order.survey?.estimatedHours ? `${order.survey.estimatedHours} giờ` : "Chưa có ước tính")}
               </Text>
             </View>
           </View>
@@ -440,10 +467,11 @@ const OrderDetailsScreen: React.FC = () => {
 
         {order.survey && (
           <>
-            <Card className="mt-4 rounded-[20px] p-4">
-              <Text className="text-lg font-extrabold text-slate-900">
-                1. Địa hình & Vận chuyển
-              </Text>
+            {order.moveType !== "TRUCK_RENTAL" && (
+              <Card className="mt-4 rounded-[20px] p-4">
+                <Text className="text-lg font-extrabold text-slate-900">
+                  1. Địa hình & Vận chuyển
+                </Text>
               
               {(order.survey.floors || 0) > 1 && !order.survey.hasElevator && (
                 <View className="mt-3 flex-row items-center rounded-xl bg-amber-50 p-3 border border-amber-100">
@@ -482,8 +510,9 @@ const OrderDetailsScreen: React.FC = () => {
                     {order.survey.distanceKm ?? "--"} km
                   </Text>
                 </View>
-              </View>
-            </Card>
+                </View>
+              </Card>
+            )}
 
             <Card className="mt-4 rounded-[20px] p-4">
               <Text className="text-lg font-extrabold text-slate-900">
@@ -530,43 +559,47 @@ const OrderDetailsScreen: React.FC = () => {
 
         <Card className="mt-4 rounded-[20px] p-4">
 
-          <View className="flex-row items-center justify-between">
-            <Text className="text-lg font-extrabold text-slate-900">
-              Danh sách đồ đạc
-            </Text>
-            <View className="rounded-full bg-emerald-100 px-3 py-0.5">
-              <Text className="text-xs font-bold text-emerald-700">
-                {items.length} món
-              </Text>
-            </View>
-          </View>
-
-          <View className="mt-3">
-            {items.map((item, index) => (
-              <View
-                key={index}
-                className={`flex-row items-start justify-between py-3 ${index !== items.length - 1 ? "border-b border-slate-100" : ""}`}
-              >
-                <View className="mr-3 flex-1">
-                  <Text className="text-sm font-semibold text-slate-800">
-                    {stripSecTag(item.name)}
-                  </Text>
-                  {item.notes ? (
-                    <Text className="mt-0.5 text-xs text-slate-500">
-                      {item.notes}
-                    </Text>
-                  ) : null}
-                </View>
-                <Text className="text-lg font-extrabold text-emerald-700">
-                  {item.quantity}
+          {order.moveType !== "TRUCK_RENTAL" && (
+            <>
+              <View className="flex-row items-center justify-between">
+                <Text className="text-lg font-extrabold text-slate-900">
+                  Danh sách đồ đạc
                 </Text>
+                <View className="rounded-full bg-emerald-100 px-3 py-0.5">
+                  <Text className="text-xs font-bold text-emerald-700">
+                    {items.length} món
+                  </Text>
+                </View>
               </View>
-            ))}
-          </View>
 
-          <View className="mt-5 h-px bg-emerald-100/70" />
+              <View className="mt-3">
+                {items.map((item, index) => (
+                  <View
+                    key={index}
+                    className={`flex-row items-start justify-between py-3 ${index !== items.length - 1 ? "border-b border-slate-100" : ""}`}
+                  >
+                    <View className="mr-3 flex-1">
+                      <Text className="text-sm font-semibold text-slate-800">
+                        {stripSecTag(item.name)}
+                      </Text>
+                      {item.notes ? (
+                        <Text className="mt-0.5 text-xs text-slate-500">
+                          {item.notes}
+                        </Text>
+                      ) : null}
+                    </View>
+                    <Text className="text-lg font-extrabold text-emerald-700">
+                      {item.quantity}
+                    </Text>
+                  </View>
+                ))}
+              </View>
 
-          <View className="mt-5 gap-4">
+              <View className="mt-5 h-px bg-emerald-100/70" />
+            </>
+          )}
+
+          <View className={order.moveType !== "TRUCK_RENTAL" ? "mt-5 gap-4" : "gap-4"}>
             <Text className="text-xl font-extrabold text-slate-900">
               Bằng chứng hoàn thành
             </Text>

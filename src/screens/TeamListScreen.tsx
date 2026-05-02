@@ -6,6 +6,7 @@ import {
   ScrollView,
   Text,
   View,
+  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
@@ -19,6 +20,7 @@ import {
 } from "../services/staffFeatureService";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
+type SortOrder = "DESC" | "ASC";
 type StatusFilter =
   | "ALL"
   | "PENDING"
@@ -56,6 +58,8 @@ const TeamListScreen: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
   const [orders, setOrders] = useState<TeamOrderSummary[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("DESC");
 
   const fetchTeamOrders = useCallback(async () => {
     try {
@@ -91,15 +95,20 @@ const TeamListScreen: React.FC = () => {
   };
 
   const filteredOrders = useMemo(() => {
-    const base = statusFilter === "ALL" ? orders : orders.filter((order) => order.status === statusFilter);
+    const base = orders.filter((order) => {
+      const statusOk = statusFilter === "ALL" || order.status === statusFilter;
+      const searchOk = order.orderCode?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                       (searchQuery === "");
+      return statusOk && searchOk;
+    });
     
-    // Sắp xếp mới nhất từ trên xuống (theo scheduledTime)
+    // Sắp xếp theo scheduledTime
     return [...base].sort((a, b) => {
       const timeA = new Date(a.scheduledTime || 0).getTime();
       const timeB = new Date(b.scheduledTime || 0).getTime();
-      return timeB - timeA;
+      return sortOrder === "DESC" ? timeB - timeA : timeA - timeB;
     });
-  }, [orders, statusFilter]);
+  }, [orders, statusFilter, searchQuery, sortOrder]);
 
   const availableFilters: StatusFilter[] = useMemo(() => {
     const allStatus = new Set<StatusFilter>(["ALL"]);
@@ -163,6 +172,35 @@ const TeamListScreen: React.FC = () => {
           Danh sách đơn có đội được phân công cho bạn
         </Text>
 
+        <View className="mt-4 flex-row gap-3">
+          <Card className="flex-1 rounded-2xl bg-white p-4">
+            <Text className="text-2xl font-extrabold text-slate-900">{orders.length}</Text>
+            <Text className="mt-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">Tổng số đơn</Text>
+          </Card>
+          <Card className="flex-1 rounded-2xl bg-emerald-50 p-4 border border-emerald-100">
+            <Text className="text-2xl font-extrabold text-emerald-700">
+              {orders.filter(o => o.status === "IN_PROGRESS").length}
+            </Text>
+            <Text className="mt-1 text-[10px] font-bold uppercase tracking-wide text-emerald-600">Đang thực hiện</Text>
+          </Card>
+        </View>
+
+        <View className="mt-4 flex-row items-center rounded-2xl bg-white px-4 py-3 shadow-sm">
+          <Ionicons name="search" size={20} color="#64748b" />
+          <TextInput
+            className="ml-2 flex-1 text-base text-slate-900"
+            placeholder="Tìm theo mã đơn..."
+            placeholderTextColor="#94a3b8"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery ? (
+            <Pressable onPress={() => setSearchQuery("")}>
+              <Ionicons name="close-circle" size={20} color="#cbd5e1" />
+            </Pressable>
+          ) : null}
+        </View>
+
         {showFilters ? (
           <Card className="mt-4 rounded-2xl p-4">
             <Text className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
@@ -185,6 +223,25 @@ const TeamListScreen: React.FC = () => {
                   </Pressable>
                 );
               })}
+            </View>
+
+            <Text className="mt-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+              Sắp xếp theo thời gian
+            </Text>
+            <View className="mt-2 flex-row flex-wrap">
+              {(["DESC", "ASC"] as const).map((s) => (
+                <Pressable
+                  key={s}
+                  className={`mb-2 mr-2 rounded-full border px-3 py-1.5 ${sortOrder === s ? "border-emerald-500 bg-emerald-50" : "border-slate-200 bg-white"}`}
+                  onPress={() => setSortOrder(s)}
+                >
+                  <Text
+                    className={`text-sm font-bold ${sortOrder === s ? "text-emerald-700" : "text-slate-600"}`}
+                  >
+                    {s === "DESC" ? "Mới nhất trước" : "Cũ nhất trước"}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
           </Card>
         ) : null}

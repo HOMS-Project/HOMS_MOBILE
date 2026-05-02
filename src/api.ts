@@ -2,7 +2,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
 
 // URL Backend từ biến môi trường .env
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.9:5000/api';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.2.8:5000/api';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 

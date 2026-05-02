@@ -3,7 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Replace with your actual backend URL when in production/dev
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.9:5000/api';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.2.8:5000/api';
 const BACKEND_URL = API_URL.replace(/\/api\/?$/, ''); // Strip out /api if present
 
 class LocationTrackingService {
