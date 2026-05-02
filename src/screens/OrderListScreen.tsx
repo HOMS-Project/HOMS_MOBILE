@@ -6,6 +6,7 @@ import {
   ScrollView,
   Text,
   View,
+  TextInput,
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -30,8 +31,9 @@ type Order = {
   items: { name: string; quantity: number }[];
 };
 
-type StatusFilter = "ALL" | "IN_PROGRESS" | "ACCEPTED" | "COMPLETED" | "OTHER";
+type StatusFilter = "ALL" | "IN_PROGRESS" | "ACCEPTED" | "COMPLETED" | "ASSIGNED" | "CANCELLED" | "OTHER";
 type TimeFilter = "ALL" | "TODAY" | "WEEK" | "MONTH";
+type SortOrder = "DESC" | "ASC";
 
 const statusLabel = (status: string) => {
   if (status === "IN_PROGRESS") return "Đang thực hiện";
@@ -48,18 +50,26 @@ const statusClass = (status: string) => {
   if (status === "IN_PROGRESS") return "bg-sky-100 text-sky-700";
   if (status === "ACCEPTED") return "bg-amber-100 text-amber-700";
   if (status === "COMPLETED") return "bg-emerald-100 text-emerald-700";
+  if (status === "ASSIGNED") return "bg-violet-100 text-violet-700";
+  if (status === "CANCELLED") return "bg-rose-100 text-rose-700";
+  if (status === "CONFIRMED") return "bg-blue-100 text-blue-700";
+  if (status === "PENDING") return "bg-slate-100 text-slate-700";
   return "bg-emerald-100 text-emerald-700";
 };
 
-const filterLabel = (filter: StatusFilter | TimeFilter) => {
+const filterLabel = (filter: StatusFilter | TimeFilter | SortOrder) => {
   if (filter === "ALL") return "Tất cả";
   if (filter === "IN_PROGRESS") return "Đang thực hiện";
   if (filter === "ACCEPTED") return "Đã nhận";
   if (filter === "COMPLETED") return "Đã hoàn tất";
+  if (filter === "ASSIGNED") return "Đã phân công";
+  if (filter === "CANCELLED") return "Đã hủy";
   if (filter === "OTHER") return "Khác";
   if (filter === "TODAY") return "Hôm nay";
   if (filter === "WEEK") return "Tuần này";
   if (filter === "MONTH") return "Tháng này";
+  if (filter === "DESC") return "Mới nhất";
+  if (filter === "ASC") return "Cũ nhất";
   return filter;
 };
 
@@ -71,6 +81,8 @@ const OrderListScreen: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("DESC");
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -114,7 +126,7 @@ const OrderListScreen: React.FC = () => {
     .sort((a, b) => {
       const timeA = new Date(a.scheduledTime || 0).getTime();
       const timeB = new Date(b.scheduledTime || 0).getTime();
-      return timeB - timeA;
+      return sortOrder === "DESC" ? timeB - timeA : timeA - timeB;
     });
 
   const applyTimeFilter = (o: Order) => {
@@ -135,10 +147,11 @@ const OrderListScreen: React.FC = () => {
       statusFilter === "ALL"
         ? true
         : statusFilter === "OTHER"
-          ? !["IN_PROGRESS", "ACCEPTED", "COMPLETED"].includes(o.status)
+          ? !["IN_PROGRESS", "ACCEPTED", "COMPLETED", "ASSIGNED", "CANCELLED"].includes(o.status)
           : o.status === statusFilter;
     const timeOk = applyTimeFilter(o);
-    return statusOk && timeOk;
+    const searchOk = o.orderCode?.toLowerCase().includes(searchQuery.toLowerCase());
+    return statusOk && timeOk && searchOk;
   });
 
   const inProgress = filtered.filter((o) => o.status === "IN_PROGRESS");
@@ -215,7 +228,7 @@ const OrderListScreen: React.FC = () => {
   };
 
   const renderChip = (
-    value: StatusFilter | TimeFilter,
+    value: StatusFilter | TimeFilter | SortOrder,
     selected: boolean,
     onPress: () => void,
   ) => (
@@ -270,6 +283,22 @@ const OrderListScreen: React.FC = () => {
           </Pressable>
         </View>
 
+        <View className="mt-4 flex-row items-center rounded-2xl bg-white px-4 py-3 shadow-sm">
+          <Ionicons name="search" size={20} color="#64748b" />
+          <TextInput
+            className="ml-2 flex-1 text-base text-slate-900"
+            placeholder="Tìm theo mã đơn hàng..."
+            placeholderTextColor="#94a3b8"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery ? (
+            <Pressable onPress={() => setSearchQuery("")}>
+              <Ionicons name="close-circle" size={20} color="#cbd5e1" />
+            </Pressable>
+          ) : null}
+        </View>
+
         {showFilters ? (
           <Card className="mt-5 rounded-[24px] p-5">
             <Text className="text-sm font-bold uppercase tracking-wide text-slate-500">
@@ -281,7 +310,9 @@ const OrderListScreen: React.FC = () => {
                   "ALL",
                   "IN_PROGRESS",
                   "ACCEPTED",
+                  "ASSIGNED",
                   "COMPLETED",
+                  "CANCELLED",
                   "OTHER",
                 ] as const
               ).map((s) =>
@@ -295,6 +326,15 @@ const OrderListScreen: React.FC = () => {
             <View className="mt-2 flex-row flex-wrap">
               {(["ALL", "TODAY", "WEEK", "MONTH"] as const).map((t) =>
                 renderChip(t, timeFilter === t, () => setTimeFilter(t)),
+              )}
+            </View>
+
+            <Text className="mt-3 text-sm font-bold uppercase tracking-wide text-slate-500">
+              Sắp xếp
+            </Text>
+            <View className="mt-2 flex-row flex-wrap">
+              {(["DESC", "ASC"] as const).map((s) =>
+                renderChip(s, sortOrder === s, () => setSortOrder(s)),
               )}
             </View>
           </Card>

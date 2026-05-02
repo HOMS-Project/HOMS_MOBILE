@@ -8,6 +8,7 @@ import {
   ScrollView,
   Text,
   View,
+  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
@@ -22,6 +23,23 @@ import {
 } from "../services/staffFeatureService";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
+
+type StatusFilter = "ALL" | "Open" | "Investigating" | "Resolved" | "Dismissed";
+type TypeFilter = "ALL" | "Damage" | "Delay" | "Accident" | "Loss" | "Other";
+
+const filterLabel = (filter: StatusFilter | TypeFilter) => {
+  if (filter === "ALL") return "Tất cả";
+  if (filter === "Open") return "Mở";
+  if (filter === "Investigating") return "Đang xử lý";
+  if (filter === "Resolved") return "Đã giải quyết";
+  if (filter === "Dismissed") return "Đã đóng";
+  if (filter === "Damage") return "Hư hỏng";
+  if (filter === "Delay") return "Trễ giờ";
+  if (filter === "Accident") return "Tai nạn";
+  if (filter === "Loss") return "Mất mát";
+  if (filter === "Other") return "Khác";
+  return filter;
+};
 
 const typeLabel = (type: string) => {
   if (type === "Damage") return "Hư hỏng";
@@ -56,6 +74,11 @@ const IncidentListScreen: React.FC = () => {
   const [incidents, setIncidents] = useState<StaffIncident[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
+  const [showFilters, setShowFilters] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
+
   const fetchIncidents = useCallback(async () => {
     try {
       const data = await fetchMyIncidents();
@@ -81,6 +104,18 @@ const IncidentListScreen: React.FC = () => {
   };
 
   const closePreview = () => setPreviewImage(null);
+
+  const filteredIncidents = incidents.filter((incident) => {
+    const statusOk = statusFilter === "ALL" || incident.status === statusFilter;
+    const typeOk = typeFilter === "ALL" 
+      ? true 
+      : typeFilter === "Other"
+        ? !["Damage", "Delay", "Accident", "Loss"].includes(incident.type)
+        : incident.type === typeFilter;
+    const searchOk = incident.invoiceCode?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                     (searchQuery === "");
+    return statusOk && typeOk && searchOk;
+  }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
   if (loading) {
     return (
@@ -117,6 +152,16 @@ const IncidentListScreen: React.FC = () => {
             Báo cáo sự cố
           </Text>
           <Pressable
+            className="h-9 w-9 items-center justify-center rounded-2xl bg-white shadow-sm"
+            onPress={() => setShowFilters((prev) => !prev)}
+          >
+            <Ionicons
+              name={showFilters ? "close" : "options-outline"}
+              size={20}
+              color="#0f172a"
+            />
+          </Pressable>
+          <Pressable
             className="rounded-full border border-emerald-700 bg-emerald-600 px-3 py-1 shadow-sm"
             onPress={() => navigation.navigate("CreateIncident")}
           >
@@ -126,8 +171,70 @@ const IncidentListScreen: React.FC = () => {
           </Pressable>
         </View>
 
+        <View className="mt-4 flex-row items-center rounded-2xl bg-white px-4 py-3 shadow-sm">
+          <Ionicons name="search" size={20} color="#64748b" />
+          <TextInput
+            className="ml-2 flex-1 text-base text-slate-900"
+            placeholder="Tìm theo mã đơn hàng..."
+            placeholderTextColor="#94a3b8"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery ? (
+            <Pressable onPress={() => setSearchQuery("")}>
+              <Ionicons name="close-circle" size={20} color="#cbd5e1" />
+            </Pressable>
+          ) : null}
+        </View>
+
+        {showFilters ? (
+          <Card className="mt-4 rounded-[24px] p-5">
+            <Text className="text-sm font-bold uppercase tracking-wide text-slate-500">
+              Trạng thái
+            </Text>
+            <View className="mt-2 flex-row flex-wrap">
+              {(
+                ["ALL", "Open", "Investigating", "Resolved", "Dismissed"] as const
+              ).map((s) => (
+                <Pressable
+                  key={s}
+                  className={`mb-2 mr-2 rounded-full border px-3 py-1.5 ${statusFilter === s ? "border-emerald-500 bg-emerald-50" : "border-slate-200 bg-white"}`}
+                  onPress={() => setStatusFilter(s)}
+                >
+                  <Text
+                    className={`text-sm font-bold ${statusFilter === s ? "text-emerald-700" : "text-slate-600"}`}
+                  >
+                    {filterLabel(s)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <Text className="mt-3 text-sm font-bold uppercase tracking-wide text-slate-500">
+              Loại sự cố
+            </Text>
+            <View className="mt-2 flex-row flex-wrap">
+              {(
+                ["ALL", "Damage", "Delay", "Accident", "Loss", "Other"] as const
+              ).map((t) => (
+                <Pressable
+                  key={t}
+                  className={`mb-2 mr-2 rounded-full border px-3 py-1.5 ${typeFilter === t ? "border-emerald-500 bg-emerald-50" : "border-slate-200 bg-white"}`}
+                  onPress={() => setTypeFilter(t)}
+                >
+                  <Text
+                    className={`text-sm font-bold ${typeFilter === t ? "text-emerald-700" : "text-slate-600"}`}
+                  >
+                    {filterLabel(t)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </Card>
+        ) : null}
+
         <View className="mt-5 gap-3">
-          {incidents.map((incident) => {
+          {filteredIncidents.map((incident) => {
             const reportTime = incident.createdAt
               ? new Date(incident.createdAt).toLocaleString("vi-VN")
               : "Không rõ";
@@ -219,11 +326,11 @@ const IncidentListScreen: React.FC = () => {
             );
           })}
 
-          {incidents.length === 0 ? (
+          {filteredIncidents.length === 0 ? (
             <EmptyState
               icon="shield-checkmark-outline"
-              title="Mọi thứ đều ổn"
-              description="Bạn chưa báo cáo sự cố nào. Các sự cố bạn tạo sẽ xuất hiện tại đây."
+              title="Không có sự cố nào"
+              description="Không tìm thấy báo cáo sự cố nào phù hợp với bộ lọc của bạn."
             />
           ) : null}
         </View>
