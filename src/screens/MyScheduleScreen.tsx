@@ -9,6 +9,13 @@ import {
   Text,
   View,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -74,6 +81,44 @@ const getStatusLabel = (status: string) => {
   }
 };
 
+const SkeletonScheduleCard = () => {
+  const opacity = useSharedValue(0.4);
+  React.useEffect(() => {
+    opacity.value = withRepeat(
+      withSequence(
+        withTiming(0.8, { duration: 600 }),
+        withTiming(0.4, { duration: 600 }),
+      ),
+      -1,
+      true,
+    );
+  }, [opacity]);
+  const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  return (
+    <Animated.View style={animatedStyle} className="mb-4">
+      <Card className="gap-3 rounded-[26px] border-0 bg-white p-5 shadow-none">
+        <View className="flex-row items-start justify-between">
+          <View className="mr-3 flex-1">
+            <View className="h-6 w-40 rounded-lg bg-slate-200" />
+            <View className="mt-2 h-4 w-32 rounded-lg bg-slate-100" />
+          </View>
+          <View className="h-8 w-24 rounded-full bg-slate-200" />
+        </View>
+        <View className="mt-2 gap-3 rounded-2xl border border-slate-50 bg-slate-50/50 p-3">
+          <View className="flex-row items-center gap-2">
+            <View className="h-2 w-2 rounded-full bg-slate-200" />
+            <View className="h-4 flex-1 rounded-lg bg-slate-100" />
+          </View>
+          <View className="flex-row items-center gap-2">
+            <View className="h-2 w-2 rounded-full bg-slate-200" />
+            <View className="h-4 flex-1 rounded-lg bg-slate-100" />
+          </View>
+        </View>
+      </Card>
+    </Animated.View>
+  );
+};
+
 const MyScheduleScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const [loading, setLoading] = useState(true);
@@ -113,6 +158,8 @@ const MyScheduleScreen: React.FC = () => {
       }));
 
       setJobs(formattedJobs);
+      // Forced delay for skeleton effect (800ms)
+      await new Promise((resolve) => setTimeout(resolve, 800));
     } catch (error: any) {
       console.error("Fetch jobs failed:", error);
       showToast(error?.message || "Không thể tải lịch làm việc");
@@ -163,6 +210,7 @@ const MyScheduleScreen: React.FC = () => {
   };
 
   const onRefresh = () => {
+    setLoading(true);
     setRefreshing(true);
     fetchJobs();
   };
@@ -205,8 +253,11 @@ const MyScheduleScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-[#edf4ef]">
-        <ActivityIndicator size="large" color="#10b981" />
+      <View className="flex-1 bg-[#edf4ef] p-4 pt-10">
+        <View className="mb-8 h-10 w-48 rounded-xl bg-slate-200 opacity-50" />
+        <View className="mb-4 h-6 w-40 rounded-lg bg-slate-200 opacity-30" />
+        <SkeletonScheduleCard />
+        <SkeletonScheduleCard />
       </View>
     );
   }

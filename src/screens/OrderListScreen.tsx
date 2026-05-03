@@ -168,11 +168,12 @@ const OrderListScreen: React.FC = () => {
   );
 
   const onRefresh = () => {
+    setLoading(true);
     setRefreshing(true);
     fetchOrders();
   };
 
-  if (loading && !refreshing) {
+  if (loading) {
     return (
       <View className="flex-1 bg-[#edf4ef] p-4 pt-10">
         <View className="mb-8 h-10 w-64 rounded-xl bg-slate-200 opacity-50" />

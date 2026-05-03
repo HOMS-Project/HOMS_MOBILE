@@ -142,6 +142,7 @@ const IncidentListScreen: React.FC = () => {
   );
 
   const onRefresh = () => {
+    setLoading(true);
     setRefreshing(true);
     fetchIncidents();
   };
@@ -160,7 +161,7 @@ const IncidentListScreen: React.FC = () => {
     return statusOk && typeOk && searchOk;
   }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
-  if (loading && !refreshing) {
+  if (loading) {
     return (
       <View className="flex-1 bg-[#edf4ef] p-4 pt-10">
         <View className="mb-8 h-10 w-48 rounded-xl bg-slate-200 opacity-50" />

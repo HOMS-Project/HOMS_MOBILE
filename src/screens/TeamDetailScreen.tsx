@@ -8,6 +8,7 @@ import {
   ScrollView,
   Text,
   View,
+  RefreshControl,
 } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -76,6 +77,7 @@ const TeamDetailScreen: React.FC = () => {
   const route = useRoute<TeamDetailRoute>();
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState<TeamDetail | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [showDrivers, setShowDrivers] = useState(true);
   const [showAssistants, setShowAssistants] = useState(true);
 
@@ -92,8 +94,15 @@ const TeamDetailScreen: React.FC = () => {
       showToast(error?.message || "Không thể tải thông tin đội");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [invoiceId]);
+
+  const onRefresh = useCallback(async () => {
+    setLoading(true);
+    setRefreshing(true);
+    await fetchDetail();
+  }, [fetchDetail]);
 
   useFocusEffect(
     useCallback(() => {
@@ -210,6 +219,9 @@ const TeamDetailScreen: React.FC = () => {
           paddingBottom: 24,
         }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         <View className="flex-row items-center">
           <Pressable

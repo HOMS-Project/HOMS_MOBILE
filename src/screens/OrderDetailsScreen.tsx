@@ -215,12 +215,13 @@ const OrderDetailsScreen: React.FC = () => {
   );
 
   const onRefresh = useCallback(async () => {
+    setLoading(true);
     setRefreshing(true);
     await fetchOrderDetails();
     setRefreshing(false);
   }, [route.params?.invoiceId]);
 
-  if (loading && !refreshing) {
+  if (loading) {
     return <SkeletonDetail />;
   }
 
