@@ -256,6 +256,7 @@ export const endpoints = {
     getProxyRoute: '/staff/routing/osrm',
     getNotifications: '/notifications',
     markNotificationRead: (id: string) => `/notifications/${id}/read`,
+    getStats: '/staff/dashboard/stats',
   },
 };
 

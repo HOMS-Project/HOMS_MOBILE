@@ -10,6 +10,13 @@ import {
   View,
   TextInput,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -67,6 +74,40 @@ const statusClass = (status: string) => {
 
 const isVideo = (url: string) => /\.(mp4|mov|m4v|webm)(\?|$)/i.test(url);
 
+const SkeletonIncidentCard = () => {
+  const opacity = useSharedValue(0.4);
+  React.useEffect(() => {
+    opacity.value = withRepeat(
+      withSequence(
+        withTiming(0.8, { duration: 600 }),
+        withTiming(0.4, { duration: 600 }),
+      ),
+      -1,
+      true,
+    );
+  }, [opacity]);
+  const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  return (
+    <Animated.View style={animatedStyle} className="mb-3">
+      <Card className="rounded-2xl border-0 bg-white p-4 shadow-none">
+        <View className="flex-row items-start justify-between">
+          <View className="mr-2 flex-1">
+            <View className="h-5 w-24 rounded bg-slate-200" />
+            <View className="mt-2 h-3 w-32 rounded bg-slate-100" />
+          </View>
+          <View className="h-6 w-16 rounded-full bg-slate-200" />
+        </View>
+        <View className="mt-3 flex-row gap-2">
+          <View className="h-5 w-20 rounded-full bg-slate-100" />
+        </View>
+        <View className="mt-4 h-20 rounded-xl bg-slate-100" />
+        <View className="mt-3 h-3 w-full rounded bg-slate-100" />
+        <View className="mt-2 h-3 w-2/3 rounded bg-slate-100" />
+      </Card>
+    </Animated.View>
+  );
+};
+
 const IncidentListScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const [loading, setLoading] = useState(true);
@@ -83,6 +124,8 @@ const IncidentListScreen: React.FC = () => {
     try {
       const data = await fetchMyIncidents();
       setIncidents(data);
+      // Forced delay for skeleton effect (800ms)
+      await new Promise((resolve) => setTimeout(resolve, 800));
     } catch (error: any) {
       console.error("Fetch incidents failed:", error);
       showToast(error?.message || "Không thể tải báo cáo sự cố");
@@ -90,7 +133,7 @@ const IncidentListScreen: React.FC = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [fetchMyIncidents]);
 
   useFocusEffect(
     useCallback(() => {
@@ -117,10 +160,13 @@ const IncidentListScreen: React.FC = () => {
     return statusOk && typeOk && searchOk;
   }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
-  if (loading) {
+  if (loading && !refreshing) {
     return (
-      <View className="flex-1 items-center justify-center bg-[#edf4ef]">
-        <ActivityIndicator size="large" color="#10b981" />
+      <View className="flex-1 bg-[#edf4ef] p-4 pt-10">
+        <View className="mb-8 h-10 w-48 rounded-xl bg-slate-200 opacity-50" />
+        <View className="mb-4 h-12 w-full rounded-2xl bg-white opacity-60" />
+        <SkeletonIncidentCard />
+        <SkeletonIncidentCard />
       </View>
     );
   }

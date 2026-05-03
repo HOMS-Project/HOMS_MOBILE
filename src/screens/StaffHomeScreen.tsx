@@ -8,6 +8,7 @@ import {
   ScrollView,
   Text,
   View,
+  RefreshControl,
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -89,6 +90,7 @@ const StaffHomeScreen: React.FC = () => {
   const [orders, setOrders] = useState<DashboardOrder[]>([]);
   const [user, setUser] = useState<any>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   // ── Tab bar visibility (Grab-style) ────────────────────────────────
   const { setTabBarVisible } = useTabBar();
@@ -124,8 +126,14 @@ const StaffHomeScreen: React.FC = () => {
       console.error("Fetch data general error:", error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchData();
+  }, [fetchData]);
 
   useEffect(() => {
     fetchData();
@@ -286,6 +294,9 @@ const StaffHomeScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={handleScroll}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />
+        }
       >
         <LinearGradient
           colors={["#0f3f2a", "#156f45", "#1d8a55"]}
@@ -343,36 +354,53 @@ const StaffHomeScreen: React.FC = () => {
             </Pressable>
           </View>
 
-          <View className="mt-6 flex-row gap-3">
-            <Pressable
-              className="flex-1 items-center rounded-3xl bg-white p-4 shadow-sm border border-slate-50"
-              onPress={() => navigation.navigate("OrderList")}
-            >
-              <Ionicons name="receipt-outline" size={28} color="#059669" />
-              <Text className="mt-2 text-center text-[12px] font-bold text-slate-800">
-                Danh sách đơn
-              </Text>
-            </Pressable>
+          <View className="mt-6 gap-3">
+            <View className="flex-row gap-3">
+              <Pressable
+                className="flex-1 items-center rounded-3xl bg-white p-4 shadow-sm border border-slate-50"
+                onPress={() => navigation.navigate("OrderList")}
+              >
+                <Ionicons name="receipt-outline" size={28} color="#059669" />
+                <Text className="mt-2 text-center text-[12px] font-bold text-slate-800">
+                  Danh sách đơn
+                </Text>
+              </Pressable>
 
-            <Pressable
-              className="flex-1 items-center rounded-3xl bg-white p-4 shadow-sm border border-slate-50"
-              onPress={goToTeamList}
-            >
-              <Ionicons name="people-outline" size={28} color="#059669" />
-              <Text className="mt-2 text-center text-[12px] font-bold text-slate-800">
-                Quản lý đội
-              </Text>
-            </Pressable>
+              <Pressable
+                className="flex-1 items-center rounded-3xl bg-white p-4 shadow-sm border border-slate-50"
+                onPress={goToTeamList}
+              >
+                <Ionicons name="people-outline" size={28} color="#059669" />
+                <Text className="mt-2 text-center text-[12px] font-bold text-slate-800">
+                  Quản lý đội
+                </Text>
+              </Pressable>
+            </View>
 
-            <Pressable
-              className="flex-1 items-center rounded-3xl bg-white p-4 shadow-sm border border-slate-50"
-              onPress={() => navigation.navigate("IncidentList")}
-            >
-              <Ionicons name="alert-circle-outline" size={28} color="#059669" />
-              <Text className="mt-2 text-center text-[12px] font-bold text-slate-800">
-                Báo cáo sự cố
-              </Text>
-            </Pressable>
+            <View className="flex-row gap-3">
+              <Pressable
+                className="flex-1 items-center rounded-3xl bg-white p-4 shadow-sm border border-slate-50"
+                onPress={() => navigation.navigate("IncidentList")}
+              >
+                <Ionicons name="alert-circle-outline" size={28} color="#059669" />
+                <Text className="mt-2 text-center text-[12px] font-bold text-slate-800">
+                  Báo cáo sự cố
+                </Text>
+              </Pressable>
+
+              <Pressable
+                className="flex-1 items-center rounded-3xl bg-white p-4 shadow-sm border border-slate-50"
+                onPress={() => navigation.navigate("Dashboard")}
+              >
+                <View className="absolute right-3 top-3 rounded-full bg-emerald-500 px-1.5">
+                  <Text className="text-[10px] font-bold text-white">{orders.length}</Text>
+                </View>
+                <Ionicons name="grid-outline" size={28} color="#059669" />
+                <Text className="mt-2 text-center text-[12px] font-bold text-slate-800">
+                  Bảng điều khiển
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </LinearGradient>
 

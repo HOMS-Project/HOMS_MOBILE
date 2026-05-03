@@ -8,6 +8,13 @@ import {
   View,
   TextInput,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -51,6 +58,45 @@ const statusClass = (status: string) => {
   return "bg-violet-100 text-violet-700";
 };
 
+const SkeletonTeamCard = () => {
+  const opacity = useSharedValue(0.4);
+  React.useEffect(() => {
+    opacity.value = withRepeat(
+      withSequence(
+        withTiming(0.8, { duration: 600 }),
+        withTiming(0.4, { duration: 600 }),
+      ),
+      -1,
+      true,
+    );
+  }, [opacity]);
+  const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  return (
+    <Animated.View style={animatedStyle} className="mb-3">
+      <Card className="gap-3 rounded-2xl border-0 bg-white p-4 shadow-none">
+        <View className="flex-row items-start justify-between">
+          <View className="mr-2 flex-1">
+            <View className="h-5 w-32 rounded-lg bg-slate-200" />
+            <View className="mt-2 h-3 w-40 rounded-lg bg-slate-100" />
+          </View>
+          <View className="h-6 w-16 rounded-full bg-slate-200" />
+        </View>
+        <View className="mt-2 gap-2.5 p-1">
+          <View className="flex-row items-center gap-2">
+            <View className="h-2 w-2 rounded-full bg-slate-200" />
+            <View className="h-3 flex-1 rounded-lg bg-slate-100" />
+          </View>
+          <View className="ml-1 h-3 w-px bg-slate-200" />
+          <View className="flex-row items-center gap-2">
+            <View className="h-2 w-2 rounded-full bg-slate-200" />
+            <View className="h-3 flex-1 rounded-lg bg-slate-100" />
+          </View>
+        </View>
+      </Card>
+    </Animated.View>
+  );
+};
+
 const TeamListScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const [loading, setLoading] = useState(true);
@@ -66,6 +112,8 @@ const TeamListScreen: React.FC = () => {
     try {
       const data = await fetchAssignedInvoices();
       setOrders(data);
+      // Forced delay for skeleton effect (800ms)
+      await new Promise((resolve) => setTimeout(resolve, 800));
     } catch (error: any) {
       console.error("Fetch team orders failed:", error);
       showToast(error?.message || "Không thể tải danh sách quản lý đội");
@@ -123,10 +171,14 @@ const TeamListScreen: React.FC = () => {
     return Array.from(allStatus);
   }, [orders]);
 
-  if (loading) {
+  if (loading && !refreshing) {
     return (
-      <View className="flex-1 items-center justify-center bg-[#edf4ef]">
-        <ActivityIndicator size="large" color="#10b981" />
+      <View className="flex-1 bg-[#edf4ef] p-4 pt-10">
+        <View className="mb-4 h-10 w-48 rounded-xl bg-slate-200 opacity-50" />
+        <View className="mb-8 h-4 w-64 rounded-lg bg-slate-200 opacity-30" />
+        <SkeletonTeamCard />
+        <SkeletonTeamCard />
+        <SkeletonTeamCard />
       </View>
     );
   }
@@ -174,18 +226,6 @@ const TeamListScreen: React.FC = () => {
           Danh sách đơn có đội được phân công cho bạn
         </Text>
 
-        <View className="mt-4 flex-row gap-3">
-          <Card className="flex-1 rounded-2xl bg-white p-4">
-            <Text className="text-2xl font-extrabold text-slate-900">{orders.length}</Text>
-            <Text className="mt-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">Tổng số đơn</Text>
-          </Card>
-          <Card className="flex-1 rounded-2xl bg-emerald-50 p-4 border border-emerald-100">
-            <Text className="text-2xl font-extrabold text-emerald-700">
-              {orders.filter(o => o.status === "IN_PROGRESS").length}
-            </Text>
-            <Text className="mt-1 text-[10px] font-bold uppercase tracking-wide text-emerald-600">Đang thực hiện</Text>
-          </Card>
-        </View>
 
         <View className="mt-4 flex-row items-center rounded-2xl bg-white px-4 py-3 shadow-sm">
           <Ionicons name="search" size={20} color="#64748b" />

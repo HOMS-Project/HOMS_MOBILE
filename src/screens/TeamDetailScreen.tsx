@@ -9,6 +9,13 @@ import {
   Text,
   View,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import {
   useNavigation,
@@ -38,6 +45,32 @@ const statusLabel = (status: string) => {
   return status || "Không rõ";
 };
 
+const SkeletonTeamDetail = () => {
+  const opacity = useSharedValue(0.4);
+  React.useEffect(() => {
+    opacity.value = withRepeat(
+      withSequence(
+        withTiming(0.8, { duration: 600 }),
+        withTiming(0.4, { duration: 600 }),
+      ),
+      -1,
+      true,
+    );
+  }, [opacity]);
+  const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  return (
+    <Animated.View style={animatedStyle} className="flex-1 bg-[#edf4ef] p-4 pt-10">
+      <View className="flex-row items-center mb-10">
+         <View className="h-9 w-9 rounded-full bg-white opacity-60 mr-4" />
+         <View className="h-8 w-48 rounded-xl bg-slate-200 opacity-50" />
+      </View>
+      <View className="h-44 w-full rounded-2xl bg-white opacity-60 mb-4" />
+      <View className="h-32 w-full rounded-2xl bg-white opacity-60 mb-4" />
+      <View className="h-48 w-full rounded-2xl bg-white opacity-60 mb-4" />
+    </Animated.View>
+  );
+};
+
 const TeamDetailScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const route = useRoute<TeamDetailRoute>();
@@ -48,17 +81,19 @@ const TeamDetailScreen: React.FC = () => {
 
   const invoiceId = route.params?.invoiceId;
 
-  const fetchDetail = async () => {
+  const fetchDetail = useCallback(async () => {
     try {
       const data = await fetchTeamOrderDetail(invoiceId);
       setDetail(data);
+      // Forced delay for skeleton effect (300ms)
+      await new Promise((resolve) => setTimeout(resolve, 300));
     } catch (error: any) {
       console.error("Fetch team detail failed:", error);
       showToast(error?.message || "Không thể tải thông tin đội");
     } finally {
       setLoading(false);
     }
-  };
+  }, [invoiceId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -140,11 +175,7 @@ const TeamDetailScreen: React.FC = () => {
   );
 
   if (loading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-[#edf4ef]">
-        <ActivityIndicator size="large" color="#10b981" />
-      </View>
-    );
+    return <SkeletonTeamDetail />;
   }
 
   if (!detail) {
