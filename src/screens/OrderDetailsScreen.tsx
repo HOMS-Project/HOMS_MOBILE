@@ -516,7 +516,7 @@ const OrderDetailsScreen: React.FC = () => {
 
             <Card className="mt-4 rounded-[20px] p-4">
               <Text className="text-lg font-extrabold text-slate-900">
-                2. Dịch vụ & Bảo hiểm
+                2. Dịch vụ
               </Text>
               
               <View className="mt-4 flex-row flex-wrap gap-2">
@@ -542,16 +542,6 @@ const OrderDetailsScreen: React.FC = () => {
                   </Text>
                 </View>
 
-                <View className={`flex-row items-center px-3 py-2 rounded-xl border ${order.survey.insuranceRequired ? "bg-blue-50 border-blue-100" : "bg-slate-50 border-slate-100 opacity-60"}`}>
-                  <Ionicons 
-                    name={order.survey.insuranceRequired ? "shield-checkmark" : "shield-outline"} 
-                    size={16} 
-                    color={order.survey.insuranceRequired ? "#2563eb" : "#94a3b8"} 
-                  />
-                  <Text className={`ml-2 text-sm font-bold ${order.survey.insuranceRequired ? "text-blue-800" : "text-slate-500"}`}>
-                    {order.survey.insuranceRequired ? "Có bảo hiểm" : "Không bảo hiểm"}
-                  </Text>
-                </View>
               </View>
             </Card>
           </>
