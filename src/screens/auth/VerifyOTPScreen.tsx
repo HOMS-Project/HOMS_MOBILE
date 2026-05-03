@@ -23,7 +23,7 @@ interface Props {
   digits?: number;
 }
 
-const VerifyOTPScreen: React.FC<Props> = ({ onSubmit, digits = 4 }) => {
+const VerifyOTPScreen: React.FC<Props> = ({ onSubmit, digits = 6 }) => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, "VerifyOTP">>();

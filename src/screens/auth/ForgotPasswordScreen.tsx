@@ -119,8 +119,9 @@ const ForgotPasswordScreen: React.FC<Props> = ({ onRequestOTP }) => {
           setError(res?.message || "Gửi OTP thất bại");
         }
       }
-    } catch (err) {
-      Alert.alert("Có lỗi xảy ra", "Vui lòng thử lại sau");
+    } catch (err: any) {
+      const msg = err?.message || "Vui lòng thử lại sau";
+      setError(msg);
     } finally {
       setSubmitting(false);
     }

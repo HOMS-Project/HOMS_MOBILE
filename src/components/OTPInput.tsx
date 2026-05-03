@@ -17,7 +17,7 @@ interface Props {
 }
 
 const OTPInput: React.FC<Props> = ({
-  length = 4,
+  length = 6,
   onChange,
   inputProps,
   autoFocus = true,
@@ -97,13 +97,13 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: spacing.md,
+    gap: 8,
     marginTop: spacing.md,
     marginBottom: spacing.xl,
   },
   input: {
-    width: 56,
-    height: 56,
+    width: 46,
+    height: 52,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.lg,
