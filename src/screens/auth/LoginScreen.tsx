@@ -57,7 +57,7 @@ const FormField: React.FC<FormFieldProps> = ({
   return (
     <View className="gap-1.5">
       <Text className="text-[13px] font-bold text-slate-700">{label}</Text>
-      <View className="h-[48px] flex-row items-center rounded-xl border border-emerald-100 bg-white/95 px-4">
+      <View className="h-[48px] flex-row items-center rounded-xl border border-white/40 bg-white/30 px-4">
         <Ionicons name={icon} size={18} color="#4b5563" />
         <TextInput
           className="ml-3 flex-1 text-[15px] text-slate-900"
@@ -277,15 +277,15 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
             </View>
 
             <Animated.View
-              className="overflow-hidden rounded-[28px] border border-white/70 bg-white/30 shadow-xl"
+              className="overflow-hidden rounded-[28px] border border-white/40 shadow-xl"
               style={{ transform: [{ scale: cardScale }] }}
             >
               <BlurView
-                intensity={26}
-                tint="light"
+                intensity={40}
+                tint="systemUltraThinMaterial"
                 className="absolute inset-0"
               />
-              <View className="p-5">
+              <View className="p-5" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
                 <Text className="text-[26px] font-black tracking-tight text-slate-900">
                   Đăng nhập
                 </Text>

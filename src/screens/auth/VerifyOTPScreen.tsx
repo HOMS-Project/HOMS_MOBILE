@@ -86,15 +86,15 @@ const VerifyOTPScreen: React.FC<Props> = ({ onSubmit, digits = 6 }) => {
             </View>
 
             <Animated.View
-              className="overflow-hidden rounded-[34px] border border-white/70 bg-white/30 shadow-xl"
+              className="overflow-hidden rounded-[34px] border border-white/40 shadow-xl"
               style={{ transform: [{ scale: cardScale }] }}
             >
               <BlurView
-                intensity={26}
-                tint="light"
+                intensity={40}
+                tint="systemUltraThinMaterial"
                 className="absolute inset-0"
               />
-              <View className="p-5">
+              <View className="p-5" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
                 <Text className="text-3xl font-black tracking-tight text-slate-900">
                   Xác thực OTP
                 </Text>
@@ -108,7 +108,7 @@ const VerifyOTPScreen: React.FC<Props> = ({ onSubmit, digits = 6 }) => {
                   </Text>
                 ) : null}
 
-                <View className="mt-7 rounded-2xl border border-emerald-100 bg-white/70 px-4 py-3">
+                <View className="mt-7 rounded-2xl border border-white/40 bg-white/20 px-4 py-3">
                   <OTPInput
                     length={digits || 6}
                     onChange={setCode}
@@ -118,8 +118,8 @@ const VerifyOTPScreen: React.FC<Props> = ({ onSubmit, digits = 6 }) => {
                         height: 48,
                         borderRadius: 10,
                         borderWidth: 1,
-                        borderColor: "#bbf7d0",
-                        backgroundColor: "#ffffff",
+                        borderColor: "rgba(255,255,255,0.4)",
+                        backgroundColor: "rgba(255,255,255,0.15)",
                         fontSize: 18,
                         fontWeight: "700",
                         color: "#0f172a",
