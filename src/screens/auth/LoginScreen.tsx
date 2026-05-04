@@ -17,6 +17,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
@@ -264,15 +265,17 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
       <View className="absolute left-[-80px] top-[36%] h-64 w-64 rounded-full bg-cyan-100/35" />
       <View className="absolute -bottom-24 -left-14 h-72 w-72 rounded-full bg-emerald-100/45" />
 
-      <KeyboardSafeArea
-        scrollable
-        contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingBottom: 24 }}
-      >
-          <Animated.View
-            className="px-5 pb-4 pt-6"
-            style={{ opacity: screenOpacity }}
-          >
-            <View className="items-center">
+      <SafeAreaView style={{ flex: 1 }}>
+        <KeyboardSafeArea
+          scrollable
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 24, paddingTop: Platform.OS === 'android' ? 24 : 0 }}
+        >
+          <View style={{ flex: 1, justifyContent: "center" }}>
+            <Animated.View
+              className="px-5 pb-4 pt-6"
+              style={{ opacity: screenOpacity }}
+            >
+              <View className="items-center">
               <AuthHeader size={200} />
             </View>
 
@@ -384,8 +387,10 @@ const LoginScreen: React.FC<Props> = ({ onForgotPassword, onSubmit }) => {
               </View>
             </Animated.View>
           </Animated.View>
+        </View>
       </KeyboardSafeArea>
-    </View>
+    </SafeAreaView>
+  </View>
   );
 };
 

@@ -144,8 +144,11 @@ axiosClient.interceptors.response.use(
       console.error(`[API] Request failed: ${message}`);
     }
 
+    const url = originalRequest?.url || '';
+    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh') || url.includes('/auth/google-login');
+
     // Auto-refresh on 401 Token expired
-    if (status === 401 && originalRequest && !originalRequest._authRetried) {
+    if (status === 401 && originalRequest && !originalRequest._authRetried && !isAuthEndpoint) {
       if (isRefreshing) {
         // Queue this request until refresh is done
         return new Promise<void>((resolve) => {
